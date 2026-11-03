@@ -9,6 +9,7 @@ use eframe::egui::{self, RichText};
 use serde_json::Value;
 use utsim_lss_core::domain::{self, Action, Approach, Column, Project, fields};
 use utsim_lss_core::overview::Overview;
+use utsim_lss_core::tools::Tool;
 use utsim_lss_core::{Date, EntityRef, Id as Uid, Kind, kanban};
 use utsim_lss_store::user::{self, AppDirs, Identity, UserConfig};
 use utsim_lss_store::{Clock, SystemClock, lssz, project};
@@ -16,6 +17,8 @@ use utsim_lss_store::{Clock, SystemClock, lssz, project};
 use crate::session::Session;
 use crate::text::{self, texts};
 use crate::theme;
+
+mod tools;
 
 /// Screens of an open project (the left navigation).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -129,6 +132,14 @@ pub struct App {
     selected_card: Option<Uid>,
     drafts: HashMap<(Uid, String), Draft>,
     editing: Option<EntityRef>,
+    /// The deliverable open on the "Ferramentas" screen.
+    pub selected_deliverable: Option<Uid>,
+    new_tool: Tool,
+    /// Text typed in the "new entry" boxes of the tools, by box.
+    inputs: HashMap<String, String>,
+    ap_csv_path: String,
+    ap_table_name: String,
+    ap_errors: Vec<String>,
     status: Option<(String, bool)>,
     theme_applied: Option<user::Theme>,
 }
@@ -166,6 +177,12 @@ impl App {
             selected_card: None,
             drafts: HashMap::new(),
             editing: None,
+            selected_deliverable: None,
+            new_tool: Tool::Voc,
+            inputs: HashMap::new(),
+            ap_csv_path: String::new(),
+            ap_table_name: String::new(),
+            ap_errors: Vec::new(),
             status: None,
             theme_applied: None,
         }
@@ -233,6 +250,7 @@ impl App {
         self.screen = Screen::Project;
         self.nav = Nav::Overview;
         self.selected_card = None;
+        self.selected_deliverable = None;
         self.drafts.clear();
     }
 
@@ -577,7 +595,7 @@ impl App {
                 Nav::Meetings => soon(ui, t.nav_meetings, t.soon_meetings, "L1"),
                 Nav::Schedule => soon(ui, t.nav_schedule, t.soon_schedule, "L1"),
                 Nav::Savings => soon(ui, t.nav_savings, t.soon_savings, "L1"),
-                Nav::Tools => soon(ui, t.nav_tools, t.soon_tools, "L2"),
+                Nav::Tools => self.tools(ui, &mut s),
             });
         });
 
@@ -1034,6 +1052,9 @@ impl App {
             });
         });
         self.presence_warning(ui, s, r);
+        if card.origin != domain::Origin::Manual {
+            ui.weak(text::origin_name(card.origin));
+        }
         let w = 290.0;
         use fields::action as f;
         egui::ScrollArea::vertical().show(ui, |ui| {
@@ -1237,12 +1258,11 @@ fn entity_label(s: &Session, e: EntityRef) -> String {
     let entity = s.state().entity(e.id);
     let name = entity
         .map(|x| {
-            let title = x.text("titulo");
-            if title.is_empty() {
-                x.text("nome")
-            } else {
-                title
-            }
+            ["titulo", "nome", "texto", "modo", "sinal", "caracteristica"]
+                .iter()
+                .map(|f| x.text(f))
+                .find(|t| !t.is_empty())
+                .unwrap_or_default()
         })
         .filter(|n| !n.is_empty())
         .unwrap_or_else(|| e.id.short());
@@ -1253,6 +1273,7 @@ fn entity_label(s: &Session, e: EntityRef) -> String {
         Kind::Meeting => t.nav_meetings,
         Kind::Saving => t.nav_savings,
         Kind::Phase => t.phases,
+        Kind::Deliverable | Kind::ToolItem => t.nav_tools,
         other => other.key(),
     };
     format!("{kind}: {name}")
