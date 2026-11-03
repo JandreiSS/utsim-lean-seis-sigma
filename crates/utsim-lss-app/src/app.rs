@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use eframe::egui::{self, RichText};
 use serde_json::Value;
-use utsim_lss_core::domain::{self, Action, Approach, Column, Project, fields};
+use utsim_lss_core::domain::{self, Action, Approach, Column, fields};
 use utsim_lss_core::overview::Overview;
 use utsim_lss_core::{Date, EntityRef, Id as Uid, Kind, kanban};
 use utsim_lss_store::user::{self, AppDirs, Identity, UserConfig};
@@ -16,6 +16,11 @@ use utsim_lss_store::{Clock, SystemClock, lssz, project};
 use crate::session::Session;
 use crate::text::{self, texts};
 use crate::theme;
+
+// Stage L1 screens (portfolio, charter versions, team, tollgates, risks, meetings,
+// schedule, savings, closing, folder picker).
+#[path = "screens/mod.rs"]
+pub mod screens;
 
 /// Screens of an open project (the left navigation).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,18 +37,22 @@ pub enum Nav {
     Tools,
     Data,
     Conflicts,
+    Team,
+    Closure,
 }
 
 impl Nav {
-    pub const PROJECT: [Nav; 10] = [
+    pub const PROJECT: [Nav; 12] = [
         Nav::Overview,
         Nav::Charter,
+        Nav::Team,
         Nav::Phases,
         Nav::Actions,
         Nav::Risks,
         Nav::Meetings,
         Nav::Schedule,
         Nav::Savings,
+        Nav::Closure,
         Nav::Tools,
         Nav::Data,
     ];
@@ -63,6 +72,8 @@ impl Nav {
             Nav::Tools => "ferramentas",
             Nav::Data => "dados",
             Nav::Conflicts => "conflitos",
+            Nav::Team => "equipe",
+            Nav::Closure => "encerramento",
         }
     }
 
@@ -88,6 +99,8 @@ impl Nav {
             Nav::Tools => t.nav_tools,
             Nav::Data => t.nav_data,
             Nav::Conflicts => t.nav_conflicts,
+            Nav::Team => text::l1::l1().nav_team,
+            Nav::Closure => text::l1::l1().nav_closure,
         }
     }
 }
@@ -131,6 +144,7 @@ pub struct App {
     editing: Option<EntityRef>,
     status: Option<(String, bool)>,
     theme_applied: Option<user::Theme>,
+    l1: screens::L1Ui,
 }
 
 impl App {
@@ -168,11 +182,17 @@ impl App {
             editing: None,
             status: None,
             theme_applied: None,
+            l1: screens::L1Ui::default(),
         }
     }
 
     pub fn session(&self) -> Option<&Session> {
         self.session.as_ref()
+    }
+
+    /// Opens a card in the side panel of the board.
+    pub fn select_card(&mut self, card: Uid) {
+        self.selected_card = Some(card);
     }
 
     pub fn status(&self) -> Option<&(String, bool)> {
@@ -229,9 +249,15 @@ impl App {
         self.config.touch_recent(&root);
         self.save_config();
         self.export_dest = session.default_export_path().display().to_string();
+        // A portfolio folder opens on the portfolio screen.
+        let portfolio = session.folder().is_portfolio();
         self.session = Some(session);
         self.screen = Screen::Project;
-        self.nav = Nav::Overview;
+        self.nav = if portfolio {
+            Nav::Portfolio
+        } else {
+            Nav::Overview
+        };
         self.selected_card = None;
         self.drafts.clear();
     }
@@ -274,6 +300,7 @@ impl App {
         if let Some(mut s) = self.session.take() {
             s.close();
         }
+        self.l1.close();
         self.screen = Screen::Start;
         self.drafts.clear();
         self.editing = None;
@@ -292,6 +319,44 @@ impl App {
             Screen::Start => self.start_screen(ui),
             Screen::Project => self.project_screen(ui),
         }
+        self.after_frame(ui.ctx());
+    }
+
+    /// The folder picker, and switching to another project asked by a screen (after the
+    /// frame, when no session is borrowed).
+    fn after_frame(&mut self, ctx: &egui::Context) {
+        self.l1.picker.show(ctx);
+        if let Some((target, path)) = self.l1.picker.take() {
+            use screens::picker::Target;
+            let p = path.display().to_string();
+            match target {
+                Target::OpenProject => self.open_input = p,
+                Target::NewProjectParent => self.new_parent = p,
+                Target::ImportFile => self.import_file = p,
+                Target::ImportDest => self.import_dest = p,
+            }
+        }
+        if let Some(p) = self.l1.portfolio.open_request.take() {
+            self.close_project();
+            self.open_project(&p);
+        }
+    }
+
+    /// Opens the folder picker for one of the start screen's boxes.
+    pub fn browse(&mut self, target: screens::picker::Target) {
+        use screens::picker::Target;
+        let start = match target {
+            Target::OpenProject => self.open_input.clone(),
+            Target::NewProjectParent => self.new_parent.clone(),
+            Target::ImportFile => self.import_file.clone(),
+            Target::ImportDest => self.import_dest.clone(),
+        };
+        self.l1.picker.open(target, &start);
+    }
+
+    /// Whether the folder picker is open (tests).
+    pub fn picker_open(&self) -> bool {
+        self.l1.picker.is_open()
     }
 
     fn identity_screen(&mut self, ui: &mut egui::Ui) {
@@ -399,6 +464,9 @@ impl App {
                             let p = PathBuf::from(self.open_input.trim());
                             self.open_project(&p);
                         }
+                        if ui.button(text::l1::l1().browse).clicked() {
+                            self.browse(screens::picker::Target::OpenProject);
+                        }
                     });
                 });
                 ui.add_space(8.0);
@@ -409,11 +477,16 @@ impl App {
                             .hint_text(t.title_hint)
                             .desired_width(520.0),
                     );
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.new_parent)
-                            .hint_text(t.parent_hint)
-                            .desired_width(520.0),
-                    );
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.new_parent)
+                                .hint_text(t.parent_hint)
+                                .desired_width(520.0),
+                        );
+                        if ui.button(text::l1::l1().browse).clicked() {
+                            self.browse(screens::picker::Target::NewProjectParent);
+                        }
+                    });
                     ui.horizontal(|ui| {
                         ui.label(t.approach);
                         egui::ComboBox::from_id_salt("abordagem")
@@ -442,17 +515,25 @@ impl App {
                 ui.add_space(8.0);
                 theme::card(ui).show(ui, |ui| {
                     ui.strong(t.import_lssz);
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.import_file)
-                            .hint_text(t.import_hint)
-                            .desired_width(520.0),
-                    );
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.import_file)
+                                .hint_text(t.import_hint)
+                                .desired_width(520.0),
+                        );
+                        if ui.button(text::l1::l1().browse).clicked() {
+                            self.browse(screens::picker::Target::ImportFile);
+                        }
+                    });
                     ui.horizontal(|ui| {
                         ui.add(
                             egui::TextEdit::singleline(&mut self.import_dest)
                                 .hint_text(t.import_dest_hint)
                                 .desired_width(420.0),
                         );
+                        if ui.button(text::l1::l1().browse).clicked() {
+                            self.browse(screens::picker::Target::ImportDest);
+                        }
                         if ui.button(t.import).clicked() {
                             let (file, dest) = (
                                 PathBuf::from(self.import_file.trim()),
@@ -567,16 +648,18 @@ impl App {
         egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::both().show(ui, |ui| match self.nav {
                 Nav::Overview => self.overview(ui, &s),
-                Nav::Charter => self.charter(ui, &mut s),
-                Nav::Phases => self.phases(ui, &s),
+                Nav::Charter => self.charter_l1(ui, &mut s),
+                Nav::Phases => self.phases_l1(ui, &mut s),
                 Nav::Actions => self.board(ui, &mut s),
                 Nav::Conflicts => self.conflicts(ui, &mut s),
                 Nav::Data => self.data(ui, &s),
-                Nav::Portfolio => self.portfolio(ui),
-                Nav::Risks => soon(ui, t.nav_risks, t.soon_risks, "L1"),
-                Nav::Meetings => soon(ui, t.nav_meetings, t.soon_meetings, "L1"),
-                Nav::Schedule => soon(ui, t.nav_schedule, t.soon_schedule, "L1"),
-                Nav::Savings => soon(ui, t.nav_savings, t.soon_savings, "L1"),
+                Nav::Portfolio => self.portfolio_l1(ui, &mut s),
+                Nav::Risks => self.risks(ui, &mut s),
+                Nav::Meetings => self.meetings(ui, &mut s),
+                Nav::Schedule => self.schedule(ui, &mut s),
+                Nav::Savings => self.savings(ui, &mut s),
+                Nav::Team => self.team(ui, &mut s),
+                Nav::Closure => self.closure(ui, &mut s),
                 Nav::Tools => soon(ui, t.nav_tools, t.soon_tools, "L2"),
             });
         });
@@ -588,6 +671,7 @@ impl App {
         ui.ctx().request_repaint_after(Duration::from_millis(500));
         if close {
             s.close();
+            self.l1.close();
             self.screen = Screen::Start;
             self.drafts.clear();
         } else {
@@ -605,6 +689,10 @@ impl App {
             self.nav = Nav::Portfolio;
         }
         ui.add_space(6.0);
+        if s.folder().is_portfolio() {
+            // A portfolio folder has no project screens.
+            return;
+        }
         ui.strong(t.nav_project);
         for n in Nav::PROJECT {
             let mut label = n.label().to_string();
@@ -856,70 +944,6 @@ impl App {
             });
     }
 
-    fn charter(&mut self, ui: &mut egui::Ui, s: &mut Session) {
-        let t = texts();
-        let p = Project::entity_ref(s.project());
-        ui.heading(t.nav_charter);
-        ui.weak(t.charter_intro);
-        self.presence_warning(ui, s, p);
-        ui.add_space(8.0);
-        let w = 520.0;
-        use fields::project as f;
-        egui::Grid::new("termo")
-            .num_columns(2)
-            .spacing([16.0, 8.0])
-            .show(ui, |ui| {
-                for (label, field, multi) in [
-                    (t.f_title, f::TITLE, false),
-                    (t.f_process, f::PROCESS, false),
-                    (t.f_area, f::AREA, false),
-                    (t.f_problem, f::PROBLEM, true),
-                    (t.f_goal, f::GOAL, false),
-                    (t.f_baseline, f::BASELINE, false),
-                ] {
-                    ui.label(label);
-                    self.text_field(ui, s, p, field, multi, w);
-                    ui.end_row();
-                }
-                ui.label(t.f_deadline);
-                self.date_field(ui, s, p, f::DEADLINE);
-                ui.end_row();
-                for (label, field) in [
-                    (t.f_scope_in, f::SCOPE_IN),
-                    (t.f_scope_out, f::SCOPE_OUT),
-                    (t.f_business_case, f::BUSINESS_CASE),
-                ] {
-                    ui.label(label);
-                    self.text_field(ui, s, p, field, true, w);
-                    ui.end_row();
-                }
-            });
-    }
-
-    fn phases(&mut self, ui: &mut egui::Ui, s: &Session) {
-        let t = texts();
-        ui.heading(t.nav_phases);
-        let current = s
-            .state()
-            .entity(s.project())
-            .and_then(|e| e.id(fields::project::CURRENT_PHASE));
-        for (i, ph) in domain::phases(s.state(), s.project()).iter().enumerate() {
-            theme::card(ui).show(ui, |ui| {
-                ui.set_min_width(420.0);
-                let title = format!("{}. {}", i + 1, ph.name);
-                if current == Some(ph.id) {
-                    ui.label(RichText::new(title).strong().color(theme::accent(ui)));
-                } else {
-                    ui.strong(title);
-                }
-                ui.small(text::phase_status_name(ph.status));
-            });
-        }
-        ui.add_space(8.0);
-        ui.weak(t.soon_phases);
-        ui.weak((t.coming_in)("L1"));
-    }
-
     fn board(&mut self, ui: &mut egui::Ui, s: &mut Session) {
         let t = texts();
         ui.heading(t.nav_actions);
@@ -939,17 +963,19 @@ impl App {
             }
         });
         ui.weak(t.board_tip);
+        self.wip_limits(ui, s);
         ui.add_space(6.0);
         let board = kanban::board(s.state(), s.project());
+        let loads = utsim_lss_core::board::loads(s.state(), s.project());
         let today = s.today();
         let mut dropped: Option<(Uid, Column)> = None;
         let mut select = None;
         ui.horizontal_top(|ui| {
-            for col in Column::ALL {
+            for (col, load) in Column::ALL.into_iter().zip(&loads) {
                 let cards = &board[&col];
                 ui.vertical(|ui| {
                     ui.set_width(220.0);
-                    ui.strong(format!("{} ({})", text::column_name(col), cards.len()));
+                    self.column_header(ui, load);
                     let frame = theme::card(ui);
                     let (_, payload) = ui.dnd_drop_zone::<Uid, ()>(frame, |ui| {
                         ui.set_min_size(egui::vec2(204.0, 80.0));
@@ -1101,6 +1127,7 @@ impl App {
                     }
                 }
             });
+            self.card_extras(ui, s, &card);
             ui.add_space(12.0);
             if ui
                 .button(RichText::new(t.delete).color(ui.visuals().error_fg_color))
@@ -1190,36 +1217,6 @@ impl App {
         ui.add_space(8.0);
         ui.weak(t.soon_data);
         ui.weak((t.coming_in)("L3"));
-    }
-
-    fn portfolio(&mut self, ui: &mut egui::Ui) {
-        let t = texts();
-        ui.heading(t.nav_portfolio);
-        ui.weak(t.soon_portfolio);
-        ui.weak((t.coming_in)("L1"));
-        ui.add_space(8.0);
-        ui.strong(t.recent);
-        let mut open = None;
-        for p in &self.config.recent {
-            let name = p
-                .file_stem()
-                .map(|s| s.to_string_lossy().into_owned())
-                .unwrap_or_default();
-            let current = self
-                .session
-                .as_ref()
-                .is_some_and(|s| s.folder().root() == p.as_path());
-            if ui
-                .add_enabled(!current && project::is_project(p), egui::Button::new(name))
-                .clicked()
-            {
-                open = Some(p.clone());
-            }
-        }
-        if let Some(p) = open {
-            self.close_project();
-            self.open_project(&p);
-        }
     }
 }
 

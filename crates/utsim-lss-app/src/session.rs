@@ -50,6 +50,20 @@ impl Session {
         Ok(Self::with(folder, clock))
     }
 
+    /// Creates a portfolio folder (its project folders go next to it).
+    pub fn create_portfolio(
+        path: &Path,
+        names: (&str, &str, &str),
+        me: &Identity,
+        cache: Option<&Path>,
+        clock: Box<dyn Clock>,
+    ) -> utsim_lss_store::Result<Self> {
+        let (name, unit, program) = names;
+        let folder =
+            ProjectFolder::create_portfolio(path, name, unit, program, me, clock.as_ref(), cache)?;
+        Ok(Self::with(folder, clock))
+    }
+
     fn with(folder: ProjectFolder, clock: Box<dyn Clock>) -> Self {
         let now = clock.now_ms();
         Self {
@@ -83,10 +97,19 @@ impl Session {
         self.clock.now_ms()
     }
 
-    /// Today. The date uses UTC; the local offset arrives with the working-day calendar
-    /// (etapa L1).
+    /// Today, in the local time of this computer.
     pub fn today(&self) -> Date {
-        Date::from_unix_ms(self.clock.now_ms(), 0)
+        Date::from_unix_ms(self.clock.now_ms(), self.clock.utc_offset_minutes())
+    }
+
+    /// A new id (UUID v7) for an entity created on the screens.
+    pub fn new_id(&self) -> Id {
+        self.clock.new_id()
+    }
+
+    /// An id generator for edits that create several entities.
+    pub fn ids(&self) -> impl FnMut() -> Id + '_ {
+        || self.clock.new_id()
     }
 
     /// Commits edits; returns how many operations were written.
@@ -132,12 +155,16 @@ impl Session {
         Ok(Some(id))
     }
 
+    /// Moves a card, respecting the column's WIP limit and the effectiveness check before
+    /// "feito" (`utsim_lss_core::board::check_move`).
     pub fn move_card(
         &mut self,
         card: Id,
         column: Column,
         index: usize,
     ) -> utsim_lss_store::Result<()> {
+        utsim_lss_core::board::check_move(self.state(), self.project(), card, column)
+            .map_err(|e| utsim_lss_store::Error::Invalid(e.to_string()))?;
         let edits = kanban::move_card(self.state(), self.project(), card, column, index);
         self.apply(edits).map(|_| ())
     }
