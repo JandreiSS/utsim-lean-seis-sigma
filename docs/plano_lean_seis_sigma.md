@@ -465,8 +465,10 @@ depende de crate do app LSS.
   calendário, receitas de análise; serialização e migrações do formato do projeto.
 - `utsim-lss-store` (nativa): pasta do projeto, diário de operações, bloqueio otimista,
   instantâneos, anexos por hash, índice local de busca (seção 4.5).
-- `utsim-lss-app` (binário): servidor HTTP local, API JSON, página embutida, fios de trabalho
-  para simulações, exportações.
+- `utsim-lss-app` (binário `utsim-seis-sigma`): janela `eframe`/`egui` (decisão de 2026-11-03,
+  seção 7), fios de trabalho para simulações, exportações. *Fundação feita (L0): telas
+  iniciais, visão geral, termo, quadro de ações, presença e conflitos; veja
+  `docs/arquitetura.md`, seção 4v.*
 
 ---
 
@@ -636,7 +638,7 @@ plano; Haiku para tarefas mecânicas).
 
 | Fase | Conteúdo | Horas | Modelo |
 |---|---|---|---|
-| **L0 Fundação** (MVP) | crates `utsim-lss-core`, `-store`, `-app`; formato do projeto, diário, Lamport, instantâneos, conflitos, presença, migrações; servidor local e API; esqueleto da página, navegação, catálogo de textos; módulo de gráficos compartilhado com o painel; entrada no manifesto do launcher | 30–42 | Opus 14–20 (formato, armazenamento, concorrência); Sonnet 15–20 (servidor, página); Haiku 1–2 (CI, catálogo) |
+| **L0 Fundação** (MVP) | (**feita** em 2026-11-03, com janela egui no lugar da página web, decisão da seção 7: crates `utsim-lss-core`, `utsim-lss-store` e `utsim-lss-app`, binário `utsim-seis-sigma`, `scripts/publicar-seis-sigma.sh`; ficam para L1 a janela de escolha de pasta, o fuso local nas datas, a cadeia de hash por autor e os gráficos com `egui_plot`) crates `utsim-lss-core`, `-store`, `-app`; formato do projeto, diário, Lamport, instantâneos, conflitos, presença, migrações; janela egui (no lugar do servidor local, da API e da página), navegação, catálogo de textos; entrada no manifesto do launcher | 30–42 | Opus 14–20 (formato, armazenamento, concorrência); Sonnet 15–20 (servidor, página); Haiku 1–2 (CI, catálogo) |
 | **L1 Gestão do projeto** (MVP) | carteira, banco de ideias, priorização (matriz, pontuação, alinhamento), escolha da abordagem, termo versionado, papéis e RACI, fases e tollgates com checklists manuais e verificados, kanban de ações, riscos, reuniões e atas, cronograma com Gantt e CPM/PERT do `utsim-pert` e calendário, ganhos com estados e validação, encerramento, lições | 45–62 | Opus 8–12 (regras de tollgate, calendário, ganhos); Sonnet 37–50 (telas) |
 | **L2 Ferramentas qualitativas** (MVP) | VOC/CTQ, SIPOC manual, Ishikawa, 5 porquês, matriz C&E, FMEA com RPN e AP configurável, plano de coleta, plano de controle e de resposta, Pareto, A3 | 24–32 | Opus 3–4 (FMEA e C&E); Sonnet 21–28 |
 | **L3 Estatística essencial** (MVP), em `utsim-stats` e `utsim-quality` | (**parte feita** em `utsim-quality`: A-D, capacidade normal, por percentis e Box-Cox, DPMO e nível sigma, as sete cartas com Western Electric e Nelson; faltam descritiva, gráficos e os testes de hipótese) descritiva, gráficos (dados), A-D, capacidade normal e por percentis e Box-Cox, DPMO e nível sigma, I-MR, X̄-R, X̄-S, p, np, c, u com Western Electric e Nelson, testes t (três), ANOVA de um fator com Tukey, qui-quadrado, proporções, Mann-Whitney e Wilcoxon; testes de referência (NIST StRD e livros) | 34–46 | Opus 28–38; Sonnet 6–8 (telas de análise) |
