@@ -268,6 +268,8 @@ livro, a precisão impressa no livro.
 
 ### 2.2 Medir
 
+*Feito em `utsim-quality` (comando `utsim qualidade`, manual "Qualidade"): MSA por ANOVA e por médias e amplitudes, viés e linearidade, atributos com Cohen e Fleiss; capacidade normal, Box-Cox e percentis; DPMO e nível sigma; Anderson-Darling; cartas com fase I e II, Western Electric e Nelson. Faltam: estudo do tipo 1, transformação de Johnson e gráfico de probabilidade normal. Os exemplos do manual de MSA não foram embutidos (material protegido): os testes usam somas de quadrados calculadas à mão e estudos simulados com componentes conhecidos.*
+
 | Ferramenta | O que calcula | Teste |
 |---|---|---|
 | Plano de coleta de dados | Y e X, definição operacional, tipo (contínuo, atributo, contagem), unidade, estratificação, amostragem (tamanho, frequência, subgrupo), quem, onde, formulário de coleta gerado em planilha | tamanho de amostra pelas fórmulas de poder (seção 2.3) contra exemplos de Montgomery, *Design and Analysis of Experiments* [conferir capítulo] |
@@ -445,14 +447,14 @@ diagramas). Arquivos só onde há fronteira de pessoa ou de tempo:
 | Crate | Conteúdo | Usada por |
 |---|---|---|
 | `utsim-stats` (existe; cresce) | base: funções especiais, quantis, descritiva, testes de hipótese (t, F, variâncias, ANOVA, Tukey, qui-quadrado, Fisher, proporções, não paramétricos), normalidade A-D, poder, correlação, regressão (QR), Box-Cox e Johnson; consolida `norm_cdf`, `quantile_sorted`, `correlation` e `wilson`, hoje duplicados em `utsim-pert::math` | simulador, painel, LSS |
-| `utsim-quality` (nova) | cartas de controle e regras, EWMA, CUSUM, ARL por simulação, capacidade (normal, percentis, transformada), DPMO e nível sigma, MSA (ANOVA, médias e amplitudes, atributos, kappa) | painel (E4, E6), LSS |
+| `utsim-quality` (**criada**; falta Johnson e o estudo do tipo 1) | cartas de controle e regras, EWMA, CUSUM, ARL por simulação, capacidade (normal, percentis, transformada), DPMO e nível sigma, MSA (ANOVA, médias e amplitudes, atributos, kappa) | painel (E4, E6), LSS |
 | `utsim-doe` (nova; ou módulo `doe` de `utsim-stats`, decisão C1) | geração de planejamentos (fatorial, fracionado com aliases, Plackett-Burman, CCD, Box-Behnken), análise de efeitos, Lenth, superfície de resposta, desejabilidade | `utsim experiment`, LSS |
 | `utsim-diagram` (no branch; cresce) | fluxograma e carta (existem), SIPOC, VSM, espaguete | simulador, LSS |
 | `utsim-pert` (existe) | CPM, PERT e Monte Carlo do cronograma | simulador, LSS |
 | `utsim-fit` (existe) | ajuste de distribuições para capacidade não normal | simulador, LSS |
 
 `utsim-stats` depende só de `utsim-core` (por `Summary` e `t_975`), o que é leve (sem motor
-gráfico). `utsim-quality` depende de `utsim-stats` e de `utsim-fit`. Nenhuma crate comum
+gráfico). `utsim-quality` depende só de `utsim-stats`: o método dos percentis recebe a função quantil, e quem chama usa a distribuição do `utsim-fit` (o `utsim qualidade` faz assim). Nenhuma crate comum
 depende de crate do app LSS.
 
 **Crates do app LSS**:
@@ -636,12 +638,12 @@ plano; Haiku para tarefas mecânicas).
 | **L0 Fundação** (MVP) | crates `utsim-lss-core`, `-store`, `-app`; formato do projeto, diário, Lamport, instantâneos, conflitos, presença, migrações; servidor local e API; esqueleto da página, navegação, catálogo de textos; módulo de gráficos compartilhado com o painel; entrada no manifesto do launcher | 30–42 | Opus 14–20 (formato, armazenamento, concorrência); Sonnet 15–20 (servidor, página); Haiku 1–2 (CI, catálogo) |
 | **L1 Gestão do projeto** (MVP) | carteira, banco de ideias, priorização (matriz, pontuação, alinhamento), escolha da abordagem, termo versionado, papéis e RACI, fases e tollgates com checklists manuais e verificados, kanban de ações, riscos, reuniões e atas, cronograma com Gantt e CPM/PERT do `utsim-pert` e calendário, ganhos com estados e validação, encerramento, lições | 45–62 | Opus 8–12 (regras de tollgate, calendário, ganhos); Sonnet 37–50 (telas) |
 | **L2 Ferramentas qualitativas** (MVP) | VOC/CTQ, SIPOC manual, Ishikawa, 5 porquês, matriz C&E, FMEA com RPN e AP configurável, plano de coleta, plano de controle e de resposta, Pareto, A3 | 24–32 | Opus 3–4 (FMEA e C&E); Sonnet 21–28 |
-| **L3 Estatística essencial** (MVP), em `utsim-stats` e `utsim-quality` | descritiva, gráficos (dados), A-D, capacidade normal e por percentis e Box-Cox, DPMO e nível sigma, I-MR, X̄-R, X̄-S, p, np, c, u com Western Electric e Nelson, testes t (três), ANOVA de um fator com Tukey, qui-quadrado, proporções, Mann-Whitney e Wilcoxon; testes de referência (NIST StRD e livros) | 34–46 | Opus 28–38; Sonnet 6–8 (telas de análise) |
+| **L3 Estatística essencial** (MVP), em `utsim-stats` e `utsim-quality` | (**parte feita** em `utsim-quality`: A-D, capacidade normal, por percentis e Box-Cox, DPMO e nível sigma, as sete cartas com Western Electric e Nelson; faltam descritiva, gráficos e os testes de hipótese) descritiva, gráficos (dados), A-D, capacidade normal e por percentis e Box-Cox, DPMO e nível sigma, I-MR, X̄-R, X̄-S, p, np, c, u com Western Electric e Nelson, testes t (três), ANOVA de um fator com Tukey, qui-quadrado, proporções, Mann-Whitney e Wilcoxon; testes de referência (NIST StRD e livros) | 34–46 | Opus 28–38; Sonnet 6–8 (telas de análise) |
 | **L4 Integração essencial** (MVP) | ligação ao modelo com hash, fluxograma e carta, SIPOC gerado, conjuntos simulados rotulados, cenários com diferença pareada e pacote `estudo.json`, gargalo e gargalo móvel, PERT observado, abrir no UTSim | 18–26 | Opus 8–12 (SIPOC, estudos, reprodutibilidade); Sonnet 10–14 |
 | **L5 Relatórios e modelos** (MVP) | impressão do A3, tollgate, termo, ata, FMEA e plano de controle; `.xlsx` e CSV; modelos da empresa na pasta `modelos/`; base de conhecimento com busca; `.lssz` | 16–22 | Sonnet 15–20; Haiku 1–2 |
 | **Total do MVP** | | **167–230** | Opus ≈ 61–86; Sonnet ≈ 104–140; Haiku ≈ 2–4 |
-| P1 MSA | Gage R&R por ANOVA e médias e amplitudes, tipo 1, vício e linearidade, atributos com kappa de Cohen e Fleiss; checklist verificado do Medir | 18–25 | Opus 14–19; Sonnet 4–6 |
-| P2 Estatística ampliada | Johnson, Levene e Bartlett, ANOVA de dois fatores, Kruskal-Wallis, Mood, Friedman, Fisher, poder e tamanho de amostra, correlação, regressão múltipla com diagnósticos, logística, seleção de variáveis, EWMA e CUSUM com ARL | 30–42 | Opus 25–35; Sonnet 5–7 |
+| P1 MSA | (**cálculos feitos** em `utsim-quality`, menos o estudo do tipo 1; falta o checklist) Gage R&R por ANOVA e médias e amplitudes, tipo 1, vício e linearidade, atributos com kappa de Cohen e Fleiss; checklist verificado do Medir | 18–25 | Opus 14–19; Sonnet 4–6 |
+| P2 Estatística ampliada | Johnson, Levene e Bartlett, ANOVA de dois fatores, Kruskal-Wallis, Mood, Friedman, Fisher, poder e tamanho de amostra, correlação, regressão múltipla com diagnósticos, logística, seleção de variáveis, EWMA e CUSUM com ARL (**feitos** em `utsim-quality`) | 30–42 | Opus 25–35; Sonnet 5–7 |
 | P3 DOE | fatorial, fracionado com aliases, Plackett-Burman, CCD, Box-Behnken, análise, Lenth, superfície e desejabilidade; DOE no simulador (gerador para `Experiment`) | 30–42 | Opus 24–34; Sonnet 6–8 |
 | P4 VSM e espaguete | VSM atual e futuro gerados do modelo e editáveis, escada do lead time, espaguete sobre a planta | 20–28 | Opus 8–11; Sonnet 12–17 |
 | P5 Controle com gêmeo e painel | leitura da API do painel e das gravações, cartas de fase II, alertas para o plano de resposta, realizado dos ganhos a partir dos KPIs | 12–18 | Opus 5–8; Sonnet 7–10 |
