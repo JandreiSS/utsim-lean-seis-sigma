@@ -11,12 +11,18 @@
 //! `painel`, `perfis`, `privacidade`).
 
 mod capacity;
+mod certification;
+mod classroom;
 mod coaching;
 mod dashboards;
+mod exams;
+pub mod l7;
+mod mytraining;
 mod pipeline;
 mod profiles;
 mod reviews;
 mod structure;
+mod training;
 
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
@@ -51,10 +57,16 @@ pub enum ProgramNav {
     MbbDashboard,
     LeadershipDashboard,
     Profiles,
+    // Stage L7.
+    Training,
+    Classroom,
+    Exams,
+    Certification,
+    MyTraining,
 }
 
 impl ProgramNav {
-    pub const ALL: [ProgramNav; 9] = [
+    pub const ALL: [ProgramNav; 14] = [
         ProgramNav::Structure,
         ProgramNav::Scoreboard,
         ProgramNav::Pipeline,
@@ -64,6 +76,11 @@ impl ProgramNav {
         ProgramNav::MbbDashboard,
         ProgramNav::LeadershipDashboard,
         ProgramNav::Profiles,
+        ProgramNav::Training,
+        ProgramNav::Classroom,
+        ProgramNav::Exams,
+        ProgramNav::Certification,
+        ProgramNav::MyTraining,
     ];
 
     /// Stable key written in the presence file.
@@ -78,6 +95,11 @@ impl ProgramNav {
             ProgramNav::MbbDashboard => "painel_mbb",
             ProgramNav::LeadershipDashboard => "painel_lideranca",
             ProgramNav::Profiles => "perfis",
+            ProgramNav::Training => "formacao",
+            ProgramNav::Classroom => "turmas",
+            ProgramNav::Exams => "provas",
+            ProgramNav::Certification => "certificacao",
+            ProgramNav::MyTraining => "minha_formacao",
         }
     }
 
@@ -93,6 +115,11 @@ impl ProgramNav {
             ProgramNav::MbbDashboard => t.nav_mbb,
             ProgramNav::LeadershipDashboard => t.nav_leadership,
             ProgramNav::Profiles => t.nav_profiles,
+            ProgramNav::Training => crate::text::l7::l7().nav_training,
+            ProgramNav::Classroom => crate::text::l7::l7().nav_classroom,
+            ProgramNav::Exams => crate::text::l7::l7().nav_exams,
+            ProgramNav::Certification => crate::text::l7::l7().nav_certification,
+            ProgramNav::MyTraining => crate::text::l7::l7().nav_my_training,
         }
     }
 }
@@ -139,6 +166,8 @@ pub struct L6Ui {
     grant_person: Option<Id>,
     grant_profile: Profile,
     grant_unit: Option<Id>,
+    /// The training screens (stage L7).
+    pub(crate) l7: l7::L7Ui,
 }
 
 impl L6Ui {
@@ -146,6 +175,7 @@ impl L6Ui {
         for (_, mut s) in std::mem::take(&mut self.logs) {
             s.close();
         }
+        self.l7.close();
         *self = L6Ui::default();
     }
 
@@ -185,6 +215,8 @@ pub struct Data {
     pub map: CompetenceMap,
     pub mbbs: Vec<Id>,
     pub my_profiles: Vec<(Profile, Option<Id>)>,
+    /// The training (stage L7).
+    pub tr: l7::Training,
 }
 
 impl Data {
@@ -209,7 +241,13 @@ impl Data {
             today,
         );
         let mbbs = perfis::mbbs(st, founder);
-        let entries = mentoria::entries(st);
+        let tr = l7::Training::read(st, program);
+        // The training feeds `estudou` and `praticou` (recomputed, never written).
+        let mut entries = mentoria::entries(st);
+        entries.extend(utsim_lss_core::formacao::learning_entries(
+            &tr.sessions,
+            &tr.modules,
+        ));
         let map = mentoria::competence_map(&entries, &records, |p| mbbs.contains(&p));
         Data {
             program,
@@ -232,6 +270,7 @@ impl Data {
             entries,
             map,
             mbbs,
+            tr,
         }
     }
 
@@ -285,6 +324,25 @@ impl App {
         self.l6.review_item = review;
         self.l6.assign_idea = idea;
         self.l6.opportunity = opportunity;
+    }
+
+    /// Selects the class of the training screens and the person of the certification
+    /// check (stage L7).
+    pub fn select_in_training(
+        &mut self,
+        class: Option<Id>,
+        person: Option<Id>,
+        level: programa::BeltLevel,
+    ) {
+        self.l6.l7.class = class;
+        self.l6.l7.cert_person = person;
+        self.l6.l7.cert_level = level;
+    }
+
+    /// Opens the exam mode of "Minha formação" on an exam.
+    pub fn start_exam(&mut self, exam: Id) {
+        self.l6.l7.exam_mode_on = Some(exam);
+        self.l6.l7.answers.clear();
     }
 
     /// The window of an open program folder.
@@ -376,6 +434,11 @@ impl App {
                 ProgramNav::MbbDashboard => self.program_mbb(ui, &s, &d),
                 ProgramNav::LeadershipDashboard => self.program_leadership(ui, &s, &d),
                 ProgramNav::Profiles => self.program_profiles(ui, &mut s, &d),
+                ProgramNav::Training => self.program_training(ui, &mut s, &d),
+                ProgramNav::Classroom => self.program_classroom(ui, &mut s, &d),
+                ProgramNav::Exams => self.program_exams(ui, &mut s, &d),
+                ProgramNav::Certification => self.program_certification(ui, &mut s, &d),
+                ProgramNav::MyTraining => self.program_my_training(ui, &mut s, &d),
             });
         });
         let editing = self.editing.take();

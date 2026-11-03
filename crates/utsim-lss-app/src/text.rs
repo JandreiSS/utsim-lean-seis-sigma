@@ -926,3 +926,4 @@ mod tests {
 /// Texts of the stage L1 screens.
 pub mod l1;
 pub mod l6;
+pub mod l7;

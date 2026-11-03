@@ -761,6 +761,8 @@ pub fn tool_label(key: &str) -> String {
         "doe" => "DOE",
         "vsm" => "VSM",
         "kaizen" => "Kaizen",
+        "acoes" => "Quadro de ações",
+        "cinco_s" => "5S",
         other => return other.to_string(),
     }
     .to_string()
@@ -788,5 +790,9 @@ pub fn action_name(a: Action) -> &'static str {
         Action::ViewScoreboard => "Ver o placar",
         Action::ViewReviewQueue => "Ver a fila de revisões",
         Action::Comment => "Comentar",
+        Action::ManageTraining => "Ondas, turmas, currículo e requisitos",
+        Action::SelectTrainees => "Selecionar alunos",
+        Action::Teach => "Presença, provas e correção",
+        Action::Certify => "Certificar",
     }
 }

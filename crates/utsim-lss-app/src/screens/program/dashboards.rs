@@ -446,6 +446,9 @@ impl App {
             );
         }
         rule(ui, tl.rule_load);
+        // The certification funnel (stage L7).
+        ui.separator();
+        self.certification_funnel(ui, s, d);
     }
 
     pub(in crate::app) fn program_leadership(&mut self, ui: &mut egui::Ui, s: &Session, d: &Data) {
