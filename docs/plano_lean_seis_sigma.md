@@ -807,6 +807,30 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 
 ## 7. Decisões do dono
 
+**Decididas em 2026-11-03.** O dono escolheu um aplicativo de verdade, sem navegador, e aceitou
+as demais propostas, com uma mudança no FMEA:
+
+- **N1** nome provisório "UTSim Seis Sigma" (pode mudar depois; muda só o rótulo).
+- **I1, I2 e I3 substituídas:** janela própria em Rust com `eframe`/`egui`, a mesma versão do
+  launcher (`=0.36.2`) e do visualizador, para o `Cargo.lock` manter um só egui. Nada de
+  servidor HTTP nem navegador. Gráficos com `egui_plot` na tela; impressão (A3, tollgate,
+  termo, ata, FMEA, plano de controle) por PDF gerado no próprio programa. Formulários,
+  tabelas editáveis, kanban, Gantt e editores de árvore são componentes egui próprios. O que a
+  seção 4.2 diz sobre a página web fica como histórico da análise.
+- **R1** mesmo workspace, versão e tag próprias. **S1** pasta de projeto com diário de
+  operações em JSON. **C1** crate `utsim-doe`. **C2** `utsim-quality` como casa única de CEP,
+  capacidade e MSA. **U1** belts de uma empresa piloto, com uso em aula em paralelo. **M1** MVP
+  L0 a L5 com o MSA (P1) dentro. **G1** ganhos com as definições padrão e 12 meses. **G2** nível
+  sigma com deslocamento de 1,5σ ligado e explícito no relatório.
+- **T1 mudada:** o FMEA vem com a tabela de ação prioritária (AP) já no app, pronta para usar.
+  A tabela embutida é própria do UTSim, escrita a partir da lógica pública do método (a
+  severidade pesa primeiro, depois a ocorrência, depois a detecção) e cobrindo as 1000
+  combinações; não é cópia da tabela do manual, que é protegida. A empresa que tem direito de
+  uso da tabela oficial pode cadastrá-la (importação CSV) e ela passa a valer no projeto.
+
+Registro original das perguntas:
+
+
 1. **N1 Nome do app.** Provisório desde 2026-11-03: "UTSim Seis Sigma" (o dono deixou a escolha
    e pode mudar). As crates ficam com o prefixo `utsim-lss-*`, que não depende do nome exibido;
    trocar o nome muda só o rótulo no launcher e nas telas.
