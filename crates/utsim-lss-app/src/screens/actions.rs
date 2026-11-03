@@ -37,7 +37,7 @@ impl App {
                 for c in Column::ALL {
                     ui.label(text::column_name(c));
                     let p = utsim_lss_core::domain::Project::entity_ref(s.project());
-                    self.number_field(ui, s, p, &board::wip_field(c), 32.0);
+                    self.num_field(ui, s, p, &board::wip_field(c), 32.0);
                 }
             });
         });

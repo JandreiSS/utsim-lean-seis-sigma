@@ -342,7 +342,7 @@ impl App {
                     ui.end_row();
                 }
                 ui.label(tl.i_rough_gain);
-                self.number_field(ui, ps, r, pf::ROUGH_GAIN, 120.0);
+                self.num_field(ui, ps, r, pf::ROUGH_GAIN, 120.0);
                 ui.end_row();
                 ui.label(tl.i_impact_effort);
                 ui.horizontal(|ui| {
@@ -580,7 +580,7 @@ impl App {
                     for cr in &cs {
                         let r = EntityRef::new(Kind::Criterion, cr.id);
                         self.text_field(ui, ps, r, pf::NAME, false, 180.0);
-                        self.number_field(ui, ps, r, pf::WEIGHT, 50.0);
+                        self.num_field(ui, ps, r, pf::WEIGHT, 50.0);
                         self.enum_field(
                             ui,
                             ps,
@@ -632,7 +632,7 @@ impl App {
                 ui.horizontal(|ui| {
                     self.text_field(ui, ps, r, pf::NAME, false, 260.0);
                     ui.label(tl.weight);
-                    self.number_field(ui, ps, r, pf::WEIGHT, 50.0);
+                    self.num_field(ui, ps, r, pf::WEIGHT, 50.0);
                 });
             }
             ui.horizontal(|ui| {

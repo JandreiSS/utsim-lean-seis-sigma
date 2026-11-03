@@ -155,19 +155,19 @@ impl App {
                 );
                 ui.end_row();
                 ui.label(tl.s_value);
-                self.number_field(ui, s, r, f::VALUE, 120.0);
+                self.num_field(ui, s, r, f::VALUE, 120.0);
                 ui.end_row();
                 ui.label(tl.s_rationale);
                 self.text_field(ui, s, r, f::RATIONALE, true, 420.0);
                 ui.end_row();
                 ui.label(tl.s_monthly);
-                self.number_field(ui, s, r, savings::fields::MONTHLY, 120.0);
+                self.num_field(ui, s, r, savings::fields::MONTHLY, 120.0);
                 ui.end_row();
                 ui.label(tl.s_start);
                 self.text_field(ui, s, r, savings::fields::START, false, 90.0);
                 ui.end_row();
                 ui.label(tl.s_months);
-                self.number_field(ui, s, r, savings::fields::MONTHS, 60.0);
+                self.num_field(ui, s, r, savings::fields::MONTHS, 60.0);
                 ui.end_row();
             });
         // State moves.

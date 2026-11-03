@@ -8,6 +8,7 @@ use serde_json::Value;
 use utsim_lss_core::domain::{Approach, Column, fields};
 use utsim_lss_core::op::FIELD_DELETED;
 use utsim_lss_core::presence::{self, HEARTBEAT_MS, Presence};
+use utsim_lss_core::tools::{self, Deliverable, Tool, ap::CsvError, fmea, plans};
 use utsim_lss_core::{Conflict, Date, Edit, EntityRef, Id, State, kanban};
 use utsim_lss_store::project::ProjectFolder;
 use utsim_lss_store::{Clock, Identity, Refresh, lssz};
@@ -100,11 +101,6 @@ impl Session {
     /// Today, in the local time of this computer.
     pub fn today(&self) -> Date {
         Date::from_unix_ms(self.clock.now_ms(), self.clock.utc_offset_minutes())
-    }
-
-    /// A new id (UUID v7) for an entity created on the screens.
-    pub fn new_id(&self) -> Id {
-        self.clock.new_id()
     }
 
     /// An id generator for edits that create several entities.
@@ -201,6 +197,95 @@ impl Session {
         self.state()
             .entity(card)
             .map(|e| e.typed(fields::action::COLUMN).unwrap_or_default())
+    }
+
+    /// A new id (UUID v7) from the session's clock.
+    pub fn new_id(&self) -> Id {
+        self.clock.new_id()
+    }
+
+    /// A new deliverable of `tool` in its usual phase; returns its id.
+    pub fn add_deliverable(&mut self, tool: Tool, name: &str) -> utsim_lss_store::Result<Id> {
+        let id = self.clock.new_id();
+        let phase = tools::default_phase(self.state(), self.project(), tool);
+        self.apply(Deliverable::create(self.project(), phase, tool, id, name))?;
+        Ok(id)
+    }
+
+    /// A new row or node of a deliverable at the end of its siblings; returns its id.
+    pub fn add_item(
+        &mut self,
+        deliverable: Id,
+        item_kind: &str,
+        parent: Option<Id>,
+        extra: Vec<(&str, Value)>,
+    ) -> utsim_lss_store::Result<Id> {
+        let id = self.clock.new_id();
+        let edits = tools::new_item(
+            self.state(),
+            self.project(),
+            deliverable,
+            item_kind,
+            id,
+            parent,
+            extra,
+        );
+        self.apply(edits)?;
+        Ok(id)
+    }
+
+    /// Deletes an item and the items below it.
+    pub fn delete_item(&mut self, item: Id) -> utsim_lss_store::Result<()> {
+        let edits = tools::delete_subtree(self.state(), item);
+        self.apply(edits).map(|_| ())
+    }
+
+    /// Moves an item one place up (`-1`) or down (`+1`) among its siblings.
+    pub fn nudge_item(&mut self, item: Id, step: i32) -> utsim_lss_store::Result<()> {
+        let edits = tools::nudge_item(self.state(), item, step);
+        self.apply(edits).map(|_| ())
+    }
+
+    /// Turns the recommended action of an FMEA row into a card; `None` when the row
+    /// already has one.
+    pub fn fmea_card(&mut self, row: Id) -> utsim_lss_store::Result<Option<Id>> {
+        let card = self.clock.new_id();
+        let edits = fmea::action_card(self.state(), self.project(), row, card);
+        if edits.is_empty() {
+            return Ok(None);
+        }
+        self.apply(edits)?;
+        Ok(Some(card))
+    }
+
+    /// Opens a card for a signal of the response plan.
+    pub fn signal_card(&mut self, signal: Id) -> utsim_lss_store::Result<Option<Id>> {
+        let card = self.clock.new_id();
+        let edits = plans::signal_card(self.state(), self.project(), signal, card);
+        if edits.is_empty() {
+            return Ok(None);
+        }
+        self.apply(edits)?;
+        Ok(Some(card))
+    }
+
+    /// Imports the company's action priority table for the project. The outer error is
+    /// the folder's; the inner one lists the problems of the CSV.
+    pub fn import_ap_table(
+        &mut self,
+        csv: &str,
+        name: &str,
+    ) -> utsim_lss_store::Result<Result<(), Vec<CsvError>>> {
+        match fmea::import_table(self.project(), csv, name) {
+            Ok(edits) => self.apply(edits).map(|_| Ok(())),
+            Err(e) => Ok(Err(e)),
+        }
+    }
+
+    /// Back to the built-in action priority table.
+    pub fn use_builtin_ap_table(&mut self) -> utsim_lss_store::Result<()> {
+        self.apply(fmea::use_builtin_table(self.project()))
+            .map(|_| ())
     }
 
     pub fn delete(&mut self, entity: EntityRef) -> utsim_lss_store::Result<()> {
@@ -427,6 +512,72 @@ mod tests {
         );
         b.close();
         a.close();
+    }
+
+    #[test]
+    fn tools_through_the_folder() {
+        use utsim_lss_core::tools::ap::{Ap, ApTable};
+        let dir = tempfile::tempdir().unwrap();
+        let c = ManualClock::new(1);
+        let mut s = Session::create(
+            &dir.path().join("F"),
+            "P",
+            Approach::Dmaic,
+            &me(1, "Ana"),
+            None,
+            Box::new(c),
+        )
+        .unwrap();
+        let d = s.add_deliverable(Tool::Fmea, "FMEA").unwrap();
+        let row = s
+            .add_item(
+                d,
+                fmea::ITEM,
+                None,
+                vec![
+                    (fmea::fields::S, Value::from(9)),
+                    (fmea::fields::O, Value::from(4)),
+                    (fmea::fields::D, Value::from(2)),
+                    (fmea::fields::ACTION, Value::from("Poka-yoke no gabarito")),
+                ],
+            )
+            .unwrap();
+        let card = s.fmea_card(row).unwrap().unwrap();
+        assert!(s.fmea_card(row).unwrap().is_none());
+        assert_eq!(s.card_column(card), Some(Column::Todo));
+        let (t, _) = fmea::project_table(s.state(), s.project());
+        assert_eq!(fmea::rows(s.state(), d)[0].ap(&t), Some(Ap::High));
+        assert!(s.import_ap_table("x", "y").unwrap().is_err());
+        let low = ApTable::from_compact(&"L".repeat(1000)).unwrap();
+        s.import_ap_table(&low.to_csv(), "Empresa")
+            .unwrap()
+            .unwrap();
+        let (t, _) = fmea::project_table(s.state(), s.project());
+        assert_eq!(fmea::rows(s.state(), d)[0].ap(&t), Some(Ap::Low));
+        s.use_builtin_ap_table().unwrap();
+        let rp = s.add_deliverable(Tool::ResponsePlan, "Plano").unwrap();
+        let sig = s
+            .add_item(
+                rp,
+                plans::RESPONSE_ITEM,
+                None,
+                vec![(plans::fields::SIGNAL, Value::from("Alarme"))],
+            )
+            .unwrap();
+        assert!(s.signal_card(sig).unwrap().is_some());
+        let child = s
+            .add_item(rp, plans::RESPONSE_ITEM, Some(sig), vec![])
+            .unwrap();
+        s.nudge_item(sig, 1).unwrap();
+        s.delete_item(sig).unwrap();
+        assert!(s.state().entity(child).unwrap().is_deleted());
+        // Everything is in the folder: reopening gives the same state.
+        let before = s.state().clone();
+        let root = s.folder().root().to_path_buf();
+        s.close();
+        let again =
+            Session::open(&root, &me(1, "Ana"), None, Box::new(ManualClock::new(1))).unwrap();
+        assert_eq!(again.state().entities, before.entities);
     }
 
     #[test]

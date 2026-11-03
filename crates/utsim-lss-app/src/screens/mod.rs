@@ -141,7 +141,7 @@ impl App {
     }
 
     /// A number box bound to a field (empty: no value). Committed when the focus leaves.
-    pub(super) fn number_field(
+    pub(super) fn num_field(
         &mut self,
         ui: &mut egui::Ui,
         s: &mut Session,

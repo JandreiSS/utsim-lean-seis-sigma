@@ -18,7 +18,7 @@ use crate::text::{self, texts};
 use crate::theme;
 
 /// Verified checks offered when adding an item by hand.
-const CHECKS: [&str; 13] = [
+const CHECKS: [&str; 18] = [
     "termo_completo",
     "termo_aprovado",
     "equipe_definida",
@@ -32,6 +32,11 @@ const CHECKS: [&str; 13] = [
     "licoes_registradas",
     "aceite_do_dono",
     "entregavel:fmea",
+    "entregavel:voc_ctq",
+    "entregavel:sipoc",
+    "entregavel:ishikawa",
+    "entregavel:plano_coleta",
+    "entregavel:plano_controle",
 ];
 
 impl App {

@@ -115,20 +115,20 @@ impl App {
                         ui.weak(tl.milestone);
                         ui.label("");
                     } else {
-                        self.number_field(ui, s, e, schedule::fields::DURATION, 44.0);
+                        self.num_field(ui, s, e, schedule::fields::DURATION, 44.0);
                         ui.horizontal(|ui| {
                             for f in [
                                 schedule::fields::OPTIMISTIC,
                                 schedule::fields::LIKELY,
                                 schedule::fields::PESSIMISTIC,
                             ] {
-                                self.number_field(ui, s, e, f, 32.0);
+                                self.num_field(ui, s, e, f, 32.0);
                             }
                         });
                     }
                     self.preds_field(ui, s, task, &tasks);
                     self.person_field(ui, s, e, schedule::fields::WHO);
-                    self.number_field(ui, s, e, schedule::fields::PERCENT, 36.0);
+                    self.num_field(ui, s, e, schedule::fields::PERCENT, 36.0);
                     if task.milestone {
                         self.date_field(ui, s, e, schedule::fields::TARGET);
                     } else {
