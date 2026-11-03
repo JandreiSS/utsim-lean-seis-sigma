@@ -9,7 +9,7 @@ use utsim_lss_core::domain::{Approach, Column, fields};
 use utsim_lss_core::op::FIELD_DELETED;
 use utsim_lss_core::presence::{self, HEARTBEAT_MS, Presence};
 use utsim_lss_core::tools::{self, Deliverable, Tool, ap::CsvError, fmea, plans};
-use utsim_lss_core::{Conflict, Date, Edit, EntityRef, Id, State, kanban};
+use utsim_lss_core::{Conflict, Date, Edit, EntityRef, Id, State, kanban, perfis};
 use utsim_lss_store::project::ProjectFolder;
 use utsim_lss_store::{Clock, Identity, Refresh, lssz};
 
@@ -25,6 +25,21 @@ pub struct Session {
     others: Vec<Presence>,
     /// Instant of the last change picked up from someone else.
     pub last_incoming_ms: Option<i64>,
+    /// Who may write: nobody checked (a project) or the program's profiles.
+    guard: Guard,
+    /// The state built only from authorized operations (program and coaching logs).
+    authorized: Option<perfis::Authorized>,
+}
+
+/// The permission rules of a folder (`docs/plano_lean_seis_sigma.md`, 8.8).
+#[derive(Debug, Clone, PartialEq)]
+pub enum Guard {
+    /// Project and portfolio folders: the rules of their own screens.
+    Free,
+    /// The program folder: the profiles of its role list; the creator is an MBB.
+    Program { founder: Id },
+    /// A belt's coaching log: only the belt and the program's MBBs.
+    Coaching { belt: Id, mbbs: Vec<Id> },
 }
 
 impl Session {
@@ -35,8 +50,131 @@ impl Session {
         clock: Box<dyn Clock>,
     ) -> utsim_lss_store::Result<Self> {
         let mut folder = ProjectFolder::open(path, me, cache)?;
+        match folder.main_kind() {
+            Some(utsim_lss_core::Kind::Program) => return Self::open_program(path, me, clock),
+            Some(utsim_lss_core::Kind::CoachingLog) => {
+                return Err(utsim_lss_store::Error::Invalid(
+                    crate::text::l6::l6().open_log_from_program.to_string(),
+                ));
+            }
+            _ => {}
+        }
         folder.register_me(clock.as_ref())?;
         Ok(Self::with(folder, clock))
+    }
+
+    /// Opens a program folder: every operation in memory, each checked against its
+    /// author's profile at its instant.
+    pub fn open_program(
+        path: &Path,
+        me: &Identity,
+        clock: Box<dyn Clock>,
+    ) -> utsim_lss_store::Result<Self> {
+        let folder = ProjectFolder::open_full(path, me)?;
+        let founder = folder.manifest().created_by;
+        let mut s = Self::with(folder, clock);
+        s.guard = Guard::Program { founder };
+        s.reauthorize();
+        // Registering oneself (name and e-mail) is free for everyone.
+        let edits =
+            utsim_lss_core::domain::Person::register(s.state(), me.person, &me.name, &me.email);
+        s.apply(edits)?;
+        Ok(s)
+    }
+
+    pub fn create_program(
+        path: &Path,
+        name: &str,
+        me: &Identity,
+        clock: Box<dyn Clock>,
+    ) -> utsim_lss_store::Result<Self> {
+        let folder = ProjectFolder::create_program(path, name, me, clock.as_ref())?;
+        let founder = folder.manifest().created_by;
+        let mut s = Self::with(folder, clock);
+        s.guard = Guard::Program { founder };
+        s.reauthorize();
+        Ok(s)
+    }
+
+    /// Opens (or, with `create`, creates) the coaching log of `belt` under the program.
+    pub fn open_coaching(
+        path: &Path,
+        me: &Identity,
+        clock: Box<dyn Clock>,
+        belt: Id,
+        program: Id,
+        mbbs: Vec<Id>,
+        create: bool,
+    ) -> utsim_lss_store::Result<Self> {
+        // MB8: the log is seen only by the MBB and the belt.
+        if !utsim_lss_core::mentoria::can_see(me.person, belt, mbbs.contains(&me.person)) {
+            return Err(utsim_lss_store::Error::Invalid(
+                crate::text::l6::l6().log_not_yours.to_string(),
+            ));
+        }
+        let guard = Guard::Coaching { belt, mbbs };
+        let folder = if create && !path.join(utsim_lss_store::project::MANIFEST).is_file() {
+            ProjectFolder::create_coaching(path, belt, program, me, clock.as_ref())?
+        } else {
+            ProjectFolder::open_full(path, me)?
+        };
+        let mut s = Self::with(folder, clock);
+        s.guard = guard;
+        s.reauthorize();
+        Ok(s)
+    }
+
+    /// The program's creator (`None` outside a program folder).
+    pub fn founder(&self) -> Option<Id> {
+        match self.guard {
+            Guard::Program { founder } => Some(founder),
+            _ => None,
+        }
+    }
+
+    pub fn is_program(&self) -> bool {
+        matches!(self.guard, Guard::Program { .. })
+    }
+
+    pub fn guard(&self) -> &Guard {
+        &self.guard
+    }
+
+    /// Operations without effect because their author had no profile for them.
+    pub fn unauthorized(&self) -> &[perfis::Unauthorized] {
+        self.authorized
+            .as_ref()
+            .map_or(&[], |a| a.unauthorized.as_slice())
+    }
+
+    /// Rebuilds the authorized state from every operation of the folder.
+    fn reauthorize(&mut self) {
+        self.authorized = match &self.guard {
+            Guard::Free => None,
+            Guard::Program { founder } => Some(perfis::replay(self.folder.all_ops(), *founder)),
+            Guard::Coaching { belt, mbbs } => {
+                Some(perfis::replay_coaching(self.folder.all_ops(), *belt, mbbs))
+            }
+        };
+    }
+
+    /// Checks the profile for an action of the program (screens call it before acting,
+    /// so the refusal has a clear message even for actions that write nothing here).
+    pub fn may(&self, action: perfis::Action, unit: Option<Id>) -> Result<(), perfis::Denied> {
+        match self.guard {
+            Guard::Program { founder } => {
+                perfis::check(self.state(), founder, self.me(), action, unit)
+            }
+            _ => Ok(()),
+        }
+    }
+
+    /// Reopens the folder from the files (after the history was rewritten).
+    pub fn reload(&mut self) -> utsim_lss_store::Result<()> {
+        let me = self.folder.me().clone();
+        self.folder = ProjectFolder::open_full(self.folder.root(), &me)?;
+        self.reauthorize();
+        Ok(())
     }
 
     pub fn create(
@@ -75,6 +213,8 @@ impl Session {
             beat: None,
             others: Vec::new(),
             last_incoming_ms: None,
+            guard: Guard::Free,
+            authorized: None,
         }
     }
 
@@ -82,8 +222,12 @@ impl Session {
         &self.folder
     }
 
+    /// The state: of a program or coaching log, only the authorized operations.
     pub fn state(&self) -> &State {
-        self.folder.state()
+        match &self.authorized {
+            Some(a) => &a.state,
+            None => self.folder.state(),
+        }
     }
 
     pub fn project(&self) -> Id {
@@ -108,9 +252,24 @@ impl Session {
         || self.clock.new_id()
     }
 
-    /// Commits edits; returns how many operations were written.
+    /// Commits edits; returns how many operations were written. In a program folder (and a
+    /// coaching log) the edits outside the person's profiles are refused before anything
+    /// is written, with the message of [`perfis::Denied`].
     pub fn apply(&mut self, edits: Vec<Edit>) -> utsim_lss_store::Result<usize> {
+        if edits.is_empty() {
+            return Ok(0);
+        }
+        let me = self.me();
+        let check = match &self.guard {
+            Guard::Free => Ok(()),
+            Guard::Program { founder } => perfis::check_edits(self.state(), *founder, me, &edits),
+            Guard::Coaching { belt, mbbs } => perfis::check_coaching(me, *belt, mbbs, &edits),
+        };
+        check.map_err(|d| utsim_lss_store::Error::Invalid(d.to_string()))?;
         let ops = self.folder.commit(edits, self.clock.as_ref())?;
+        if self.authorized.is_some() {
+            self.reauthorize();
+        }
         Ok(ops.len())
     }
 
@@ -316,6 +475,9 @@ impl Session {
             let r = self.folder.refresh(self.clock.as_ref())?;
             if r.new_ops > 0 {
                 self.last_incoming_ms = Some(now);
+                if self.authorized.is_some() {
+                    self.reauthorize();
+                }
             }
             report = Some(r);
         }
@@ -335,7 +497,16 @@ impl Session {
     /// Picks up other people's changes now.
     pub fn refresh_now(&mut self) -> utsim_lss_store::Result<Refresh> {
         self.last_refresh_ms = self.clock.now_ms();
-        self.folder.refresh(self.clock.as_ref())
+        let r = self.folder.refresh(self.clock.as_ref())?;
+        if r.new_ops > 0 && self.authorized.is_some() {
+            self.reauthorize();
+        }
+        Ok(r)
+    }
+
+    /// The clock (to open other folders with the same one).
+    pub fn clock(&self) -> &dyn Clock {
+        self.clock.as_ref()
     }
 
     /// Other people with the project open.

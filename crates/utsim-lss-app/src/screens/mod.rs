@@ -16,6 +16,8 @@ mod savings;
 mod schedule;
 mod team;
 mod tollgates;
+// Stage L6, the implementation program.
+pub mod program;
 
 use std::collections::HashMap;
 

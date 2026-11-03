@@ -155,6 +155,10 @@ pub struct App {
     status: Option<(String, bool)>,
     theme_applied: Option<user::Theme>,
     l1: screens::L1Ui,
+    /// The screen of an open program folder (stage L6).
+    pub pnav: screens::program::ProgramNav,
+    l6: screens::program::L6Ui,
+    new_program: String,
 }
 
 impl App {
@@ -199,6 +203,32 @@ impl App {
             status: None,
             theme_applied: None,
             l1: screens::L1Ui::default(),
+            pnav: screens::program::ProgramNav::default(),
+            l6: screens::program::L6Ui::default(),
+            new_program: String::new(),
+        }
+    }
+
+    /// Creates a program folder (stage L6) in `parent` and opens it.
+    pub fn create_program(&mut self, parent: &Path, name: &str) -> bool {
+        let Some(me) = self.identity() else {
+            return false;
+        };
+        let name = if name.trim().is_empty() {
+            text::l6::l6().default_program_name.to_string()
+        } else {
+            name.trim().to_string()
+        };
+        let path = parent.join(sanitize_folder_name(&name));
+        let r = Session::create_program(&path, &name, &me, (self.clock)());
+        match self.report(r) {
+            Some(s) => {
+                let root = s.folder().root().display().to_string();
+                self.entered(s);
+                self.set_status((text::l6::l6().program_created)(&root), false);
+                true
+            }
+            None => false,
         }
     }
 
@@ -267,6 +297,10 @@ impl App {
         self.export_dest = session.default_export_path().display().to_string();
         // A portfolio folder opens on the portfolio screen.
         let portfolio = session.folder().is_portfolio();
+        if session.is_program() {
+            self.pnav = screens::program::ProgramNav::Structure;
+            self.l6.close();
+        }
         self.session = Some(session);
         self.screen = Screen::Project;
         self.nav = if portfolio {
@@ -318,6 +352,7 @@ impl App {
             s.close();
         }
         self.l1.close();
+        self.l6.close();
         self.screen = Screen::Start;
         self.drafts.clear();
         self.editing = None;
@@ -531,6 +566,28 @@ impl App {
                 });
                 ui.add_space(8.0);
                 theme::card(ui).show(ui, |ui| {
+                    let t6 = text::l6::l6();
+                    ui.strong(t6.create_program);
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.new_program)
+                                .hint_text(t6.program_name_hint)
+                                .desired_width(420.0),
+                        );
+                        if ui.button(t.create).clicked() {
+                            let (parent, name) = (
+                                PathBuf::from(self.new_parent.trim()),
+                                self.new_program.clone(),
+                            );
+                            if self.create_program(&parent, &name) {
+                                self.new_program.clear();
+                            }
+                        }
+                    });
+                    ui.small(t6.program_tip);
+                });
+                ui.add_space(8.0);
+                theme::card(ui).show(ui, |ui| {
                     ui.strong(t.import_lssz);
                     ui.horizontal(|ui| {
                         ui.add(
@@ -617,6 +674,10 @@ impl App {
             self.screen = Screen::Start;
             return;
         };
+        if s.is_program() {
+            self.program_screen(ui, s);
+            return;
+        }
         let t = texts();
         let mut close = false;
         egui::Panel::top("topo").show(ui, |ui| {
