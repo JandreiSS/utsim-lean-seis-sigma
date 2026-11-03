@@ -7,6 +7,11 @@ Sigma à mão". Nome provisório (decisão N1, 2026-11-03): **UTSim Seis Sigma**
 `lean-seis-sigma` no launcher; o dono pode trocar depois. No texto ele aparece como **app LSS** e
 as crates com o prefixo `utsim-lss`.
 
+Direção do dono de 2026-11-03 (seção 8): o app atende também o **master black belt** que conduz
+a implantação do Lean Seis Sigma na empresa inteira, "da escolha dos projetos à escolha das
+equipes de formação". As ferramentas do app são as que o MBB e os belts que ele orienta usam
+para aplicar o conhecimento na empresa, e também as que os alunos praticam na formação.
+
 Cada seção traz o que o app faz, onde mora o cálculo, como é testado, estimativa em horas
 Opus 5.5 e o modelo de IA sugerido. Os requisitos têm prefixo próprio (`LSS-RF-nn`,
 `LSS-RNF-nn`) e ficam só aqui até o dono aprovar; não entram em `docs/requisitos.md`.
@@ -103,7 +108,9 @@ decide:
    capítulo]); a soma ponderada pelos pesos dos objetivos entra como critério do item 2.
 
 A carteira mostra também a **capacidade das pessoas**: belts disponíveis, projetos por belt e
-horas comprometidas, com aviso quando alguém passa do limite configurado.
+horas comprometidas, com aviso quando alguém passa do limite configurado. Acima das carteiras
+fica o **programa de implantação** do MBB (seção 8): várias carteiras, uma por unidade de
+negócio, com o funil, a capacidade e a designação de belts tratados no nível do programa.
 
 ### 1.2 Papéis
 
@@ -112,7 +119,7 @@ horas comprometidas, com aviso quando alguém passa do limite configurado.
 | Patrocinador | dono do resultado de negócio; libera recursos | termo de abertura, tollgates, encerramento |
 | Champion (ou dono da carteira) | seleciona e prioriza, remove barreiras, acompanha a carteira | priorização, tollgates |
 | Dono do processo | recebe o processo melhorado e o plano de controle | tollgate do Controlar, transferência |
-| Master black belt | mentor; revisa a estatística | parecer técnico nos tollgates (opcional) |
+| Master black belt | conduz o programa de implantação (seção 8): alinha a carteira à estratégia, designa belts, mentora, revisa tollgates, forma e certifica | parecer técnico nos tollgates (obrigatório se o modelo da empresa exigir), seleção para a formação, certificação |
 | Black belt / green belt | conduz o projeto | submete entregáveis |
 | Yellow belt e equipe | executam ações, coletam dados, participam das reuniões | nada |
 | Controladoria | valida os ganhos | savings previstos e realizados |
@@ -522,7 +529,8 @@ Entidades principais: `Carteira`, `Projeto` (abordagem, fase atual, termo versio
 congelado), `Pessoa` e `Papel`, `Acao`, `Risco`, `Reuniao`, `Ganho` (lançamentos e validações),
 `ConjuntoDeDados` (origem, hash, colunas), `Analise` (receita e resultado em cache),
 `LigacaoModelo`, `Estudo`, `Licao`, `Anexo`. Identificadores são UUID v7 (ordenáveis pelo tempo,
-gerados sem servidor).
+gerados sem servidor). As entidades do programa, da formação e da certificação estão na seção
+8.9.
 
 ### 4.4 Armazenamento local
 
@@ -627,8 +635,17 @@ versionados; um projeto registra a versão do modelo com que nasceu.
 
 Um green belt conduz um DMAIC do termo ao encerramento, com a equipe na pasta compartilhada,
 usando as ferramentas essenciais, e importa o modelo UTSim para gerar SIPOC e fluxograma e para
-comparar cenários. Ficam fora do MVP: MSA, DOE, regressão, VSM, gêmeo, DMADV e assinatura das
-aprovações (decisão M1).
+comparar cenários. O MSA (P1) entra no MVP (decisão M1). Ficam fora do MVP: DOE, regressão, VSM,
+gêmeo, DMADV e assinatura das aprovações.
+
+**MVP ampliado pela direção de 2026-11-03 (proposta M2, seção 8).** Além do green belt, o MVP
+atende o master black belt: um programa com duas ou mais unidades de negócio, o funil de
+oportunidades até o termo, a designação de belts com a capacidade de cada um, o diário de
+mentoria, a fila de revisões de tollgate com trabalho padrão, uma onda de formação de green
+belts (candidatos, aprovação do gestor, turma, currículo ligado às ferramentas, presença, prova,
+requisitos de certificação conferidos pelo app e registro com validade), o modo de ensino com
+projetos-exemplo e pacotes de exercícios, os painéis do programa e os perfis de acesso. São as
+fases L6, L7 e L8 da seção 5.2.
 
 ### 5.2 Fases
 
@@ -644,8 +661,12 @@ plano; Haiku para tarefas mecânicas).
 | **L3 Estatística essencial** (MVP), em `utsim-stats` e `utsim-quality` | (**feita**, falta só a tela: em `utsim-quality`, A-D, capacidade normal, por percentis e Box-Cox, DPMO e nível sigma com o deslocamento de 1,5σ explícito, as sete cartas com Western Electric e Nelson; em `utsim-stats`, módulos `descriptive`, `hypothesis` e `nonparametric` com descritiva, dados dos gráficos, os três testes t, ANOVA com Tukey, qui-quadrado, Fisher, proporções, Mann-Whitney e Wilcoxon, validados contra NIST StRD univariado e ANOVA e exemplos de livro; comando `utsim estatistica`) descritiva, gráficos (dados), A-D, capacidade normal e por percentis e Box-Cox, DPMO e nível sigma, I-MR, X̄-R, X̄-S, p, np, c, u com Western Electric e Nelson, testes t (três), ANOVA de um fator com Tukey, qui-quadrado, proporções, Mann-Whitney e Wilcoxon; testes de referência (NIST StRD e livros) | 34–46 | Opus 28–38; Sonnet 6–8 (telas de análise) |
 | **L4 Integração essencial** (MVP) | ligação ao modelo com hash, fluxograma e carta, SIPOC gerado, conjuntos simulados rotulados, cenários com diferença pareada e pacote `estudo.json`, gargalo e gargalo móvel, PERT observado, abrir no UTSim | 18–26 | Opus 8–12 (SIPOC, estudos, reprodutibilidade); Sonnet 10–14 |
 | **L5 Relatórios e modelos** (MVP) | impressão do A3, tollgate, termo, ata, FMEA e plano de controle; `.xlsx` e CSV; modelos da empresa na pasta `modelos/`; base de conhecimento com busca; `.lssz` | 16–22 | Sonnet 15–20; Haiku 1–2 |
-| **Total do MVP** | | **167–230** | Opus ≈ 61–86; Sonnet ≈ 104–140; Haiku ≈ 2–4 |
-| P1 MSA | (**cálculos feitos** em `utsim-quality`, menos o estudo do tipo 1; falta o checklist) Gage R&R por ANOVA e médias e amplitudes, tipo 1, vício e linearidade, atributos com kappa de Cohen e Fleiss; checklist verificado do Medir | 18–25 | Opus 14–19; Sonnet 4–6 |
+| *Subtotal L0 a L5* | | *167–230* | *Opus ≈ 61–86; Sonnet ≈ 104–140; Haiku ≈ 2–4* |
+| **L6 Programa de implantação** (MVP ampliado, seção 8.1 a 8.4, 8.7 e 8.8) | programa com unidades de negócio, objetivos e metas; funil entre carteiras (ideia, triagem, seleção, abertura) com comitê de seleção; capacidade de belts e champions; designação com sugestão ordenada; diário de mentoria e mapa de competências; fila de revisões de tollgate com trabalho padrão e parecer do MBB; painéis do programa; perfis e pastas restritas | 36–50 | Opus 10–14 (agregação do programa, validação de autoria por perfil, sugestão de designação, indicadores de tempo de ciclo); Sonnet 25–34 (telas, painéis, roteiros de revisão); Haiku 1–2 (catálogo de textos) |
+| **L7 Formação e certificação** (MVP ampliado, seção 8.5) | ondas e turmas, indicação com critérios, aprovação do gestor, checagem de capacidade, lista de espera, montagem das equipes de formação, currículo por belt ligado às ferramentas, presença, banco de questões e provas com sorteio reprodutível e correção, requisitos de certificação conferidos sobre os dados do app, registro com validade e renovação, instrutores, certificado em PDF | 34–46 | Opus 8–11 (motor de requisitos, montagem das equipes com restrições, sorteio e correção numérica); Sonnet 25–33 (telas, certificado, relatórios da turma); Haiku 1–2 (importação de listas de pessoas por CSV) |
+| **L8 Modo de ensino** (MVP ampliado, seção 8.6) | espaço de treino separado da carteira real, três projetos-exemplo completos, conjuntos de dados didáticos com resposta conhecida, pacotes de exercícios com correção automática, criação de casos pelo MBB (do zero, de projeto encerrado anonimizado ou de modelo UTSim), progresso da turma | 23–34 | Opus 6–9 (geradores de dados com efeito plantado, anonimização, correção com tolerância); Sonnet 15–22 (projetos-exemplo, enunciados, telas); Haiku 2–3 (empacotamento dos exercícios, conferência de catálogo) |
+| **Total do MVP** (L0 a L8 com P1, decisões M1 e M2) | | **278–385** | Opus ≈ 99–139; Sonnet ≈ 173–235; Haiku ≈ 6–11 |
+| P1 MSA (no MVP pela decisão M1) | (**cálculos feitos** em `utsim-quality`, menos o estudo do tipo 1; falta o checklist) Gage R&R por ANOVA e médias e amplitudes, tipo 1, vício e linearidade, atributos com kappa de Cohen e Fleiss; checklist verificado do Medir | 18–25 | Opus 14–19; Sonnet 4–6 |
 | P2 Estatística ampliada | Johnson, Levene e Bartlett, ANOVA de dois fatores, Kruskal-Wallis, Mood, Friedman, Fisher, poder e tamanho de amostra, correlação, regressão múltipla com diagnósticos, logística, seleção de variáveis, EWMA e CUSUM com ARL (**feitos** em `utsim-quality`) | 30–42 | Opus 25–35; Sonnet 5–7 |
 | P3 DOE | fatorial, fracionado com aliases, Plackett-Burman, CCD, Box-Behnken, análise, Lenth, superfície e desejabilidade; DOE no simulador (gerador para `Experiment`) | 30–42 | Opus 24–34; Sonnet 6–8 |
 | P4 VSM e espaguete | VSM atual e futuro gerados do modelo e editáveis, escada do lead time, espaguete sobre a planta | 20–28 | Opus 8–11; Sonnet 12–17 |
@@ -653,8 +674,9 @@ plano; Haiku para tarefas mecânicas).
 | P6 DMADV e ferramentas Lean | QFD, Pugh, tolerâncias por Monte Carlo, kaizen rápido completo, PDCA, poka-yoke, 5S, SMED, trabalho padronizado e balanceamento | 22–30 | Opus 5–7; Sonnet 17–23 |
 | P7 Equipe avançada | conflito por parágrafo, assinatura ed25519 das aprovações, cadeia de hash conferida na abertura, visão "minhas ações" da carteira, acesso pela rede local com token | 12–18 | Opus 7–10; Sonnet 5–8 |
 | P8 Idiomas | extração dos textos, inglês e espanhol, revisão de termos | 6–10 | Haiku 2–3; Sonnet 4–7 |
-| **Total depois do MVP** | | **150–213** | Opus ≈ 88–124; Sonnet ≈ 60–86; Haiku ≈ 2–3 |
-| **Total geral** | | **317–443** | |
+| P9 Programa ampliado | análise dos itens das provas (dificuldade e discriminação), certificados e papéis assinados com a chave do MBB (usa P7), comparação entre unidades e tendências nos painéis, avaliação de reação das turmas, importação periódica de pessoas e áreas por CSV do RH, relatório anual do programa | 14–20 | Opus 6–8; Sonnet 7–10; Haiku 1–2 |
+| **Total depois do MVP** (P2 a P9) | | **146–208** | Opus ≈ 80–113; Sonnet ≈ 63–90; Haiku ≈ 3–5 |
+| **Total geral** | | **424–593** | |
 
 **Sobreposição com o plano do gêmeo.** E4 (CEP) e E6 (capacidade) do plano do gêmeo estão
 contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, L3 cai cerca de
@@ -666,8 +688,13 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 1. Integrar `utsim-diagram` a `feat/fase-1` (pré-requisito de L4 e P4).
 2. L0 e, em paralelo, L3 (não mexem nos mesmos arquivos: L3 só toca `utsim-stats` e a crate
    nova `utsim-quality`), com o painel do gêmeo já consumindo `utsim-quality`.
-3. L1 e L2 (interface) com L4.
-4. L5 e piloto interno com um projeto real; depois P1, P3, P4 e P5 conforme o uso.
+3. L1 e L2 (interface) com L4. L6 começa junto com L1, porque a carteira de L1 nasce como
+   carteira de uma unidade dentro do programa (seção 8.1); o L0 em andamento não muda, só
+   precisa aceitar uma pasta de programa acima das pastas de projeto com o mesmo diário.
+4. L7 e L8 depois de L2 e L3, porque o currículo e os exercícios apontam para ferramentas que já
+   existem.
+5. L5 e piloto interno: um programa real pequeno (uma onda de green belts com seus projetos) e,
+   em paralelo, uma turma de aula (decisão U1); depois P2 a P9 conforme o uso.
 
 ### 5.4 Testes e validação
 
@@ -681,6 +708,11 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 - Fluxo: um projeto DMAIC de exemplo completo (com dados sintéticos e o modelo
   `examples/centro_de_distribuicao.ron`) como teste de ponta a ponta da API e como tutorial.
 - Interface: teste de fumaça da página em navegador sem janela, como `web/smoke.mjs`.
+- Programa e formação (seção 8.10): programa sintético com contagens conhecidas por estágio,
+  unidade e belt, conferidas nos indicadores dos painéis; motor de requisitos de certificação
+  com casos que atendem e que falham em cada requisito; montagem das equipes conferida contra
+  as restrições; sorteio das provas idêntico para a mesma semente; pacotes de exercícios cuja
+  resposta esperada é recalculada pelas crates comuns na CI.
 
 ### 5.5 Riscos
 
@@ -695,6 +727,15 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
   real.
 - **Duas interfaces web na família** (painel e LSS) podem divergir; mitigado pelo módulo de
   gráficos e componentes compartilhados.
+- **Escopo do programa**: com L6 a L8 o MVP passa de 167–230 h para 278–385 h. Se o prazo
+  apertar, o corte proposto é adiar L8 (os belts aprendem com o projeto-exemplo de 5.4) e
+  manter L6 e L7, que são o pedido central do MBB.
+- **Dados pessoais**: notas de prova, presença, diário de mentoria e avaliação de competências
+  são dados pessoais sob a LGPD. Sem servidor, a proteção real é o compartilhamento das pastas
+  no Drive (seção 8.8); o app deixa isso claro e registra a finalidade e o consentimento.
+- **Permissão sem servidor**: o app impede ações fora do perfil, mas quem tem acesso aos
+  arquivos pode editá-los. A cadeia de hash por autor e a validação de autoria por perfil
+  revelam a edição; não a impedem.
 
 ---
 
@@ -784,6 +825,54 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 - **LSS-RF-53** Assinatura opcional das aprovações com chave por pessoa e conferência da cadeia
   de hash.
 
+Programa de implantação, formação e ensino (seção 8):
+
+- **LSS-RF-54** Programa de implantação com unidades de negócio, objetivos estratégicos, metas
+  anuais de ganho e de belts por unidade, e uma carteira por unidade.
+- **LSS-RF-55** Funil do programa com os estágios ideia, triagem, seleção e abertura em todas as
+  carteiras, com comitê de seleção, pauta gerada e decisão registrada por oportunidade.
+- **LSS-RF-56** Capacidade de belts e champions (horas por semana, projetos simultâneos por
+  nível, ausências), com aviso de sobrecarga no programa inteiro.
+- **LSS-RF-57** Designação de projeto a belt com sugestão ordenada por nível exigido, área,
+  carga e necessidade de projeto de certificação, e decisão do MBB registrada.
+- **LSS-RF-58** Diário de mentoria por belt: sessões com data, duração, projeto, temas,
+  ferramentas, dificuldades, compromissos que viram ações e avaliação de evolução.
+- **LSS-RF-59** Mapa de competências belt × ferramenta com os níveis estudou, praticou, aplicou
+  e demonstrou, alimentado pela formação, pelos projetos e pela mentoria, com histórico.
+- **LSS-RF-60** Fila de revisões de tollgate de todos os projetos do programa, com tollgates
+  vencidos destacados e agenda de revisões.
+- **LSS-RF-61** Trabalho padrão das revisões: roteiro por fase com perguntas-padrão, tempo-alvo,
+  checklist do revisor e parecer técnico estruturado do MBB.
+- **LSS-RF-62** Ondas e turmas de formação por nível (yellow, green, black belt), com datas,
+  local, vagas, instrutores e currículo.
+- **LSS-RF-63** Indicação de candidatos com critérios configuráveis, aprovação do gestor,
+  conferência da capacidade para formação e projeto, e lista de espera.
+- **LSS-RF-64** Montagem das equipes de formação com sugestão sob restrições (vagas, mistura de
+  áreas, projeto candidato com champion) e ajuste manual do MBB.
+- **LSS-RF-65** Currículo por nível com módulos, carga horária, objetivos, pré-requisitos e
+  ligação de cada módulo às ferramentas e exercícios do app.
+- **LSS-RF-66** Presença por sessão de aula, com frequência mínima configurável.
+- **LSS-RF-67** Banco de questões por módulo, prova montada por sorteio com semente registrada,
+  correção automática de múltipla escolha e de resposta numérica com tolerância, e lançamento de
+  nota de prova aplicada em papel.
+- **LSS-RF-68** Requisitos de certificação configuráveis por nível (formação, prova, projetos
+  concluídos, ganhos validados, ferramentas demonstradas, mentoria dada, parecer do MBB),
+  conferidos automaticamente sobre os dados do programa.
+- **LSS-RF-69** Registro de certificação com número, nível, data, validade, evidências com hash e
+  emissor; certificado em PDF; aviso de expiração e regras de renovação.
+- **LSS-RF-70** Cadastro de instrutores com qualificação por módulo e agenda das turmas.
+- **LSS-RF-71** Modo de ensino em espaço de treino separado, com projetos-exemplo, conjuntos de
+  dados didáticos e modelos UTSim de exemplo, sem efeito nos painéis do programa.
+- **LSS-RF-72** Pacotes de exercícios com enunciado, dados, ferramenta alvo, resposta esperada
+  recalculável, tolerância e dicas, com correção automática e progresso da turma.
+- **LSS-RF-73** Criação de casos pelo MBB: do zero, a partir de projeto encerrado anonimizado ou
+  a partir de rodadas de um modelo UTSim, com gerador de dados com efeito plantado.
+- **LSS-RF-74** Painéis do programa para MBB e liderança: funil, tempo de ciclo por fase,
+  ganhos hard e soft por estado, belts por área, funil de certificação, uso de ferramentas,
+  tollgates vencidos e carga dos belts, com exportação em PDF e `.xlsx`.
+- **LSS-RF-75** Perfis MBB, champion, patrocinador, belt, controladoria, instrutor, liderança e
+  aluno, com telas e ações por perfil e papéis do programa definidos pelo MBB.
+
 ### Não funcionais
 
 - **LSS-RNF-01** Toda função estatística tem teste contra valor certificado ou exemplo
@@ -804,6 +893,19 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 - **LSS-RNF-09** Todos os textos da interface em catálogo; pt-BR completo na primeira versão.
 - **LSS-RNF-10** Origem do dado (Real, Gêmeo, Simulado) visível em todo gráfico, índice e
   relatório.
+- **LSS-RNF-11** O programa continua sem servidor e a custo zero: só pastas compartilhadas no
+  Drive com o mesmo diário de operações de S1.
+- **LSS-RNF-12** Dados restritos (gabaritos, notas, diário de mentoria, valores financeiros
+  antes da validação) ficam em pastas próprias, cujo compartilhamento no Drive define quem lê;
+  o app nunca copia um dado restrito para uma pasta de acesso mais amplo.
+- **LSS-RNF-13** Operação de autor sem o perfil exigido aparece como "não autorizada" na
+  reconstrução, não altera o estado e entra na lista de conflitos a revisar.
+- **LSS-RNF-14** Painéis de um programa com 20 unidades, 300 projetos e 500 pessoas abrem em
+  menos de 3 s com o cache local.
+- **LSS-RNF-15** Projetos, ganhos e notas do modo de ensino nunca entram nos indicadores do
+  programa real.
+- **LSS-RNF-16** Todo indicador dos painéis mostra a regra de cálculo e o instante dos dados
+  (sincronização do Drive pode atrasar minutos).
 
 ---
 
@@ -863,3 +965,345 @@ Registro original das perguntas:
     ligado por padrão e explícito no relatório.
 13. **T1 Tabelas de manuais.** Confirmar a abordagem de não embutir tabelas de manuais protegidos
     (AP do FMEA) e oferecer tabela padrão própria com cadastro pela empresa.
+
+**Novas perguntas de 2026-11-03** (direção do dono sobre o master black belt, seção 8). As
+decididas acima continuam valendo; estas são propostas:
+
+14. **M2 MVP ampliado.** Proposta: o MVP passa a ser L0 a L8 com P1 (278–385 h), com o MBB como
+    público de primeira classe ao lado do belt. Alternativa: MVP L0 a L5 com P1 (185–255 h) e
+    L6 a L8 logo depois, como segunda versão. Corte de emergência: adiar L8.
+15. **MB1 Estrutura do programa.** Proposta: programa acima de carteiras, uma carteira por
+    unidade de negócio, cada carteira com seus projetos (seção 8.1). Alternativa: carteira única
+    com filtro por área (mais simples, mas sem metas e comitês por unidade).
+16. **MB2 Perfis e permissões.** Proposta: oito perfis (MBB, champion, patrocinador, belt,
+    controladoria, instrutor, liderança, aluno), conferidos pelo app sobre a lista de papéis do
+    programa mantida pelo MBB, mais pastas restritas no Drive para o que é sigiloso (seção
+    8.8). Ponto a confirmar: trazer a assinatura ed25519 da lista de papéis (parte de P7) para
+    o MVP, para que um papel forjado seja detectado.
+17. **MB3 Provas.** Proposta: as duas formas, prova no app do aluno em modo prova (sem gabarito
+    na máquina do aluno, correção na máquina do instrutor) e prova em papel com lançamento das
+    notas. Alternativa: só lançamento de notas, sem prova no app.
+18. **MB4 Requisitos de certificação padrão.** Proposta: o app traz um conjunto padrão próprio,
+    editável pela empresa, para yellow, green e black belt (tabela da seção 8.5), e registra
+    também a certificação de MBB, sem conferência automática (decisão do comitê do programa).
+    Confirmar os números do padrão.
+19. **MB5 Validade da certificação.** Proposta: três anos, renovável por atividade comprovada no
+    período (projeto concluído, mentoria ou horas de formação dadas), configurável; a empresa
+    pode escolher "sem validade".
+20. **MB6 Montagem das equipes de formação.** Proposta: sugestão automática sob restrições
+    (seção 8.5) com a decisão final sempre do MBB. Alternativa: só manual, com os avisos de
+    restrição violada.
+21. **MB7 Conteúdo didático.** Proposta: o app traz a estrutura do currículo padrão, os
+    projetos-exemplo, os conjuntos de dados e os exercícios, todos escritos para o UTSim; o
+    material de aula da empresa (apostilas, apresentações) entra como anexo dos módulos. O app
+    não reproduz livros nem manuais protegidos.
+22. **MB8 Dados pessoais.** Proposta: consentimento e finalidade registrados no cadastro da
+    pessoa, diário de mentoria visível só ao MBB e ao próprio belt, notas visíveis ao aluno, ao
+    instrutor e ao MBB, e retenção configurável com remoção por operação de anonimização.
+23. **MB9 Lugar do código.** Proposta: módulos `programa`, `formacao`, `certificacao`,
+    `mentoria`, `ensino` e `painel` em `utsim-lss-core`, sem crate nova; os geradores de dados
+    didáticos usam `utsim-stats` e `utsim-model`. Alternativa: crate `utsim-lss-edu` para
+    formação e ensino.
+
+---
+
+## 8. Programa de implantação: o master black belt, a formação e o ensino
+
+Direção do dono (2026-11-03): o app deve ajudar os **master black belts** a gerir a implantação
+do Lean Seis Sigma na empresa inteira, da escolha dos projetos à escolha das equipes de
+formação. As ferramentas das seções 2 e 3 são usadas pelo MBB e pelos belts que ele orienta para
+aplicar o conhecimento na empresa; na formação, os mesmos alunos praticam com as mesmas
+ferramentas. Tudo continua a custo zero, na pasta compartilhada de S1, sem servidor.
+
+### 8.1 O programa de implantação
+
+**Estrutura.** `Programa` (um por empresa ou por divisão) → `UnidadeNegocio` (planta, área ou
+diretoria) → `Carteira` (a da seção 1.1) → `Projeto`. O MBB responde pelo programa; cada
+unidade tem um champion e um patrocinador do programa.
+
+**Desdobramento da estratégia.**
+
+- Objetivos estratégicos da empresa com peso, desdobrados por unidade (a matriz de alinhamento
+  da seção 1.1 passa a ser do programa, e cada carteira herda os objetivos).
+- Metas anuais por unidade: ganho validado (hard e soft separados), número de projetos
+  encerrados, belts formados e certificados por nível, e cobertura (belts por número de
+  pessoas da unidade, com o número de pessoas informado pela empresa).
+- Placar do programa: meta × realizado por unidade, com o estado de validação dos ganhos (só
+  `validado` conta no realizado oficial; `previsto` aparece separado).
+
+**Funil entre as carteiras.** As ideias de todas as unidades passam pelos mesmos estágios:
+
+| Estágio | O que acontece | Quem decide |
+|---|---|---|
+| Ideia | registro livre (seção 1.1), qualquer pessoa | ninguém |
+| Triagem | dados mínimos, abordagem sugerida (seção 1.1), estimativa grosseira de ganho, ligação a objetivo | champion da unidade |
+| Seleção | pontuação ponderada do programa, comparação entre unidades, capacidade disponível, belt candidato | comitê de seleção (MBB, champions, patrocinador do programa) |
+| Abertura | termo de abertura redigido pelo belt designado, revisado pelo MBB, aprovado pelo patrocinador (seção 1.3) | patrocinador do projeto |
+
+O **comitê de seleção** é uma reunião (seção 1.8) com pauta gerada: oportunidades em seleção
+ordenadas pela pontuação, capacidade livre por nível de belt, metas da unidade ainda abertas e
+projetos de certificação pedidos pela formação (seção 8.5). Cada decisão (selecionar, adiar,
+devolver à triagem, recusar) fica registrada com o motivo. Cadência configurável (mensal por
+padrão).
+
+**Cálculo**: funções puras em `utsim-lss-core::programa` sobre o resumo de cada projeto
+(manifesto `projeto.json`, seção 4.4) e o estado do programa. Teste: programa sintético com
+contagens conhecidas.
+
+### 8.2 Capacidade e designação
+
+- **Capacidade por pessoa**: horas por semana dedicadas ao programa, ausências, limite de
+  projetos simultâneos por nível (padrão configurável, por exemplo green belt 1 a 2 projetos,
+  black belt 2 a 4 projetos e até 4 green belts em mentoria), champions com limite de projetos
+  acompanhados. Carga = soma das horas previstas nas tarefas dos cronogramas (seção 1.6) mais
+  a formação em curso.
+- **Designação**: para uma oportunidade selecionada, o app sugere belts em ordem, com a razão de
+  cada posição: nível exigido pela complexidade (abordagem e ferramentas previstas), área e
+  processo, carga livre no período, se o belt precisa de projeto para certificação, e a
+  experiência no mapa de competências (seção 8.3). A sugestão é ordenação por regras
+  explicadas, não otimização opaca; a decisão é do MBB e fica registrada.
+- **Aviso de sobrecarga** no programa inteiro: uma pessoa pode estar em projetos de unidades
+  diferentes, e a soma é feita sobre todas as carteiras.
+
+### 8.3 Mentoria e evolução dos belts
+
+- **Diário de mentoria** por belt: sessão com data, duração, forma (individual, grupo,
+  revisão no gemba), projeto e fase, temas, ferramentas discutidas, dificuldades, compromissos
+  (viram ações no kanban do projeto ou na lista pessoal do belt) e, opcional, avaliação da
+  evolução numa escala de 1 a 4 por competência.
+- **Mapa de competências**: matriz belt × ferramenta (as ferramentas da seção 2) com os níveis
+  `estudou` (módulo concluído), `praticou` (exercício correto no modo de ensino), `aplicou` (a
+  ferramenta aparece num entregável aprovado de projeto real) e `demonstrou` (o MBB confirmou
+  em revisão ou mentoria). Os três primeiros níveis são preenchidos pelo app a partir dos
+  dados; o quarto é do MBB.
+- **Evolução no tempo**: linha do tempo por belt com sessões, tollgates aprovados, ferramentas
+  novas e certificações; base para a renovação (seção 8.5) e para a designação.
+
+### 8.4 Revisões de tollgate no programa
+
+- **Fila de revisões**: todos os tollgates do programa pedindo parecer do MBB, com data
+  planejada (do cronograma), dias de atraso, unidade, belt e fase; vencidos destacados.
+- **Agenda de revisões**: o MBB agrupa revisões por dia ou por unidade (revisão em lote), e a
+  reunião de revisão gera a ata com as decisões de cada projeto.
+- **Trabalho padrão da revisão**: roteiro por fase do modelo de fluxo (seção 4.7) com perguntas
+  padrão (por exemplo, no Medir: "a definição operacional do Y é inequívoca?", "o MSA cobre o
+  sistema de medição usado na linha de base?", "a linha de base usa dado de origem Real?"),
+  tempo-alvo por revisão, checklist do revisor ao lado do checklist do belt e **parecer
+  técnico estruturado**: dado suficiente, ferramenta adequada, estatística correta, conclusões
+  suportadas, riscos; cada item com `ok`, `ressalva` ou `refazer` e comentário. Os itens
+  `verificado` do checklist (seção 1.4) aparecem já conferidos para o MBB.
+- **Qualidade das revisões**: indicadores por fase e por belt (taxa de `refazer`, ressalvas
+  recorrentes, tempo entre pedido e parecer), que orientam a mentoria e o currículo.
+
+### 8.5 Formação e certificação
+
+**Ondas e turmas.** Uma `Onda` é um ciclo do programa (por exemplo um semestre) com metas de
+formação por nível e unidade. Cada `Turma` tem nível (yellow, green ou black belt), datas e
+sessões, local ou forma, vagas, instrutores, currículo e a lista de alunos.
+
+**Escolha dos candidatos.**
+
+1. **Indicação** pelo gestor, pelo champion ou pela própria pessoa, com justificativa e, para
+   green e black belt, uma oportunidade candidata do funil (o projeto de formação).
+2. **Critérios de indicação** configuráveis pela empresa, cada um eliminatório ou
+   classificatório: tempo na empresa, função, nível anterior concluído (pré-requisito),
+   desempenho declarado pelo gestor, disponibilidade de horas, unidade com meta aberta.
+3. **Aprovação do gestor** imediato: compromete as horas de aula e de projeto no período.
+4. **Capacidade**: o app confere se as horas de formação mais as do projeto cabem na
+   capacidade da pessoa (seção 8.2) e se a turma tem vaga.
+5. **Seleção** pelo MBB, com lista de espera ordenada pelos critérios classificatórios.
+
+**Montagem das equipes de formação.** Com os aprovados, o MBB forma as turmas e, dentro delas,
+os grupos de exercício. O app sugere uma distribuição que respeita as restrições (vagas por
+turma, mistura de unidades e funções, no máximo N pessoas da mesma área por grupo, cada aluno de
+green ou black belt com projeto candidato e champion) e que equilibra os grupos; o método é uma
+distribuição gulosa com troca local, determinística para a mesma entrada, com cada restrição
+violada explicada. O MBB ajusta à mão e confirma.
+
+**Currículo por nível.** Módulos com carga horária, objetivos de aprendizagem, pré-requisitos,
+**ferramentas do app associadas** (identificadores das ferramentas da seção 2) e pacotes de
+exercícios (seção 8.6). O currículo padrão segue a estrutura DMAIC da ISO 13053 e as
+competências por nível da ISO 18404 [conferir edições]; a empresa edita no modelo (seção 4.7).
+Exemplo da estrutura padrão (cargas a confirmar com o dono):
+
+| Nível | Módulos (resumo) | Ferramentas do app ligadas |
+|---|---|---|
+| Yellow belt | fundamentos, DMAIC, desperdícios, Pareto, Ishikawa, 5 porquês, 5S, ações | Pareto, Ishikawa, 5 porquês, kanban, 5S |
+| Green belt | Definir a Controlar com estatística básica, MSA, capacidade, testes, cartas, FMEA, plano de controle, gestão do projeto, simulação como instrumento | seções 2.1 a 2.5 (sem DOE avançado), termo, tollgates, cenários UTSim |
+| Black belt | estatística ampliada, regressão, DOE e superfície de resposta, DMADV, VSM, liderança de mudança, mentoria de green belts | P2, P3, P4, P6, mentoria |
+
+**Presença** por sessão (presente, ausente, justificado), com frequência mínima configurável
+(padrão 80 %).
+
+**Provas.**
+
+- Banco de questões por módulo: múltipla escolha, verdadeiro ou falso, resposta numérica com
+  tolerância e **problema prático** (um conjunto de dados e uma pergunta, como "calcule o Cpk e
+  diga se o processo é capaz"), cuja resposta esperada é calculada pelas crates comuns e não
+  digitada, para nunca divergir do que a ferramenta mostra.
+- Prova montada por sorteio com semente registrada (mesma semente, mesma prova), por módulo e
+  dificuldade; variação dos dados do problema prático por aluno, gerada pela semente.
+- Aplicação: no app do aluno em modo prova (o pacote da prova não leva o gabarito; as respostas
+  voltam como operações do aluno e são corrigidas na máquina do instrutor) ou em papel, com
+  lançamento das notas. Sem servidor, a prova no app não impede consulta; o manual diz isso e
+  a empresa decide se a prova vale para certificação (decisão MB3).
+- Nota mínima configurável por prova (padrão 70 %), com uma reaplicação.
+
+**Requisitos de certificação** (motor de requisitos em `utsim-lss-core::certificacao`): cada
+nível tem uma lista de requisitos de tipos fixos, com parâmetros da empresa, e o app confere os
+que podem ser conferidos com dados do programa. Conjunto padrão proposto (decisão MB4):
+
+| Requisito | Yellow | Green | Black | Conferido por |
+|---|---|---|---|---|
+| Formação do nível concluída com frequência mínima | sim | sim | sim | presença |
+| Prova aprovada | sim | sim | sim | provas |
+| Projetos encerrados com todos os tollgates aprovados | participação em 1 | 1 como líder | 2 como líder | projetos |
+| Ganho validado pela controladoria nos projetos liderados | não | ≥ valor da empresa | ≥ valor da empresa | ganhos (seção 1.10) |
+| Ferramentas no nível `aplicou` ou `demonstrou` | 3 | lista mínima do nível | lista mínima do nível | mapa de competências |
+| Mentoria dada | não | não | 1 green belt acompanhado até o encerramento | diário de mentoria |
+| Parecer e assinatura do MBB | não | sim | sim | MBB |
+
+Ganhos só contam quando `validado`; ganho estimado por simulação nunca conta (seção 1.10).
+Cada requisito atendido guarda a evidência (identificador e hash do item que o comprova).
+
+**Registro de certificação**: número sequencial do programa, pessoa, nível, data, validade,
+requisitos atendidos com as evidências, emissor (MBB) e, com P9, assinatura ed25519 do MBB.
+Certificado em PDF gerado no próprio programa, como as demais impressões (seção 7, interface
+nativa). **Validade e renovação** (decisão MB5): aviso 90 dias antes de expirar; renovação
+conferida pelas regras da empresa (por exemplo um projeto encerrado, uma mentoria ou horas de
+formação dadas no período); certificação vencida aparece como tal nos painéis e na designação.
+
+**Instrutores**: cadastro com os módulos que cada um pode dar (qualificação), agenda nas
+turmas, horas dadas (contam para a renovação do próprio instrutor) e, com P9, a avaliação de
+reação dos alunos.
+
+### 8.6 Modo de ensino
+
+O modo de ensino serve à formação da empresa (seção 8.5) e ao uso em aula do dono (decisão U1).
+
+- **Espaço de treino**: uma pasta `treino/` do programa (ou uma pasta solta, para uso em aula
+  fora de empresa) com carteira e projetos marcados como treino. Nada do espaço de treino entra
+  nos painéis, metas, ganhos ou certificações do programa real (LSS-RNF-15), mas os exercícios
+  corretos alimentam o nível `praticou` do mapa de competências.
+- **Projetos-exemplo**: três DMAIC completos escritos para o UTSim (manufatura, serviço e
+  logística, este último sobre `examples/centro_de_distribuicao.ron`), com todos os
+  entregáveis preenchidos e os tollgates aprovados; o aluno pode abrir pronto ou começar do
+  termo e comparar com a solução fase a fase.
+- **Conjuntos de dados didáticos** gerados com semente e com resposta conhecida: estudo de MSA
+  com componentes de variância conhecidos, processo com média deslocada por um avaliador ou
+  turno, série com padrão plantado para cada regra de Nelson, fatorial com efeitos e interação
+  definidos. Os dados são próprios do UTSim; nada é copiado de livro.
+- **Modelos UTSim** de `examples/` como fonte de dados (rodadas com semente) e de mapas (SIPOC,
+  fluxograma) para os exercícios das seções 3.1 a 3.4.
+- **Pacotes de exercícios** (arquivo `.lssx`, zip com `exercicio.json`, dados e anexos):
+  enunciado, ferramenta alvo, dados, receita da resposta esperada (função, parâmetros e versão
+  da crate, recalculada na correção), tolerância, dicas graduais e o módulo do currículo a que
+  pertence. Correção automática na máquina do aluno para exercícios de prática (o gabarito pode
+  ir junto) e na do instrutor para avaliação (sem gabarito no pacote).
+- **Casos do MBB**: (a) do zero, com o editor de exercícios; (b) a partir de um projeto
+  encerrado, com anonimização (nomes de pessoas trocados por papéis, valores financeiros
+  multiplicados por um fator secreto, datas deslocadas, anexos excluídos por padrão) e revisão
+  do MBB antes de publicar; (c) a partir de um modelo UTSim, com o gerador rodando o modelo e
+  plantando o efeito pedido (por exemplo, aumentar a variabilidade de uma estação).
+- **Progresso da turma**: para o instrutor, matriz aluno × exercício com acerto, tentativas e
+  tempo, e as ferramentas com mais erro, que voltam para o planejamento das aulas.
+
+### 8.7 Painéis do programa
+
+Duas visões, ambas com filtro por unidade, ano e onda, regra de cálculo visível e o instante
+dos dados (LSS-RNF-16):
+
+- **MBB**: tudo abaixo, com detalhe até o projeto e a pessoa.
+- **Liderança**: até seis indicadores com meta e tendência (mesma ideia da visão do gestor no
+  plano do gêmeo), sem dados pessoais de formação ou mentoria.
+
+| Indicador | Cálculo |
+|---|---|
+| Funil | contagem por estágio (ideia, triagem, seleção, abertura, em execução, encerrado) e por unidade; conversão entre estágios; idade média em cada estágio |
+| Tempo de ciclo por fase | dias entre aprovações de tollgate por fase, mediana e percentil 80, por abordagem e nível do belt, contra a meta do modelo de fluxo |
+| Ganhos | hard e soft por estado (`estimado`, `previsto`, `realizado`, `validado`), por unidade e ano, contra a meta; total oficial só com `validado` |
+| Belts por área | ativos, em formação e certificados por nível, cobertura por número de pessoas da unidade, certificações a vencer |
+| Funil de certificação | indicados → aprovados pelo gestor → selecionados → formados → com projeto → certificados, por onda e nível, com o motivo das saídas |
+| Uso das ferramentas | quantos projetos usaram cada ferramenta por fase; ferramentas do currículo nunca aplicadas; ligação com o mapa de competências |
+| Tollgates vencidos | lista e contagem por unidade e belt, com dias de atraso; revisões do MBB pendentes |
+| Carga | horas comprometidas × capacidade por pessoa e por nível |
+
+Cálculo em `utsim-lss-core::painel`, gráficos com `egui_plot`, exportação em PDF e `.xlsx`
+(seção 4.6). A agregação lê só o resumo de cada projeto e o estado do programa, para abrir
+rápido mesmo com centenas de projetos (LSS-RNF-14).
+
+### 8.8 Perfis e permissões sem servidor
+
+| Perfil | Vê | Faz |
+|---|---|---|
+| MBB | tudo do programa | define papéis, metas, currículo, turmas, designa belts, revisa tollgates, certifica, cria casos |
+| Champion | sua unidade, projetos que acompanha | triagem, pauta do comitê, aprova tollgates como champion |
+| Patrocinador | projetos que patrocina, placar da unidade | aprova termo, tollgates e encerramento |
+| Belt | seus projetos, sua formação, seu mapa de competências, o próprio diário de mentoria | conduz projetos, registra mentoria recebida, faz exercícios e provas |
+| Controladoria | ganhos de todo o programa | valida ganhos previstos e realizados |
+| Instrutor | suas turmas, banco de questões dos seus módulos | presença, provas, correção, progresso da turma |
+| Liderança | visão de liderança dos painéis | nada além de comentar |
+| Aluno | espaço de treino, sua turma, suas notas | exercícios e provas |
+
+Como não há servidor, a permissão tem duas camadas:
+
+1. **No app**: a lista de papéis do programa (`pessoas/`) é mantida pelo MBB; cada operação é
+   validada na reconstrução contra o perfil do autor naquele instante, e a de autor sem perfil
+   fica "não autorizada", sem efeito (LSS-RNF-13). Com a assinatura da lista de papéis pelo MBB
+   (decisão MB2), um papel forjado é detectado.
+2. **No Drive**: o que é sigiloso fica em pastas próprias compartilhadas só com quem pode ler:
+   gabaritos e banco de questões (MBB e instrutores), diário de mentoria (uma pasta por belt,
+   MBB e o belt), notas (MBB e instrutores; o aluno vê as suas pela pasta da turma), valores
+   financeiros antes da validação (controladoria e MBB). Esta é a barreira real; o app não usa
+   a API do Drive (seção 4.5), então não confere o compartilhamento, e o manual explica como
+   configurá-lo.
+
+### 8.9 Armazenamento e modelo de dados do programa
+
+Mesmo mecanismo de S1 (diário de operações, instantâneos, Lamport, presença), aplicado a uma
+pasta de programa acima das carteiras. O L0 em andamento não muda: o programa é mais uma pasta
+com diário.
+
+```
+Programa LSS da empresa/
+  programa.json                manifesto: id, formato, unidades, onda atual
+  ops/ instantaneos/ presenca/ como na seção 4.4
+  pessoas/                     cadastro e papéis do programa (assinado pelo MBB, MB2)
+  modelos/                     modelos da empresa (seção 4.7), currículo, requisitos
+  carteiras/<unidade>/<projeto>.lss/
+  formacao/
+    turmas/<turma>/            presença, alunos, provas aplicadas (sem gabarito)
+    questoes/                  banco e gabaritos (restrito)
+    notas/                     (restrito)
+  mentoria/<belt>/             (restrito ao MBB e ao belt)
+  certificacoes/               registros e certificados em PDF
+  financas/                    valores antes da validação (restrito)
+  treino/                      espaço de treino e pacotes .lssx
+```
+
+Cada pasta restrita tem o próprio diário, para que o compartilhamento do Drive por pasta
+funcione sem expor operações sigilosas no diário geral.
+
+Entidades novas em `utsim-lss-core` (módulos da decisão MB9): `Programa`, `UnidadeNegocio`,
+`ObjetivoEstrategico`, `MetaPrograma`, `ComiteSelecao`, `Designacao`, `Capacidade`,
+`SessaoMentoria`, `Competencia`, `RevisaoTollgate`, `RoteiroRevisao`, `Onda`, `Turma`,
+`Indicacao`, `CriterioIndicacao`, `Curriculo`, `Modulo`, `SessaoAula`, `Presenca`, `Questao`,
+`Prova`, `ResultadoProva`, `RequisitoCertificacao`, `Certificacao`, `Instrutor`, `Perfil`,
+`PacoteExercicio`, `Caso`.
+
+### 8.10 Testes
+
+- Programa sintético com unidades, projetos e pessoas em estados conhecidos: cada indicador
+  dos painéis conferido contra a contagem esperada; projetos de treino presentes e ignorados.
+- Motor de requisitos: para cada tipo de requisito, um caso que atende, um que falha e um com
+  dado ambíguo (ganho `previsto`, projeto com tollgate alterado depois da aprovação), com a
+  razão mostrada.
+- Montagem das equipes: propriedades (nenhuma restrição rígida violada quando há solução;
+  mesma entrada, mesma distribuição).
+- Provas: mesma semente, mesma prova; correção numérica com tolerância nos limites.
+- Pacotes de exercícios: na CI, a resposta esperada de todo exercício embutido é recalculada
+  pelas crates comuns e comparada com a guardada, para que uma mudança na estatística não deixe
+  exercício com gabarito errado.
+- Permissões: operações de autor sem perfil ignoradas e listadas; mudança de papel no meio do
+  diário respeitada pelo instante.
+- Anonimização: nenhum nome de pessoa nem valor financeiro original sobrevive no caso gerado.
