@@ -154,3 +154,219 @@ fn folder_names_are_safe() {
     assert_eq!(sanitize_folder_name("..."), "projeto");
     assert_eq!(sanitize_folder_name("a:b*c?"), "a-b-c-");
 }
+
+#[test]
+fn every_tool_screen_draws() {
+    use serde_json::Value;
+    use utsim_lss_core::tools::{
+        self, Tool, cause_effect as ce, fmea, ishikawa, pareto, plans, sipoc, voc, whys,
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let ctx = egui::Context::default();
+    let mut app = app_in(&dir.path().join("config"));
+    app.submit_identity("Ana", "ana@x.com");
+    assert!(app.create_project(dir.path(), "Refugo", Approach::Dmaic));
+    app.nav = Nav::Tools;
+    frames(&mut app, &ctx, 2);
+
+    // Bia, on another computer, fills one deliverable of each tool in the same folder.
+    let root = app.session().unwrap().folder().root().to_path_buf();
+    let bia = Identity {
+        person: Id::v7(1_700_000_000_000, [2; 10]),
+        name: "Bia".into(),
+        email: "bia@x.com".into(),
+    };
+    let mut o = Session::open(
+        &root,
+        &bia,
+        None,
+        Box::new(Salted(Arc::new(AtomicU64::new(0)), 9)),
+    )
+    .unwrap();
+    let t = Value::from;
+    let n = |x: i64| Value::from(x);
+    let mut ids = Vec::new();
+    for tool in Tool::ALL {
+        let d = o.add_deliverable(tool, "x").unwrap();
+        ids.push(d);
+        match tool {
+            Tool::Voc => {
+                let need = o
+                    .add_item(d, voc::NEED, None, vec![(voc::fields::TEXT, t("Prazo"))])
+                    .unwrap();
+                o.add_item(
+                    d,
+                    voc::STATEMENT,
+                    Some(need),
+                    vec![(voc::fields::TEXT, t("Atrasa"))],
+                )
+                .unwrap();
+                let dr = o.add_item(d, voc::DRIVER, Some(need), vec![]).unwrap();
+                o.add_item(d, voc::CTQ, Some(dr), vec![(voc::fields::USL, n(48))])
+                    .unwrap();
+            }
+            Tool::Sipoc => {
+                o.add_item(d, sipoc::STEP, None, vec![(sipoc::TEXT, t("Cortar"))])
+                    .unwrap();
+            }
+            Tool::Pareto => {
+                for (name, c) in [("Rebarba", 30), ("Risco", 5)] {
+                    o.add_item(
+                        d,
+                        pareto::ITEM,
+                        None,
+                        vec![
+                            (pareto::fields::NAME, t(name)),
+                            (pareto::fields::COUNT, n(c)),
+                        ],
+                    )
+                    .unwrap();
+                }
+            }
+            Tool::Ishikawa => {
+                use ishikawa::fields as f;
+                let c = o
+                    .add_item(
+                        d,
+                        ishikawa::ITEM,
+                        None,
+                        vec![
+                            (f::TEXT, t("Ferramenta gasta")),
+                            (f::CATEGORY, t("maquina")),
+                        ],
+                    )
+                    .unwrap();
+                o.add_item(d, ishikawa::ITEM, Some(c), vec![(f::TEXT, t("Sem troca"))])
+                    .unwrap();
+                o.add_item(
+                    d,
+                    ishikawa::ITEM,
+                    None,
+                    vec![(f::TEXT, t("Calor")), (f::CATEGORY, t("Turno da noite"))],
+                )
+                .unwrap();
+            }
+            Tool::FiveWhys => {
+                let c = o
+                    .add_item(
+                        d,
+                        whys::CHAIN,
+                        None,
+                        vec![(whys::fields::TEXT, t("Rebarba"))],
+                    )
+                    .unwrap();
+                o.add_item(
+                    d,
+                    whys::WHY,
+                    Some(c),
+                    vec![(whys::fields::TEXT, t("Gasta"))],
+                )
+                .unwrap();
+            }
+            Tool::CauseEffect => {
+                let y = o
+                    .add_item(
+                        d,
+                        ce::OUTPUT,
+                        None,
+                        vec![
+                            (ce::fields::NAME, t("Diâmetro")),
+                            (ce::fields::WEIGHT, n(9)),
+                        ],
+                    )
+                    .unwrap();
+                let cell = ce::score_field(y);
+                o.add_item(
+                    d,
+                    ce::INPUT,
+                    None,
+                    vec![(ce::fields::NAME, t("Temperatura")), (cell.as_str(), n(9))],
+                )
+                .unwrap();
+            }
+            Tool::Fmea => {
+                use fmea::fields as f;
+                let r = o
+                    .add_item(
+                        d,
+                        fmea::ITEM,
+                        None,
+                        vec![
+                            (f::MODE, t("Furo deslocado")),
+                            (f::S, n(9)),
+                            (f::O, n(5)),
+                            (f::D, n(4)),
+                            (f::O2, n(2)),
+                            (f::ACTION, t("Pino de referência")),
+                        ],
+                    )
+                    .unwrap();
+                o.fmea_card(r).unwrap().unwrap();
+            }
+            Tool::DataCollection => {
+                o.add_item(
+                    d,
+                    plans::COLLECTION_ITEM,
+                    None,
+                    vec![(plans::fields::NAME, t("Diâmetro"))],
+                )
+                .unwrap();
+            }
+            Tool::ControlPlan => {
+                o.add_item(
+                    d,
+                    plans::CONTROL_ITEM,
+                    None,
+                    vec![(plans::fields::CHARACTERISTIC, t("Diâmetro"))],
+                )
+                .unwrap();
+            }
+            Tool::ResponsePlan => {
+                o.add_item(
+                    d,
+                    plans::RESPONSE_ITEM,
+                    None,
+                    vec![(plans::fields::SIGNAL, t("Ponto fora"))],
+                )
+                .unwrap();
+            }
+            Tool::A3 => {}
+        }
+    }
+    o.close();
+
+    // The app picks them up on its periodic refresh.
+    let mut arrived = false;
+    for _ in 0..40 {
+        frames(&mut app, &ctx, 1);
+        let s = app.session().unwrap();
+        if tools::deliverables(s.state(), s.project()).len() == Tool::ALL.len() {
+            arrived = true;
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    assert!(arrived, "the deliverables arrived");
+    for (tool, d) in Tool::ALL.iter().zip(&ids) {
+        app.selected_deliverable = Some(*d);
+        frames(&mut app, &ctx, 3);
+        assert_eq!(app.selected_deliverable, Some(*d), "{tool:?}");
+        assert!(
+            app.status().is_none_or(|(_, err)| !err),
+            "{tool:?}: {:?}",
+            app.status()
+        );
+    }
+    // The A3 sees the other deliverables; the FMEA card is on the board.
+    let s = app.session().unwrap();
+    let page = tools::a3::compose(s.state(), s.project(), ids.last().copied());
+    assert_eq!(page.fmea_high.len(), 1);
+    assert_eq!(page.critical_gaps, 1);
+    assert_eq!(page.pareto_vital.len(), 1);
+    assert_eq!(
+        kanban::board(s.state(), s.project())[&Column::Todo].len(),
+        1
+    );
+    app.nav = Nav::Actions;
+    frames(&mut app, &ctx, 1);
+}
