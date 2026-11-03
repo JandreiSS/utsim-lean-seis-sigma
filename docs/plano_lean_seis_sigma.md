@@ -969,6 +969,8 @@ Registro original das perguntas:
 **Novas perguntas de 2026-11-03** (direção do dono sobre o master black belt, seção 8). As
 decididas acima continuam valendo; estas são propostas:
 
+**Decididas em 2026-11-03 (segunda rodada):** o dono aceitou todas as propostas de M2 e MB1 a MB9, inclusive os números padrão de certificação da tabela da seção 8.5 (editáveis pela empresa).
+
 14. **M2 MVP ampliado.** Proposta: o MVP passa a ser L0 a L8 com P1 (278–385 h), com o MBB como
     público de primeira classe ao lado do belt. Alternativa: MVP L0 a L5 com P1 (185–255 h) e
     L6 a L8 logo depois, como segunda versão. Corte de emergência: adiar L8.
