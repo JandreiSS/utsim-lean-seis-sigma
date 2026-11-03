@@ -761,6 +761,8 @@ pub fn tool_label(key: &str) -> String {
         "doe" => "DOE",
         "vsm" => "VSM",
         "kaizen" => "Kaizen",
+        "acoes" => "Quadro de ações",
+        "cinco_s" => "5S",
         other => return other.to_string(),
     }
     .to_string()
