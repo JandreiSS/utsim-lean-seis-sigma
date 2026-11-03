@@ -128,7 +128,17 @@ impl App {
         let year = d.year(&self.l6);
         let rows = programa::scoreboard(s.state(), d.program, year, &d.records, &d.members);
         let free = designacao::free_by_level(&d.loads);
-        let agenda = programa::agenda(&d.opps, &free, &rows);
+        let mut agenda = programa::agenda(&d.opps, &free, &rows);
+        // The certification projects the training asks for (stage L7).
+        agenda.extend(
+            utsim_lss_core::formacao::certification_requests(&d.tr.noms, &d.opps, &d.assignments)
+                .into_iter()
+                .map(|r| AgendaLine::CertificationProject {
+                    person: r.person,
+                    level: r.level,
+                    opportunity: r.opportunity,
+                }),
+        );
         if agenda.is_empty() {
             ui.weak(tl.agenda_empty);
         }
@@ -170,6 +180,20 @@ impl App {
                         &m,
                         *actual,
                         *target,
+                    ));
+                }
+                AgendaLine::CertificationProject {
+                    person,
+                    level,
+                    opportunity,
+                } => {
+                    let opp = opportunity
+                        .and_then(|o| d.ideas.iter().find(|i| i.id == o))
+                        .map_or_else(String::new, |i| i.title.clone());
+                    ui.label((crate::text::l7::l7().agenda_cert_project)(
+                        &d.person(*person),
+                        level_name(*level),
+                        &opp,
                     ));
                 }
             }

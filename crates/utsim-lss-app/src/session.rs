@@ -40,6 +40,9 @@ pub enum Guard {
     Program { founder: Id },
     /// A belt's coaching log: only the belt and the program's MBBs.
     Coaching { belt: Id, mbbs: Vec<Id> },
+    /// A restricted training folder (question bank, grades, class): the staff, and in a
+    /// class folder each trainee's own answers.
+    Training(perfis::TrainingWriters),
 }
 
 impl Session {
@@ -52,7 +55,7 @@ impl Session {
         let mut folder = ProjectFolder::open(path, me, cache)?;
         match folder.main_kind() {
             Some(utsim_lss_core::Kind::Program) => return Self::open_program(path, me, clock),
-            Some(utsim_lss_core::Kind::CoachingLog) => {
+            Some(utsim_lss_core::Kind::CoachingLog | utsim_lss_core::Kind::TrainingFolder) => {
                 return Err(utsim_lss_store::Error::Invalid(
                     crate::text::l6::l6().open_log_from_program.to_string(),
                 ));
@@ -124,6 +127,32 @@ impl Session {
         Ok(s)
     }
 
+    /// Opens (or, with `create`, creates) a restricted training folder of the program.
+    pub fn open_training(
+        path: &Path,
+        me: &Identity,
+        clock: Box<dyn Clock>,
+        folder: utsim_lss_store::program::TrainingFolder,
+        program: Id,
+        writers: perfis::TrainingWriters,
+        create: bool,
+    ) -> utsim_lss_store::Result<Self> {
+        let f = if create && !path.join(utsim_lss_store::project::MANIFEST).is_file() {
+            if !writers.staff.contains(&me.person) {
+                return Err(utsim_lss_store::Error::Invalid(
+                    crate::text::l7::l7().not_staff.to_string(),
+                ));
+            }
+            ProjectFolder::create_training(path, folder, program, me, clock.as_ref())?
+        } else {
+            ProjectFolder::open_full(path, me)?
+        };
+        let mut s = Self::with(f, clock);
+        s.guard = Guard::Training(writers);
+        s.reauthorize();
+        Ok(s)
+    }
+
     /// The program's creator (`None` outside a program folder).
     pub fn founder(&self) -> Option<Id> {
         match self.guard {
@@ -155,6 +184,7 @@ impl Session {
             Guard::Coaching { belt, mbbs } => {
                 Some(perfis::replay_coaching(self.folder.all_ops(), *belt, mbbs))
             }
+            Guard::Training(w) => Some(perfis::replay_training(self.folder.all_ops(), w)),
         };
     }
 
@@ -264,6 +294,7 @@ impl Session {
             Guard::Free => Ok(()),
             Guard::Program { founder } => perfis::check_edits(self.state(), *founder, me, &edits),
             Guard::Coaching { belt, mbbs } => perfis::check_coaching(me, *belt, mbbs, &edits),
+            Guard::Training(w) => perfis::check_training(self.state(), me, w, &edits),
         };
         check.map_err(|d| utsim_lss_store::Error::Invalid(d.to_string()))?;
         let ops = self.folder.commit(edits, self.clock.as_ref())?;

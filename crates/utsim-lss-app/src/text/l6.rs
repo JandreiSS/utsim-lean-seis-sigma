@@ -790,5 +790,9 @@ pub fn action_name(a: Action) -> &'static str {
         Action::ViewScoreboard => "Ver o placar",
         Action::ViewReviewQueue => "Ver a fila de revisões",
         Action::Comment => "Comentar",
+        Action::ManageTraining => "Ondas, turmas, currículo e requisitos",
+        Action::SelectTrainees => "Selecionar alunos",
+        Action::Teach => "Presença, provas e correção",
+        Action::Certify => "Certificar",
     }
 }
