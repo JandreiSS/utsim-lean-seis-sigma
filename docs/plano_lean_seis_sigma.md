@@ -3,8 +3,9 @@
 Plano técnico, sem implementação, de um aplicativo próprio da família UTSim para gerenciar
 projetos de melhoria Lean Seis Sigma, distribuído pelo mesmo launcher do simulador e integrado a
 ele. Objetivo do dono: "gerenciar os projetos e ter todo o fluxo natural de um projeto Lean Six
-Sigma à mão". O nome do aplicativo ainda não foi escolhido (decisão N1); no texto ele aparece
-como **app LSS** e as crates com o prefixo provisório `utsim-lss`.
+Sigma à mão". Nome provisório (decisão N1, 2026-11-03): **UTSim Seis Sigma**, produto
+`lean-seis-sigma` no launcher; o dono pode trocar depois. No texto ele aparece como **app LSS** e
+as crates com o prefixo `utsim-lss`.
 
 Cada seção traz o que o app faz, onde mora o cálculo, como é testado, estimativa em horas
 Opus 5.5 e o modelo de IA sugerido. Os requisitos têm prefixo próprio (`LSS-RF-nn`,
@@ -806,9 +807,9 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 
 ## 7. Decisões do dono
 
-1. **N1 Nome do app.** Sugestões: "UTSim Seis Sigma", "UTSim Melhoria", "UTSim Projetos",
-   "UTSim LSS". O nome define o prefixo das crates (`utsim-lss-*` é provisório) e a entrada no
-   launcher.
+1. **N1 Nome do app.** Provisório desde 2026-11-03: "UTSim Seis Sigma" (o dono deixou a escolha
+   e pode mudar). As crates ficam com o prefixo `utsim-lss-*`, que não depende do nome exibido;
+   trocar o nome muda só o rótulo no launcher e nas telas.
 2. **I1 Interface.** Proposta: web servida localmente pelo próprio binário, no padrão do painel.
    Alternativas: egui/eframe ou Godot (seção 4.2).
 3. **I2 Janela própria.** Proposta: abrir no navegador padrão na primeira versão; janela própria
