@@ -1,0 +1,29 @@
+[package]
+name = "utsim-lss-app"
+description = "UTSim Seis Sigma: Lean Six Sigma project manager of the UTSim family (native window)"
+version = "0.1.0"
+edition.workspace = true
+# eframe 0.36 needs Rust 1.95.
+rust-version = "1.95"
+
+[[bin]]
+name = "utsim-seis-sigma"
+path = "src/main.rs"
+
+[lib]
+name = "utsim_lss_app"
+path = "src/lib.rs"
+
+[dependencies]
+utsim-lss-core = { path = "../utsim-lss-core" }
+utsim-lss-store = { path = "../utsim-lss-store" }
+serde_json.workspace = true
+# Same egui as the launcher and the 3D viewer, so Cargo.lock keeps one egui. Light: glow
+# renderer only, no wgpu.
+eframe = { version = "=0.36.2", default-features = false, features = ["default_fonts", "glow", "wayland", "x11"] }
+
+[dev-dependencies]
+tempfile = "=3.27.0"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"
