@@ -53,6 +53,10 @@ fi
     --produto lean-seis-sigma \
     --nome "UTSim Seis Sigma" \
     --descricao "Gerenciador de projetos Lean Seis Sigma da família UTSim" \
+    --subtitulo "Projetos Lean Seis Sigma" \
+    --autor "UTSim" \
+    --cor "#4FD06A" \
+    --icone assets/icone/familia/lean-seis-sigma_256.png \
     --versao "$VERSAO" \
     --canal "$CANAL" \
     --plataforma "$PLATAFORMA" \
