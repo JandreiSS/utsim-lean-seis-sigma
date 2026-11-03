@@ -16,6 +16,8 @@ mod savings;
 mod schedule;
 mod team;
 mod tollgates;
+// Stage L4, the UTSim model of the project.
+pub mod model;
 // Stage L6, the implementation program.
 pub mod program;
 

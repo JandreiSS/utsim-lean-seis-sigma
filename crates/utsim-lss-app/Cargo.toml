@@ -17,6 +17,12 @@ path = "src/lib.rs"
 [dependencies]
 utsim-lss-core = { path = "../utsim-lss-core" }
 utsim-lss-store = { path = "../utsim-lss-store" }
+# The UTSim model of a project (stage L4): read, run and draw it; open it in UTSim through
+# the launcher.
+utsim-model.workspace = true
+utsim-core.workspace = true
+utsim-diagram.workspace = true
+utsim-launcher-core = { path = "../utsim-launcher-core" }
 serde_json.workspace = true
 serde.workspace = true
 # Same egui as the launcher and the 3D viewer, so Cargo.lock keeps one egui. Light: glow

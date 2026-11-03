@@ -41,10 +41,11 @@ pub enum Nav {
     Conflicts,
     Team,
     Closure,
+    Model,
 }
 
 impl Nav {
-    pub const PROJECT: [Nav; 12] = [
+    pub const PROJECT: [Nav; 13] = [
         Nav::Overview,
         Nav::Charter,
         Nav::Team,
@@ -56,6 +57,7 @@ impl Nav {
         Nav::Savings,
         Nav::Closure,
         Nav::Tools,
+        Nav::Model,
         Nav::Data,
     ];
 
@@ -76,6 +78,7 @@ impl Nav {
             Nav::Conflicts => "conflitos",
             Nav::Team => "equipe",
             Nav::Closure => "encerramento",
+            Nav::Model => "modelo",
         }
     }
 
@@ -103,6 +106,7 @@ impl Nav {
             Nav::Conflicts => t.nav_conflicts,
             Nav::Team => text::l1::l1().nav_team,
             Nav::Closure => text::l1::l1().nav_closure,
+            Nav::Model => text::l4::l4().nav_model,
         }
     }
 }
@@ -159,6 +163,8 @@ pub struct App {
     pub pnav: screens::program::ProgramNav,
     l6: screens::program::L6Ui,
     new_program: String,
+    /// The UTSim model of the project (stage L4).
+    l4: screens::model::L4Ui,
 }
 
 impl App {
@@ -206,6 +212,7 @@ impl App {
             pnav: screens::program::ProgramNav::default(),
             l6: screens::program::L6Ui::default(),
             new_program: String::new(),
+            l4: screens::model::L4Ui::default(),
         }
     }
 
@@ -234,6 +241,11 @@ impl App {
 
     pub fn session(&self) -> Option<&Session> {
         self.session.as_ref()
+    }
+
+    /// The open session, to write through it (tests and tools that prepare data).
+    pub fn session_mut(&mut self) -> Option<&mut Session> {
+        self.session.as_mut()
     }
 
     /// Opens a card in the side panel of the board.
@@ -739,6 +751,7 @@ impl App {
                 Nav::Team => self.team(ui, &mut s),
                 Nav::Closure => self.closure(ui, &mut s),
                 Nav::Tools => self.tools(ui, &mut s),
+                Nav::Model => self.model_screen(ui, &mut s),
             });
         });
 

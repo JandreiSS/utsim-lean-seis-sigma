@@ -643,9 +643,9 @@ atende o master black belt: um programa com duas ou mais unidades de negócio, o
 oportunidades até o termo, a designação de belts com a capacidade de cada um, o diário de
 mentoria, a fila de revisões de tollgate com trabalho padrão, uma onda de formação de green
 belts (candidatos, aprovação do gestor, turma, currículo ligado às ferramentas, presença, prova,
-requisitos de certificação conferidos pelo app e registro com validade), o modo de ensino com
-projetos-exemplo e pacotes de exercícios, os painéis do programa e os perfis de acesso. São as
-fases L6, L7 e L8 da seção 5.2.
+requisitos de certificação conferidos pelo app e registro com validade), os painéis do programa
+e os perfis de acesso. São as fases L6 e L7 da seção 5.2. O modo de ensino (antigo L8) saiu do
+UTSim Seis Sigma (decisão N2, seção 7): vira um app próprio baseado no UTSim.
 
 ### 5.2 Fases
 
@@ -659,13 +659,13 @@ plano; Haiku para tarefas mecânicas).
 | **L1 Gestão do projeto** (MVP) | (**feita** em 2026-11-03: regras em `utsim-lss-core` (`portfolio`, `charter`, `roles`, `tollgate`, `board`, `risk`, `meeting`, `calendar`, `schedule`, `savings`, `closure`, `lessons`) e telas em `utsim-lss-app/src/screens`; carteira numa pasta própria ao lado dos projetos, com unidade de negócio e programa como entidades (MB1 provisória); cronograma calculado pelo `utsim-pert`; janela própria de escolha de pasta e "hoje" no fuso local, pendências da L0. Ficam para depois: visão "minhas ações" da carteira, raias no kanban, reuniões recorrentes, ata de tollgate preenchida com as decisões, capacidade dos belts em horas, somas de ganhos da carteira por área, ano e belt, diagrama da rede do PERT na tela, gráficos com `egui_plot`, modelos de fluxo da empresa (4.7) e a cadeia de hash por autor) carteira, banco de ideias, priorização (matriz, pontuação, alinhamento), escolha da abordagem, termo versionado, papéis e RACI, fases e tollgates com checklists manuais e verificados, kanban de ações, riscos, reuniões e atas, cronograma com Gantt e CPM/PERT do `utsim-pert` e calendário, ganhos com estados e validação, encerramento, lições | 45–62 | Opus 8–12 (regras de tollgate, calendário, ganhos); Sonnet 37–50 (telas) |
 | **L2 Ferramentas qualitativas** (MVP) | (**feita** em 2026-11-03: módulo `utsim_lss_core::tools` e tela "Ferramentas", cada ferramenta um entregável da fase com cada célula no diário; tabela de AP própria em 12 regras monótonas, testada nas 1000 combinações, e importação CSV da tabela da empresa; gráficos com `egui_plot`; ficam para L4 o SIPOC gerado do modelo e para L5 a impressão do A3, do FMEA e do plano de controle) VOC/CTQ, SIPOC manual, Ishikawa, 5 porquês, matriz C&E, FMEA com RPN e AP configurável, plano de coleta, plano de controle e de resposta, Pareto, A3 | 24–32 | Opus 3–4 (FMEA e C&E); Sonnet 21–28 |
 | **L3 Estatística essencial** (MVP), em `utsim-stats` e `utsim-quality` | (**feita**, falta só a tela: em `utsim-quality`, A-D, capacidade normal, por percentis e Box-Cox, DPMO e nível sigma com o deslocamento de 1,5σ explícito, as sete cartas com Western Electric e Nelson; em `utsim-stats`, módulos `descriptive`, `hypothesis` e `nonparametric` com descritiva, dados dos gráficos, os três testes t, ANOVA com Tukey, qui-quadrado, Fisher, proporções, Mann-Whitney e Wilcoxon, validados contra NIST StRD univariado e ANOVA e exemplos de livro; comando `utsim estatistica`) descritiva, gráficos (dados), A-D, capacidade normal e por percentis e Box-Cox, DPMO e nível sigma, I-MR, X̄-R, X̄-S, p, np, c, u com Western Electric e Nelson, testes t (três), ANOVA de um fator com Tukey, qui-quadrado, proporções, Mann-Whitney e Wilcoxon; testes de referência (NIST StRD e livros) | 34–46 | Opus 28–38; Sonnet 6–8 (telas de análise) |
-| **L4 Integração essencial** (MVP) | ligação ao modelo com hash, fluxograma e carta, SIPOC gerado, conjuntos simulados rotulados, cenários com diferença pareada e pacote `estudo.json`, gargalo e gargalo móvel, PERT observado, abrir no UTSim | 18–26 | Opus 8–12 (SIPOC, estudos, reprodutibilidade); Sonnet 10–14 |
+| **L4 Integração essencial** (MVP) | (**feita** em 2026-11-03: módulos `simulacao` e `dados` de `utsim-lss-core`, que passa a usar `utsim-model` e `utsim-diagram`, e a tela "Modelo UTSim" do projeto; replicações e estudos num fio de trabalho; conjuntos de dados com origem Real, Gêmeo ou Simulado; o gargalo móvel usa o rastro de `utsim-model`; ficam para depois o VSM e o espaguete (P4), o DOE no simulador (P3) e o ganho estimado lançado direto do estudo) ligação ao modelo com hash, fluxograma e carta, SIPOC gerado, conjuntos simulados rotulados, cenários com diferença pareada e pacote `estudo.json`, gargalo e gargalo móvel, PERT observado, abrir no UTSim | 18–26 | Opus 8–12 (SIPOC, estudos, reprodutibilidade); Sonnet 10–14 |
 | **L5 Relatórios e modelos** (MVP) | impressão do A3, tollgate, termo, ata, FMEA e plano de controle; `.xlsx` e CSV; modelos da empresa na pasta `modelos/`; base de conhecimento com busca; `.lssz` | 16–22 | Sonnet 15–20; Haiku 1–2 |
 | *Subtotal L0 a L5* | | *167–230* | *Opus ≈ 61–86; Sonnet ≈ 104–140; Haiku ≈ 2–4* |
 | **L6 Programa de implantação** (MVP ampliado, seção 8.1 a 8.4, 8.7 e 8.8) | (**feita** em 2026-11-03: regras em `utsim-lss-core` nos módulos `programa`, `designacao`, `mentoria`, `revisao`, `painel`, `perfis` e `privacidade` (decisão MB9) e telas em `utsim-lss-app/src/screens/program`; pasta de programa com diário próprio ao lado das carteiras e dos projetos (`utsim_lss_store::program`), que lê só o resumo de cada pasta; diário de mentoria em pasta restrita por belt (`mentoria/<belt>.lss`); permissão conferida na ação e na reconstrução, pelo perfil do autor no instante da operação; anonimização que reescreve o histórico dos campos pessoais. Ficam para depois: a lista de papéis assinada (P7), a exportação dos painéis em PDF e `.xlsx` (L5), os pedidos de projeto de certificação na pauta do comitê, o funil de certificação dos painéis e os níveis estudou e praticou alimentados pela formação e pelo ensino (L7 e L8, entidades prontas: pessoa com nível, formação e certificação, mapa de competências), o tempo-alvo por fase do modelo de fluxo da empresa (4.7, hoje padrão fixo) e as pastas restritas de finanças, questões e notas, que o app ainda não cria) programa com unidades de negócio, objetivos e metas; funil entre carteiras (ideia, triagem, seleção, abertura) com comitê de seleção; capacidade de belts e champions; designação com sugestão ordenada; diário de mentoria e mapa de competências; fila de revisões de tollgate com trabalho padrão e parecer do MBB; painéis do programa; perfis e pastas restritas | 36–50 | Opus 10–14 (agregação do programa, validação de autoria por perfil, sugestão de designação, indicadores de tempo de ciclo); Sonnet 25–34 (telas, painéis, roteiros de revisão); Haiku 1–2 (catálogo de textos) |
 | **L7 Formação e certificação** (MVP ampliado, seção 8.5) | (**feita** em 2026-11-03: módulos `formacao` (com `curriculum`, `teams` e `exams`) e `certificacao` de `utsim-lss-core`, telas em `utsim-lss-app/src/screens/program`; pastas restritas `formacao/questoes.lss`, `formacao/notas.lss` e `formacao/turmas/<turma>.lss` com diário próprio e escrita conferida; problema prático calculado por `utsim-stats` e `utsim-quality`; ficam para L5 o certificado em PDF e para P9 a importação de pessoas por CSV, a análise dos itens e a avaliação de reação) ondas e turmas, indicação com critérios, aprovação do gestor, checagem de capacidade, lista de espera, montagem das equipes de formação, currículo por belt ligado às ferramentas, presença, banco de questões e provas com sorteio reprodutível e correção, requisitos de certificação conferidos sobre os dados do app, registro com validade e renovação, instrutores, certificado em PDF | 34–46 | Opus 8–11 (motor de requisitos, montagem das equipes com restrições, sorteio e correção numérica); Sonnet 25–33 (telas, certificado, relatórios da turma); Haiku 1–2 (importação de listas de pessoas por CSV) |
-| **L8 Modo de ensino** (MVP ampliado, seção 8.6) | espaço de treino separado da carteira real, três projetos-exemplo completos, conjuntos de dados didáticos com resposta conhecida, pacotes de exercícios com correção automática, criação de casos pelo MBB (do zero, de projeto encerrado anonimizado ou de modelo UTSim), progresso da turma | 23–34 | Opus 6–9 (geradores de dados com efeito plantado, anonimização, correção com tolerância); Sonnet 15–22 (projetos-exemplo, enunciados, telas); Haiku 2–3 (empacotamento dos exercícios, conferência de catálogo) |
-| **Total do MVP** (L0 a L8 com P1, decisões M1 e M2) | | **278–385** | Opus ≈ 99–139; Sonnet ≈ 173–235; Haiku ≈ 6–11 |
+| ~~**L8 Modo de ensino**~~ (**saiu do UTSim Seis Sigma** por decisão do dono de 2026-11-03: vira um app de ensino próprio, baseado no UTSim, com plano à parte; as horas não contam mais aqui) | espaço de treino separado da carteira real, três projetos-exemplo completos, conjuntos de dados didáticos com resposta conhecida, pacotes de exercícios com correção automática, criação de casos pelo MBB (do zero, de projeto encerrado anonimizado ou de modelo UTSim), progresso da turma | 23–34 | Opus 6–9 (geradores de dados com efeito plantado, anonimização, correção com tolerância); Sonnet 15–22 (projetos-exemplo, enunciados, telas); Haiku 2–3 (empacotamento dos exercícios, conferência de catálogo) |
+| **Total do MVP** (L0 a L7 com P1, decisões M1, M2 e N2) | | **255–351** | Opus ≈ 93–130; Sonnet ≈ 158–213; Haiku ≈ 4–8 |
 | P1 MSA (no MVP pela decisão M1) | (**cálculos feitos** em `utsim-quality`, menos o estudo do tipo 1; falta o checklist) Gage R&R por ANOVA e médias e amplitudes, tipo 1, vício e linearidade, atributos com kappa de Cohen e Fleiss; checklist verificado do Medir | 18–25 | Opus 14–19; Sonnet 4–6 |
 | P2 Estatística ampliada | Johnson, Levene e Bartlett, ANOVA de dois fatores, Kruskal-Wallis, Mood, Friedman, Fisher, poder e tamanho de amostra, correlação, regressão múltipla com diagnósticos, logística, seleção de variáveis, EWMA e CUSUM com ARL (**feitos** em `utsim-quality`) | 30–42 | Opus 25–35; Sonnet 5–7 |
 | P3 DOE | fatorial, fracionado com aliases, Plackett-Burman, CCD, Box-Behnken, análise, Lenth, superfície e desejabilidade; DOE no simulador (gerador para `Experiment`) | 30–42 | Opus 24–34; Sonnet 6–8 |
@@ -691,7 +691,7 @@ contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, 
 3. L1 e L2 (interface) com L4. L6 começa junto com L1, porque a carteira de L1 nasce como
    carteira de uma unidade dentro do programa (seção 8.1); o L0 em andamento não muda, só
    precisa aceitar uma pasta de programa acima das pastas de projeto com o mesmo diário.
-4. L7 e L8 depois de L2 e L3, porque o currículo e os exercícios apontam para ferramentas que já
+4. L7 depois de L2 e L3 (o antigo L8 vai para o app de ensino), porque o currículo aponta para ferramentas que já
    existem.
 5. L5 e piloto interno: um programa real pequeno (uma onda de green belts com seus projetos) e,
    em paralelo, uma turma de aula (decisão U1); depois P2 a P9 conforme o uso.
@@ -1006,6 +1006,13 @@ decididas acima continuam valendo; estas são propostas:
     `mentoria`, `ensino` e `painel` em `utsim-lss-core`, sem crate nova; os geradores de dados
     didáticos usam `utsim-stats` e `utsim-model`. Alternativa: crate `utsim-lss-edu` para
     formação e ensino.
+24. **N2 Ensino fora do Seis Sigma** (decisão do dono, 2026-11-03): "O modo ensino não deve
+    fazer parte do Seis Sigma e sim ser um novo app, baseado no UTSim". O antigo L8 (seção 8.6)
+    sai do MVP do UTSim Seis Sigma (MVP agora L0 a L7 com P1, 255–351 h); o módulo `ensino` de
+    MB9 não é criado aqui. Fica no UTSim Seis Sigma só o ponto de ligação: o nível `praticou`
+    do mapa de competências vem dos exercícios marcados na presença das turmas (L7) e de
+    entradas `competencia` de origem `exercicio`, que o app de ensino poderá gravar no diário
+    do programa (`mentoria::record_level`). O plano do app de ensino será escrito à parte.
 
 ---
 
@@ -1180,6 +1187,10 @@ turmas, horas dadas (contam para a renovação do próprio instrutor) e, com P9,
 reação dos alunos.
 
 ### 8.6 Modo de ensino
+
+> **Saiu do UTSim Seis Sigma** (decisão N2 de 2026-11-03, seção 7): esta seção fica como
+> referência para o app de ensino próprio, baseado no UTSim, que terá plano à parte. No
+> UTSim Seis Sigma fica só o ponto de ligação com o mapa de competências.
 
 O modo de ensino serve à formação da empresa (seção 8.5) e ao uso em aula do dono (decisão U1).
 
