@@ -9,6 +9,8 @@
 //! - [`theme`]: dark and light look.
 
 pub mod app;
+/// The documents of the reports (stage L5).
+pub mod reports;
 pub mod session;
 pub mod text;
 pub mod theme;

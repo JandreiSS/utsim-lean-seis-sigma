@@ -18,6 +18,8 @@ mod team;
 mod tollgates;
 // Stage L4, the UTSim model of the project.
 pub mod model;
+// Stage L5, reports.
+pub mod reports;
 // Stage L6, the implementation program.
 pub mod program;
 

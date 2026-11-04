@@ -42,10 +42,11 @@ pub enum Nav {
     Team,
     Closure,
     Model,
+    Reports,
 }
 
 impl Nav {
-    pub const PROJECT: [Nav; 13] = [
+    pub const PROJECT: [Nav; 14] = [
         Nav::Overview,
         Nav::Charter,
         Nav::Team,
@@ -58,6 +59,7 @@ impl Nav {
         Nav::Closure,
         Nav::Tools,
         Nav::Model,
+        Nav::Reports,
         Nav::Data,
     ];
 
@@ -79,6 +81,7 @@ impl Nav {
             Nav::Team => "equipe",
             Nav::Closure => "encerramento",
             Nav::Model => "modelo",
+            Nav::Reports => "relatorios",
         }
     }
 
@@ -107,6 +110,7 @@ impl Nav {
             Nav::Team => text::l1::l1().nav_team,
             Nav::Closure => text::l1::l1().nav_closure,
             Nav::Model => text::l4::l4().nav_model,
+            Nav::Reports => text::l5::l5().nav_reports,
         }
     }
 }
@@ -165,6 +169,8 @@ pub struct App {
     new_program: String,
     /// The UTSim model of the project (stage L4).
     l4: screens::model::L4Ui,
+    /// The reports' template being edited (stage L5).
+    l5: screens::reports::L5Ui,
 }
 
 impl App {
@@ -213,6 +219,7 @@ impl App {
             l6: screens::program::L6Ui::default(),
             new_program: String::new(),
             l4: screens::model::L4Ui::default(),
+            l5: screens::reports::L5Ui::default(),
         }
     }
 
@@ -752,6 +759,7 @@ impl App {
                 Nav::Closure => self.closure(ui, &mut s),
                 Nav::Tools => self.tools(ui, &mut s),
                 Nav::Model => self.model_screen(ui, &mut s),
+                Nav::Reports => self.reports_screen(ui, &mut s),
             });
         });
 

@@ -357,6 +357,38 @@ impl App {
                             }
                         }
                     }
+                    if c.issued()
+                        && ui
+                            .small_button(crate::text::l5::l5().certificate_pdf)
+                            .clicked()
+                    {
+                        let person = c.person.map(|p| d.person(p)).unwrap_or_default();
+                        let issuer = c.issuer.map(|p| d.person(p)).unwrap_or_default();
+                        let doc = crate::reports::certificate_doc(
+                            c,
+                            &person,
+                            &s.folder().title(),
+                            &issuer,
+                        );
+                        let tp = self.report_template(s);
+                        let footer = (crate::text::l5::l5().printed_by)(
+                            &s.folder().me().name,
+                            &d.today.format_br(),
+                        );
+                        let bytes = utsim_lss_core::relatorios::pdf::render(&doc, &tp, &footer);
+                        let r = utsim_lss_store::program::write_certificate(
+                            s.folder().root(),
+                            c.number.unwrap_or(0),
+                            &bytes,
+                        );
+                        if let Some(p) = self.report(r) {
+                            let _ = crate::app::screens::model::open_with_system(&p);
+                            self.set_status(
+                                (crate::text::l5::l5().saved_at)(&p.display().to_string()),
+                                false,
+                            );
+                        }
+                    }
                     if c.issued() && ui.small_button(t.revoke).clicked() {
                         let reason = self.l6.take_input("motivo_revogacao");
                         match certificacao::revoke(c, &reason) {

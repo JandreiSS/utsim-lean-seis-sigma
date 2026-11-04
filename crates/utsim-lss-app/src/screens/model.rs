@@ -130,7 +130,7 @@ pub fn parse_set(text: &str) -> Result<BTreeMap<String, String>, String> {
 }
 
 /// Opens a file with the system's program (a saved diagram page).
-fn open_with_system(path: &Path) -> std::io::Result<()> {
+pub(crate) fn open_with_system(path: &Path) -> std::io::Result<()> {
     #[cfg(windows)]
     let mut c = {
         let mut c = std::process::Command::new("cmd");
