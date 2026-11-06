@@ -136,3 +136,84 @@ fn model_screen_links_runs_and_generates() {
     let now = simulacao::hash_text(&std::fs::read_to_string(root.join("modelos/mm1.ron")).unwrap());
     assert_eq!(simulacao::stale(s.state(), s.project(), &now).len(), 2);
 }
+
+#[test]
+fn estimated_gain_booked_from_a_saved_study() {
+    use std::collections::BTreeMap;
+    use utsim_lss_core::savings;
+    use utsim_lss_core::simulacao::{Difference, GainInput, StudyFile};
+    let dir = tempfile::tempdir().unwrap();
+    let ctx = egui::Context::default();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 8))),
+    );
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com"));
+    let work = dir.path().join("Drive");
+    std::fs::create_dir_all(&work).unwrap();
+    assert!(app.create_project(&work, "Segunda máquina", Approach::Dmaic));
+    let file = StudyFile {
+        schema: simulacao::STUDY_SCHEMA,
+        name: "Duas máquinas".into(),
+        model: "Linha".into(),
+        model_hash: "ab".repeat(32),
+        version: "x".into(),
+        replications: 10,
+        seed: 3,
+        level: simulacao::LEVEL,
+        scenarios: Vec::new(),
+        measures: vec!["vazao".into()],
+        results: Vec::new(),
+        per_replication: BTreeMap::new(),
+        differences: vec![Difference {
+            scenario: "duas".into(),
+            metric: "vazao".into(),
+            mean: 12.0,
+            half_width: 2.0,
+            significant: true,
+            minimum: 0.0,
+            relevant: true,
+        }],
+    };
+    let (study, data_file) = {
+        let s = app.session_mut().unwrap();
+        let json = file.to_json();
+        let (f, hash) = s.folder().add_data(json.as_bytes(), "json").unwrap();
+        let id = s.new_id();
+        let today = s.today();
+        s.apply(simulacao::record_study(
+            s.project(),
+            id,
+            &file,
+            &f,
+            &hash,
+            today,
+        ))
+        .unwrap();
+        (id, f)
+    };
+    app.nav = Nav::Model;
+    frames(&mut app, &ctx, 2);
+    let g = GainInput {
+        description: "Vazão a mais".into(),
+        category: utsim_lss_core::domain::SavingCategory::Hard,
+        value_per_unit: 100.0,
+        periods_per_year: 12.0,
+        higher_is_better: true,
+        conservative: true,
+    };
+    assert!(app.book_study_gain(study, 0, &g), "{:?}", app.status());
+    frames(&mut app, &ctx, 1);
+    let s = app.session().unwrap();
+    let plans = savings::plans(s.state(), s.project());
+    assert_eq!(plans.len(), 1);
+    assert!((plans[0].saving.value - 10.0 * 100.0 * 12.0).abs() < 1e-9);
+    assert_eq!(plans[0].source, savings::Source::Simulation);
+    assert_eq!(plans[0].study, Some(study));
+    // A study file changed after it was saved is refused.
+    let path = s.folder().data_path(&data_file);
+    std::fs::write(&path, file.to_json().replace("12.0", "99.0")).unwrap();
+    assert!(!app.book_study_gain(study, 0, &g));
+    assert!(app.status().is_some_and(|(_, e)| *e));
+}

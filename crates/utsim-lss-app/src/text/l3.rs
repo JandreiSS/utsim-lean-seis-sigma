@@ -123,6 +123,9 @@ pub fn kind_name(k: &str) -> &'static str {
         "wilcoxon" => "Wilcoxon pareado",
         "gage_rr" => "MSA: Gage R&R",
         "msa_tipo1" => "MSA: estudo do tipo 1",
+        "msa_vies" => "MSA: viés",
+        "msa_linearidade" => "MSA: linearidade",
+        "msa_atributos" => "MSA: concordância de atributos",
         _ => "?",
     }
 }

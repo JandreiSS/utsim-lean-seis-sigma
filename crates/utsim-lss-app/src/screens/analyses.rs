@@ -15,11 +15,12 @@ use utsim_quality::charts::ChartKind;
 use super::super::App;
 use crate::session::Session;
 use crate::text::l3::{l3, origin_name};
+use crate::text::l10::l10;
 use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 15] = [
+pub const KINDS: [&str; 18] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -35,6 +36,9 @@ pub const KINDS: [&str; 15] = [
     "wilcoxon",
     "gage_rr",
     "msa_tipo1",
+    "msa_vies",
+    "msa_linearidade",
+    "msa_atributos",
 ];
 
 /// The analyses screen's state.
@@ -47,6 +51,7 @@ pub struct L3Ui {
     pub a: usize,
     pub b: usize,
     pub c: usize,
+    pub d: usize,
     pub numbers: [String; 4],
     pub chart: usize,
     pub flag: bool,
@@ -304,6 +309,26 @@ impl App {
                     numbox(ui, t.reference, 0, &mut u.numbers);
                     numbox(ui, t.tolerance, 1, &mut u.numbers);
                 }
+                "msa_vies" => {
+                    Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
+                    numbox(ui, t.reference, 0, &mut u.numbers);
+                    numbox(ui, l10().tolerance_opt, 1, &mut u.numbers);
+                }
+                "msa_linearidade" => {
+                    Self::column_combo(ui, "col_a", l10().reference_col, table, &mut u.a);
+                    Self::column_combo(ui, "col_b", l10().measured_col, table, &mut u.b);
+                    numbox(ui, l10().process_variation, 0, &mut u.numbers);
+                }
+                "msa_atributos" => {
+                    let x = l10();
+                    Self::column_combo(ui, "col_a", x.item, table, &mut u.a);
+                    Self::column_combo(ui, "col_b", x.appraiser, table, &mut u.b);
+                    Self::column_combo(ui, "col_c", x.response, table, &mut u.c);
+                    ui.checkbox(&mut u.flag, x.with_standard);
+                    if u.flag {
+                        Self::column_combo(ui, "col_d", x.standard, table, &mut u.d);
+                    }
+                }
                 _ => {}
             }
         });
@@ -370,6 +395,22 @@ impl App {
                 col: u.a,
                 reference: need(0, l3().reference)?,
                 tolerance: need(1, l3().tolerance)?,
+            },
+            "msa_vies" => Recipe::Bias {
+                col: u.a,
+                reference: need(0, l3().reference)?,
+                tolerance: n(1),
+            },
+            "msa_linearidade" => Recipe::Linearity {
+                reference: u.a,
+                value: u.b,
+                variation: n(0),
+            },
+            "msa_atributos" => Recipe::Attribute {
+                item: u.a,
+                appraiser: u.b,
+                response: u.c,
+                standard: u.flag.then_some(u.d),
             },
             _ => return Err("análise desconhecida".into()),
         })

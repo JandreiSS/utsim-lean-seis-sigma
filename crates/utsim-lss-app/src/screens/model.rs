@@ -12,13 +12,18 @@ use std::sync::mpsc::{self, Receiver};
 use eframe::egui;
 use serde_json::Value;
 use utsim_lss_core::dados;
-use utsim_lss_core::simulacao::{self, AnalysisKind, Bottleneck, Observed, Share, StudyFile};
+use utsim_lss_core::domain::SavingCategory;
+use utsim_lss_core::id::Id;
+use utsim_lss_core::simulacao::{
+    self, AnalysisKind, Bottleneck, GainInput, Observed, Share, StudyFile,
+};
 use utsim_model::Model;
 use utsim_model::experiment::Scenario;
 
 use super::super::App;
 use crate::session::Session;
 use crate::text::l4::l4;
+use crate::text::l10::l10;
 use crate::text::texts;
 use crate::theme;
 
@@ -79,6 +84,21 @@ pub struct L4Ui {
     pub study_name: String,
     pub from: String,
     pub to: String,
+    /// The form "Lançar ganho estimado" of a saved study.
+    pub gain: Option<GainForm>,
+}
+
+/// The form that turns a difference of a saved study into an estimated saving.
+pub struct GainForm {
+    pub study: Id,
+    pub file: StudyFile,
+    pub diff: usize,
+    pub description: String,
+    pub value: String,
+    pub periods: String,
+    pub higher: bool,
+    pub conservative: bool,
+    pub soft: bool,
 }
 
 impl L4Ui {
@@ -790,12 +810,177 @@ impl App {
         for x in simulacao::studies(s.state(), s.project()) {
             let old = x.model_hash != ld.hash;
             let line = format!("· {} — {}", x.name, x.conclusion);
-            if old {
-                ui.colored_label(theme::WARN, format!("{line} ({})", t.old_version));
-            } else {
-                ui.label(line);
+            ui.horizontal_wrapped(|ui| {
+                if old {
+                    ui.colored_label(theme::WARN, format!("{line} ({})", t.old_version));
+                } else {
+                    ui.label(line);
+                }
+                if self.l4.gain.is_none() && ui.small_button(l10().book_gain).clicked() {
+                    match read_study(s, &x) {
+                        Ok(file) => {
+                            let diff = file
+                                .differences
+                                .iter()
+                                .position(|d| d.significant)
+                                .unwrap_or(0);
+                            self.l4.gain = Some(GainForm {
+                                study: x.id,
+                                file,
+                                diff,
+                                description: String::new(),
+                                value: String::new(),
+                                periods: String::new(),
+                                higher: true,
+                                conservative: true,
+                                soft: false,
+                            });
+                        }
+                        Err(e) => self.set_status(e, true),
+                    }
+                }
+            });
+        }
+        self.gain_form(ui, s);
+    }
+
+    fn gain_form(&mut self, ui: &mut egui::Ui, s: &mut Session) {
+        let t = l10();
+        let Some(f) = self.l4.gain.as_mut() else {
+            return;
+        };
+        ui.group(|ui| {
+            ui.strong(t.gain_title);
+            ui.weak(t.gain_intro);
+            let label = |d: &simulacao::Difference| {
+                format!(
+                    "{} · {}: {} [{}; {}]",
+                    d.scenario,
+                    d.metric,
+                    super::show_number(d.mean),
+                    super::show_number(d.lo()),
+                    super::show_number(d.hi())
+                )
+            };
+            ui.horizontal(|ui| {
+                ui.label(t.gain_difference);
+                egui::ComboBox::from_id_salt("ganho_diferenca")
+                    .selected_text(
+                        f.file
+                            .differences
+                            .get(f.diff)
+                            .map(label)
+                            .unwrap_or_default(),
+                    )
+                    .show_ui(ui, |ui| {
+                        for (i, d) in f.file.differences.iter().enumerate() {
+                            ui.add_enabled_ui(d.significant, |ui| {
+                                ui.selectable_value(&mut f.diff, i, label(d));
+                            });
+                        }
+                    });
+            });
+            ui.add(
+                egui::TextEdit::singleline(&mut f.description)
+                    .hint_text(t.gain_description)
+                    .desired_width(360.0),
+            );
+            ui.horizontal(|ui| {
+                ui.label(t.gain_value_per_unit);
+                ui.add(egui::TextEdit::singleline(&mut f.value).desired_width(80.0));
+                ui.label(t.gain_periods);
+                ui.add(egui::TextEdit::singleline(&mut f.periods).desired_width(60.0));
+            });
+            ui.checkbox(&mut f.higher, t.gain_higher);
+            ui.checkbox(&mut f.conservative, t.gain_conservative);
+            ui.checkbox(&mut f.soft, t.gain_soft);
+        });
+        let Some(f) = self.l4.gain.as_ref() else {
+            return;
+        };
+        let input = gain_input(f);
+        let study = simulacao::studies(s.state(), s.project())
+            .into_iter()
+            .find(|x| x.id == f.study);
+        let preview = match (&input, &study, f.file.differences.get(f.diff)) {
+            (Some(g), Some(st), Some(d)) => Some(simulacao::gain_value(st, &f.file, d, g)),
+            _ => None,
+        };
+        let (study_id, diff) = (f.study, f.diff);
+        let mut book = false;
+        let mut cancel = false;
+        ui.horizontal(|ui| {
+            match &preview {
+                Some(Ok((v, _))) => {
+                    ui.label((t.gain_preview)(&crate::text::money(*v)));
+                }
+                Some(Err(e)) => {
+                    ui.colored_label(theme::WARN, e.to_string());
+                }
+                None => {
+                    ui.weak(t.gain_bad_number);
+                }
+            }
+            book = ui
+                .add_enabled(
+                    matches!(preview, Some(Ok(_))),
+                    egui::Button::new(t.gain_book),
+                )
+                .clicked();
+            cancel = ui.button(t.cancel).clicked();
+        });
+        if book {
+            if let Some(g) = input {
+                self.book_gain(s, study_id, diff, &g);
+            }
+        } else if cancel {
+            self.l4.gain = None;
+        }
+    }
+
+    /// Books an estimated saving from a difference of a saved study; whether it worked.
+    fn book_gain(&mut self, s: &mut Session, study: Id, diff: usize, g: &GainInput) -> bool {
+        let Some(x) = simulacao::studies(s.state(), s.project())
+            .into_iter()
+            .find(|x| x.id == study)
+        else {
+            return false;
+        };
+        let file = match read_study(s, &x) {
+            Ok(f) => f,
+            Err(e) => {
+                self.set_status(e, true);
+                return false;
+            }
+        };
+        let Some(d) = file.differences.get(diff) else {
+            return false;
+        };
+        match simulacao::gain_edits(s.project(), s.new_id(), &x, &file, d, g) {
+            Ok(e) => {
+                let ok = self.commit(s, e);
+                if ok {
+                    self.l4.gain = None;
+                    self.set_status(l10().gain_booked, false);
+                }
+                ok
+            }
+            Err(e) => {
+                self.set_status(e.to_string(), true);
+                false
             }
         }
+    }
+
+    /// Books an estimated saving from the difference `diff` of a saved study, as the form
+    /// "Lançar ganho estimado" does (tests and tools).
+    pub fn book_study_gain(&mut self, study: Id, diff: usize, g: &GainInput) -> bool {
+        let Some(mut s) = self.session.take() else {
+            return false;
+        };
+        let ok = self.book_gain(&mut s, study, diff, g);
+        self.session = Some(s);
+        ok
     }
 
     fn observed_section(&mut self, ui: &mut egui::Ui, s: &mut Session, ld: &Loaded) {
@@ -868,4 +1053,32 @@ impl App {
             }
         }
     }
+}
+
+/// The package of a saved study, read from `dados/` and checked against its hash.
+fn read_study(s: &Session, x: &simulacao::Study) -> Result<StudyFile, String> {
+    let text = s
+        .folder()
+        .read_data(&x.file)
+        .map_err(|e| (texts().error)(&e.to_string()))?;
+    if simulacao::hash_text(&text) != x.hash {
+        return Err(l10().gain_file_changed.to_string());
+    }
+    StudyFile::from_json(&text).map_err(|e| (texts().error)(&e))
+}
+
+/// The numbers of the gain form, when they read.
+fn gain_input(f: &GainForm) -> Option<GainInput> {
+    Some(GainInput {
+        description: f.description.clone(),
+        category: if f.soft {
+            SavingCategory::Soft
+        } else {
+            SavingCategory::Hard
+        },
+        value_per_unit: super::parse_number(&f.value)?,
+        periods_per_year: super::parse_number(&f.periods)?,
+        higher_is_better: f.higher,
+        conservative: f.conservative,
+    })
 }
