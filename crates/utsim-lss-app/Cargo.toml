@@ -21,6 +21,8 @@ utsim-lss-store = { path = "../utsim-lss-store" }
 # the launcher.
 utsim-model.workspace = true
 utsim-core.workspace = true
+# The data and analyses screen reads CSV and draws the charts (stage L3).
+utsim-quality.workspace = true
 utsim-diagram.workspace = true
 utsim-launcher-core = { path = "../utsim-launcher-core" }
 serde_json.workspace = true

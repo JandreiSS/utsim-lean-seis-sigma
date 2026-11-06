@@ -681,6 +681,8 @@ pub fn check_name(c: &Check) -> String {
         Check::LessonsRecorded => "ao menos uma lição aprendida".into(),
         Check::OwnerAccepted => "aceite do dono do processo".into(),
         Check::DeliverableExists(t) => format!("existe o entregável \"{t}\""),
+        Check::MsaApproved => "Gage R&R com %VE do GRR ≤ 30 % ou justificado".into(),
+        Check::BaselineReal => "capacidade ou carta sobre dado de origem Real".into(),
     }
 }
 

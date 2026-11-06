@@ -43,10 +43,11 @@ pub enum Nav {
     Closure,
     Model,
     Reports,
+    Analyses,
 }
 
 impl Nav {
-    pub const PROJECT: [Nav; 14] = [
+    pub const PROJECT: [Nav; 15] = [
         Nav::Overview,
         Nav::Charter,
         Nav::Team,
@@ -58,6 +59,7 @@ impl Nav {
         Nav::Savings,
         Nav::Closure,
         Nav::Tools,
+        Nav::Analyses,
         Nav::Model,
         Nav::Reports,
         Nav::Data,
@@ -82,6 +84,7 @@ impl Nav {
             Nav::Closure => "encerramento",
             Nav::Model => "modelo",
             Nav::Reports => "relatorios",
+            Nav::Analyses => "analises",
         }
     }
 
@@ -111,6 +114,7 @@ impl Nav {
             Nav::Closure => text::l1::l1().nav_closure,
             Nav::Model => text::l4::l4().nav_model,
             Nav::Reports => text::l5::l5().nav_reports,
+            Nav::Analyses => text::l3::l3().nav_analyses,
         }
     }
 }
@@ -171,6 +175,8 @@ pub struct App {
     l4: screens::model::L4Ui,
     /// The reports' template being edited (stage L5).
     l5: screens::reports::L5Ui,
+    /// The data and analyses screen (stage L3 and P1).
+    l3: screens::analyses::L3Ui,
 }
 
 impl App {
@@ -220,6 +226,7 @@ impl App {
             new_program: String::new(),
             l4: screens::model::L4Ui::default(),
             l5: screens::reports::L5Ui::default(),
+            l3: screens::analyses::L3Ui::default(),
         }
     }
 
@@ -760,6 +767,7 @@ impl App {
                 Nav::Tools => self.tools(ui, &mut s),
                 Nav::Model => self.model_screen(ui, &mut s),
                 Nav::Reports => self.reports_screen(ui, &mut s),
+                Nav::Analyses => self.analyses_screen(ui, &mut s),
             });
         });
 
