@@ -95,6 +95,8 @@ pub struct L10Texts {
     pub spaghetti_distance: S,
     pub working: S,
     pub report_analyses: S,
+    pub dash_pdf: S,
+    pub dash_xlsx: S,
 }
 
 pub static PT_BR: L10Texts = L10Texts {
@@ -191,6 +193,8 @@ pub static PT_BR: L10Texts = L10Texts {
     spaghetti_distance: "Distância total",
     working: "Rodando o modelo com o rastro…",
     report_analyses: "Análises (com gráfico):",
+    dash_pdf: "Exportar PDF",
+    dash_xlsx: "Exportar planilha (.xlsx)",
 };
 
 pub fn l10() -> &'static L10Texts {

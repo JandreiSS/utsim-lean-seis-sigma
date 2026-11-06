@@ -14,7 +14,7 @@ mod capacity;
 mod certification;
 mod classroom;
 mod coaching;
-mod dashboards;
+pub mod dashboards;
 mod exams;
 pub mod l7;
 mod mytraining;
@@ -168,6 +168,10 @@ pub struct L6Ui {
     grant_unit: Option<Id>,
     /// The training screens (stage L7).
     pub(crate) l7: l7::L7Ui,
+    /// A dashboard export asked: leadership (or MBB), format, open the file.
+    pub(crate) export: Option<(bool, dashboards::Export, bool)>,
+    /// The file of the last dashboard export.
+    pub(crate) exported: Option<std::path::PathBuf>,
 }
 
 impl L6Ui {

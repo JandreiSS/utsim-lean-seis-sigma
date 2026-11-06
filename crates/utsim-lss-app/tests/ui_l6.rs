@@ -390,6 +390,32 @@ fn every_l6_screen_draws_over_a_filled_program() {
         assert_eq!(app.screen, Screen::Project, "{nav:?}");
         no_error(&app, &format!("{nav:?}"));
     }
+    // Both dashboards exported to PDF and to the spreadsheet, into relatorios/.
+    use utsim_lss_app::app::screens::program::dashboards::Export;
+    for (nav, leadership) in [
+        (ProgramNav::MbbDashboard, false),
+        (ProgramNav::LeadershipDashboard, true),
+    ] {
+        app.pnav = nav;
+        for how in [Export::Pdf, Export::Xlsx] {
+            app.request_dashboard_export(leadership, how);
+            frames(&mut app, &ctx, 1);
+            no_error(&app, &format!("exportar {nav:?} {how:?}"));
+            let f = app
+                .last_dashboard_export()
+                .expect("arquivo exportado")
+                .to_path_buf();
+            let bytes = std::fs::read(&f).unwrap();
+            assert!(f.starts_with(root.join("relatorios")), "{f:?}");
+            match how {
+                Export::Pdf => {
+                    assert!(bytes.starts_with(b"%PDF-1.4"));
+                    assert!(String::from_utf8_lossy(&bytes).contains(" re f 0 g"));
+                }
+                Export::Xlsx => assert!(bytes.starts_with(b"PK")),
+            }
+        }
+    }
     app.close_project();
 
     // Every screen, as the belt: the MBB's views show a refusal, never an error.

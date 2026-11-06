@@ -1,7 +1,8 @@
 //! The scoreboard (8.1) and the two dashboards of 8.7: the MBB view, with every indicator
 //! down to the project and the person, and the leadership view, with six indicators,
 //! target and trend and no personal data. Every indicator shows its rule and the instant
-//! of the data (LSS-RNF-16).
+//! of the data (LSS-RNF-16). Both dashboards export to PDF (tables, rules and charts) and to
+//! `.xlsx` (one sheet per indicator), in the program's `relatorios/`.
 
 use eframe::egui::{self, Color32, RichText};
 use egui_plot::{Bar, BarChart, Legend, Plot};
@@ -9,6 +10,7 @@ use utsim_lss_core::domain::SavingStatus;
 use utsim_lss_core::painel::{self, Filter, Inputs, Kpi};
 use utsim_lss_core::perfis::Action;
 use utsim_lss_core::programa::{self, Stage};
+use utsim_lss_core::relatorios::{Chart, Document, pdf};
 use utsim_lss_core::savings::Category;
 
 use super::{Data, instant};
@@ -185,6 +187,8 @@ impl App {
             d.scanned_ms,
             s.clock().utc_offset_minutes(),
         )));
+        self.export_buttons(ui, false);
+        self.run_export(s, d, false, year, &f);
 
         // Pipeline.
         ui.separator();
@@ -464,6 +468,8 @@ impl App {
             unit: self.l6.unit_filter,
             year: Some(year),
         };
+        self.export_buttons(ui, true);
+        self.run_export(s, d, true, year, &f);
         let inputs = Inputs {
             state: s.state(),
             program: d.program,
@@ -536,5 +542,405 @@ impl App {
             d.scanned_ms,
             s.clock().utc_offset_minutes(),
         )));
+    }
+}
+
+// --- Export (version 2) ----------------------------------------------------------------------
+
+/// Which dashboard to export, and how.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Export {
+    Pdf,
+    Xlsx,
+}
+
+const STATES: [SavingStatus; 4] = [
+    SavingStatus::Estimated,
+    SavingStatus::Forecast,
+    SavingStatus::Realized,
+    SavingStatus::Validated,
+];
+
+/// The MBB dashboard as a document: every indicator as a table, with its rule, the funnel
+/// and the cycle times as charts, and the instant of the data.
+fn mbb_doc(s: &Session, d: &Data, f: &Filter) -> Document {
+    let tl = l6();
+    let mut doc = Document::new(tl.nav_mbb, &s.folder().title());
+    doc.para(&(tl.data_of)(&instant(
+        d.scanned_ms,
+        s.clock().utc_offset_minutes(),
+    )));
+    let fun = painel::funnel(&d.ideas, &d.opps, &d.records, d.today, f);
+    doc.heading(tl.ind_funnel);
+    doc.table(
+        tl.ind_funnel,
+        &[tl.stage, tl.count, tl.mean_age, tl.conversion],
+        Stage::ALL
+            .iter()
+            .map(|st| {
+                vec![
+                    stage_name(*st).to_string(),
+                    fun.totals.get(st).copied().unwrap_or(0).to_string(),
+                    fun.mean_age
+                        .get(st)
+                        .map_or(String::new(), |a| format!("{a:.0} d")),
+                    fun.conversion
+                        .iter()
+                        .find(|c| c.0 == *st)
+                        .map_or(String::new(), |c| format!("{:.0} %", c.2 * 100.0)),
+                ]
+            })
+            .collect(),
+        &[],
+    );
+    doc.chart(Chart {
+        title: tl.ind_funnel.into(),
+        bars: true,
+        labels: Stage::ALL
+            .iter()
+            .map(|s| stage_name(*s).to_string())
+            .collect(),
+        series: vec![(
+            String::new(),
+            Stage::ALL
+                .iter()
+                .map(|s| fun.totals.get(s).copied().unwrap_or(0) as f64)
+                .collect(),
+        )],
+        ..Chart::default()
+    });
+    doc.para(tl.rule_funnel);
+
+    let ct = painel::cycle_times(&d.records, f, None, |p| d.level_of(p));
+    doc.heading(tl.ind_cycle);
+    let fmt = |x: Option<f64>| x.map_or("-".into(), |v| format!("{v:.0} d"));
+    doc.table(
+        tl.ind_cycle,
+        &[
+            tl.approach,
+            tl.phase,
+            tl.samples,
+            tl.median,
+            tl.p80,
+            tl.target,
+        ],
+        ct.iter()
+            .map(|c| {
+                vec![
+                    approach_name(c.approach).to_string(),
+                    c.phase.clone(),
+                    c.samples.len().to_string(),
+                    fmt(c.median),
+                    fmt(c.p80),
+                    fmt(c.target),
+                ]
+            })
+            .collect(),
+        &[],
+    );
+    if !ct.is_empty() {
+        doc.chart(Chart {
+            title: tl.ind_cycle.into(),
+            bars: true,
+            labels: ct.iter().map(|c| c.phase.clone()).collect(),
+            series: vec![
+                (
+                    tl.median.into(),
+                    ct.iter().map(|c| c.median.unwrap_or(f64::NAN)).collect(),
+                ),
+                (
+                    tl.target.into(),
+                    ct.iter().map(|c| c.target.unwrap_or(f64::NAN)).collect(),
+                ),
+            ],
+            ..Chart::default()
+        });
+    }
+    doc.para(tl.rule_cycle);
+
+    let sv = painel::savings_by_state(&d.records, f);
+    doc.heading(tl.ind_savings);
+    let mut units: Vec<Option<utsim_lss_core::Id>> = sv.keys().map(|k| k.0).collect();
+    units.dedup();
+    let mut head = vec![tl.unit, tl.category];
+    head.extend(STATES.iter().map(|s| saving_status_name(*s)));
+    doc.table(
+        tl.ind_savings,
+        &head,
+        units
+            .iter()
+            .flat_map(|u| {
+                [Category::Hard, Category::Soft]
+                    .into_iter()
+                    .map(move |c| (*u, c))
+            })
+            .map(|(u, c)| {
+                let mut r = vec![
+                    d.unit_name(u),
+                    if c == Category::Hard { "hard" } else { "soft" }.to_string(),
+                ];
+                r.extend(
+                    STATES
+                        .iter()
+                        .map(|st| money(sv.get(&(u, c, *st)).copied().unwrap_or(0.0))),
+                );
+                r
+            })
+            .collect(),
+        &[],
+    );
+    doc.para(&(tl.official_total)(&money(painel::official_total(&sv))));
+    doc.para(tl.rule_savings);
+
+    let br = painel::belts_by_unit(&d.units, &d.members, &d.records, d.today);
+    doc.heading(tl.ind_belts);
+    let lv = |m: &std::collections::BTreeMap<programa::BeltLevel, usize>| {
+        m.iter()
+            .map(|(l, n)| format!("{} {n}", level_name(*l)))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    doc.table(
+        tl.ind_belts,
+        &[
+            tl.unit,
+            tl.active,
+            tl.trained,
+            tl.certified,
+            tl.coverage,
+            tl.expiring,
+        ],
+        br.iter()
+            .filter(|r| f.unit.is_none() || r.unit == f.unit)
+            .map(|r| {
+                vec![
+                    d.unit_name(r.unit),
+                    lv(&r.active),
+                    lv(&r.trained),
+                    lv(&r.certified),
+                    r.coverage.map_or("-".into(), |c| format!("{c:.1}")),
+                    r.expiring.to_string(),
+                ]
+            })
+            .collect(),
+        &[],
+    );
+    doc.para(tl.rule_belts);
+
+    let tools = utsim_lss_core::mentoria::all_tools();
+    let tu = painel::tool_usage(&d.records, &tools, &d.map, f);
+    doc.heading(tl.ind_tools);
+    doc.table(
+        tl.ind_tools,
+        &[tl.tool, tl.projects, tl.belts_applied],
+        tu.projects
+            .iter()
+            .map(|(tool, n)| {
+                vec![
+                    crate::text::l6::tool_label(tool),
+                    n.to_string(),
+                    tu.belts.get(tool).copied().unwrap_or(0).to_string(),
+                ]
+            })
+            .collect(),
+        &[],
+    );
+    doc.para(tl.rule_tools);
+
+    let od = painel::overdue(&d.records, &d.reviews, d.today, f);
+    doc.heading(tl.ind_overdue);
+    doc.para(&(tl.pending_reviews)(od.pending_reviews));
+    doc.bullets(
+        od.items
+            .iter()
+            .map(|i| {
+                let belts: Vec<String> = i.belts.iter().map(|b| d.person(*b)).collect();
+                (tl.overdue_line)(
+                    &i.title,
+                    &i.phase,
+                    i.days_late,
+                    &d.unit_name(i.unit),
+                    &belts.join(", "),
+                )
+            })
+            .collect(),
+    );
+    doc.para(tl.rule_overdue);
+
+    let wl = painel::workload(&d.loads);
+    doc.heading(tl.ind_load);
+    doc.table(
+        tl.ind_load,
+        &[
+            tl.level,
+            tl.people,
+            tl.hours_committed,
+            tl.capacity,
+            tl.overloaded,
+        ],
+        wl.iter()
+            .map(|(l, v)| {
+                vec![
+                    l.map_or(tl.no_level, level_name).to_string(),
+                    v.people.to_string(),
+                    format!("{:.1}", v.hours),
+                    format!("{:.1}", v.capacity),
+                    v.overloaded.to_string(),
+                ]
+            })
+            .collect(),
+        &[],
+    );
+    doc.para(tl.rule_load);
+    doc
+}
+
+/// The leadership dashboard as a document: the six indicators with target, last year and
+/// rule, and the validated savings per unit. No personal data, as on the screen.
+fn leadership_doc(s: &Session, d: &Data, year: i32, f: &Filter) -> Document {
+    let tl = l6();
+    let inputs = Inputs {
+        state: s.state(),
+        program: d.program,
+        projects: &d.records,
+        ideas: &d.ideas,
+        members: &d.members,
+        opportunities: &d.opps,
+        reviews: &d.reviews,
+        today: d.today,
+    };
+    let kpis = painel::leadership(&inputs, year, f);
+    let mut doc = Document::new(
+        tl.nav_leadership,
+        &format!("{} · {year}", s.folder().title()),
+    );
+    doc.para(&(tl.data_of)(&instant(
+        d.scanned_ms,
+        s.clock().utc_offset_minutes(),
+    )));
+    let show = |k: Kpi, v: f64| {
+        if k == Kpi::ValidatedSavings {
+            money(v)
+        } else {
+            show_number((v * 10.0).round() / 10.0)
+        }
+    };
+    doc.table(
+        tl.nav_leadership,
+        &["Indicador", "Valor", "Meta", "Ano anterior", "Regra"],
+        kpis.iter()
+            .map(|k| {
+                vec![
+                    kpi_name(k.kpi).to_string(),
+                    show(k.kpi, k.value),
+                    k.target.map(|t| show(k.kpi, t)).unwrap_or_default(),
+                    k.previous.map(|t| show(k.kpi, t)).unwrap_or_default(),
+                    kpi_rule(k.kpi).to_string(),
+                ]
+            })
+            .collect(),
+        &[1.6, 1.0, 1.0, 1.0, 3.0],
+    );
+    let sv = painel::savings_by_state(&d.records, f);
+    let units: Vec<Option<utsim_lss_core::Id>> = d.units.iter().map(|u| Some(u.id)).collect();
+    if !units.is_empty() {
+        doc.chart(Chart {
+            title: tl.validated.into(),
+            bars: true,
+            labels: units.iter().map(|u| d.unit_name(*u)).collect(),
+            series: vec![(
+                String::new(),
+                units
+                    .iter()
+                    .map(|u| {
+                        [Category::Hard, Category::Soft]
+                            .iter()
+                            .map(|c| {
+                                sv.get(&(*u, *c, SavingStatus::Validated))
+                                    .copied()
+                                    .unwrap_or(0.0)
+                            })
+                            .sum()
+                    })
+                    .collect(),
+            )],
+            ..Chart::default()
+        });
+    }
+    doc
+}
+
+impl App {
+    /// Asks the next drawing of a dashboard (MBB or leadership) to export it, without
+    /// opening the file (tests and tools; the buttons open it).
+    pub fn request_dashboard_export(&mut self, leadership: bool, how: Export) {
+        self.l6.export = Some((leadership, how, false));
+    }
+
+    /// The file of the last dashboard export.
+    pub fn last_dashboard_export(&self) -> Option<&std::path::Path> {
+        self.l6.exported.as_deref()
+    }
+
+    fn export_buttons(&mut self, ui: &mut egui::Ui, leadership: bool) {
+        let t = crate::text::l10::l10();
+        ui.horizontal(|ui| {
+            if ui.button(t.dash_pdf).clicked() {
+                self.l6.export = Some((leadership, Export::Pdf, true));
+            }
+            if ui.button(t.dash_xlsx).clicked() {
+                self.l6.export = Some((leadership, Export::Xlsx, true));
+            }
+        });
+    }
+
+    /// Does the export asked for this dashboard, if any.
+    fn run_export(&mut self, s: &Session, d: &Data, leadership: bool, year: i32, f: &Filter) {
+        let Some((which, how, open)) = self.l6.export else {
+            return;
+        };
+        if which != leadership {
+            return;
+        }
+        self.l6.export = None;
+        let doc = if leadership {
+            leadership_doc(s, d, year, f)
+        } else {
+            mbb_doc(s, d, f)
+        };
+        let (name, bytes) = match how {
+            Export::Pdf => {
+                let tp = self.report_template(s);
+                let footer =
+                    (crate::text::l5::l5().printed_by)(&s.folder().me().name, &d.today.format_br());
+                (
+                    crate::app::screens::reports::file_name(&doc.title, "pdf"),
+                    pdf::render(&doc, &tp, &footer),
+                )
+            }
+            Export::Xlsx => match utsim_lss_store::planilha::xlsx(&doc.tables()) {
+                Ok(b) => (
+                    crate::app::screens::reports::file_name(&doc.title, "xlsx"),
+                    b,
+                ),
+                Err(e) => {
+                    self.set_status((crate::text::texts().error)(&e.to_string()), true);
+                    return;
+                }
+            },
+        };
+        match s.folder().write_report(&name, &bytes) {
+            Ok(p) => {
+                if open {
+                    let _ = crate::app::screens::model::open_with_system(&p);
+                }
+                self.set_status(
+                    (crate::text::l5::l5().saved_at)(&p.display().to_string()),
+                    false,
+                );
+                self.l6.exported = Some(p);
+            }
+            Err(e) => self.set_status((crate::text::texts().error)(&e.to_string()), true),
+        }
     }
 }

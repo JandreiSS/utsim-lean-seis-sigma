@@ -684,6 +684,9 @@ plano; Haiku para tarefas mecânicas).
 | **Total depois do MVP** (P2 a P9) | | **146–208** | Opus ≈ 80–113; Sonnet ≈ 63–90; Haiku ≈ 3–5 |
 | **Total geral** | | **424–593** | |
 
+**Versão 2 do app (2026-11-06).** Além de P3 (dois níveis) e P4, entraram: o ganho estimado lançado direto do estudo de cenários (origem simulação, ligado ao estudo, com a memória de cálculo), viés, linearidade e concordância de atributos na tela de MSA, gráficos dentro dos PDF (análises, Pareto no A3, escada do VSM, painéis) e a exportação dos painéis do MBB e da liderança em PDF e `.xlsx`.
+
+
 **Sobreposição com o plano do gêmeo.** E4 (CEP) e E6 (capacidade) do plano do gêmeo estão
 contados lá (bloco 3, 48–67 h). Se forem feitos primeiro em `utsim-quality`, L3 cai cerca de
 12–16 h e P2 cerca de 4–6 h (EWMA e CUSUM). Do mesmo modo, o item 13 do plano de análises
