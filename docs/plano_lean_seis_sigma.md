@@ -168,6 +168,12 @@ escopo depois de aprovado gera nova versão e precisa de nova aprovação do pat
 ISO 13053-1 e 13053-2 descrevem a metodologia DMAIC e as ferramentas por fase [conferir
 edição; a revisão de 2011 é a conhecida]; o checklist padrão segue essa estrutura.
 
+**Roteiro DMAIC na tela** (feito em 2026-11-05, pedido do dono para fechar a primeira versão):
+um fluxograma vertical das cinco fases com os passos, as ferramentas de cada passo (as do app
+viram link para a tela no projeto; as que ainda não existem aparecem como "em breve"), as
+decisões que voltam ao Analisar e ao Melhorar e o andamento do projeto. Conteúdo em
+`utsim_lss_core::roteiro`, com redação própria a partir desta seção e da seção 2.
+
 ### 1.5 Outras abordagens
 
 - **DMADV (DFSS).** Definir, Medir (VOC, CTQs, casa da qualidade QFD), Analisar (geração de

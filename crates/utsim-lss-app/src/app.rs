@@ -44,11 +44,13 @@ pub enum Nav {
     Model,
     Reports,
     Analyses,
+    Roadmap,
 }
 
 impl Nav {
-    pub const PROJECT: [Nav; 15] = [
+    pub const PROJECT: [Nav; 16] = [
         Nav::Overview,
+        Nav::Roadmap,
         Nav::Charter,
         Nav::Team,
         Nav::Phases,
@@ -85,6 +87,7 @@ impl Nav {
             Nav::Model => "modelo",
             Nav::Reports => "relatorios",
             Nav::Analyses => "analises",
+            Nav::Roadmap => "roteiro",
         }
     }
 
@@ -115,6 +118,7 @@ impl Nav {
             Nav::Model => text::l4::l4().nav_model,
             Nav::Reports => text::l5::l5().nav_reports,
             Nav::Analyses => text::l3::l3().nav_analyses,
+            Nav::Roadmap => text::l9::l9().nav_roadmap,
         }
     }
 }
@@ -177,6 +181,8 @@ pub struct App {
     l5: screens::reports::L5Ui,
     /// The data and analyses screen (stage L3 and P1).
     l3: screens::analyses::L3Ui,
+    /// The DMAIC roadmap's zoom.
+    roadmap: screens::roadmap::RoadmapUi,
 }
 
 impl App {
@@ -227,6 +233,7 @@ impl App {
             l4: screens::model::L4Ui::default(),
             l5: screens::reports::L5Ui::default(),
             l3: screens::analyses::L3Ui::default(),
+            roadmap: screens::roadmap::RoadmapUi::default(),
         }
     }
 
@@ -255,6 +262,11 @@ impl App {
 
     pub fn session(&self) -> Option<&Session> {
         self.session.as_ref()
+    }
+
+    /// The zoom of the DMAIC roadmap (0.5 to 2).
+    pub fn set_roadmap_zoom(&mut self, z: f32) {
+        self.roadmap.zoom = z.clamp(0.5, 2.0);
     }
 
     /// The open session, to write through it (tests and tools that prepare data).
@@ -768,6 +780,7 @@ impl App {
                 Nav::Model => self.model_screen(ui, &mut s),
                 Nav::Reports => self.reports_screen(ui, &mut s),
                 Nav::Analyses => self.analyses_screen(ui, &mut s),
+                Nav::Roadmap => self.roadmap_screen(ui, &mut s),
             });
         });
 

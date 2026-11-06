@@ -22,6 +22,8 @@ pub mod model;
 pub mod reports;
 // Stage L3 and P1, data and analyses.
 pub mod analyses;
+// The DMAIC roadmap.
+pub mod roadmap;
 // Stage L6, the implementation program.
 pub mod program;
 
