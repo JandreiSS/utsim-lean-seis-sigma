@@ -126,6 +126,7 @@ pub fn kind_name(k: &str) -> &'static str {
         "msa_vies" => "MSA: viés",
         "msa_linearidade" => "MSA: linearidade",
         "msa_atributos" => "MSA: concordância de atributos",
+        "experimento_fatorial" => "Experimento fatorial 2^k",
         _ => "?",
     }
 }

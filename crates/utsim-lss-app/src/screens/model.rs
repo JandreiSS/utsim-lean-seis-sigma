@@ -223,7 +223,7 @@ impl App {
     }
 
     /// Reads the linked model (once; again after the link changes).
-    fn load_linked(&mut self, s: &Session) {
+    pub(in crate::app) fn load_linked(&mut self, s: &Session) {
         let Some(link) = simulacao::link(s.state(), s.project()) else {
             self.l4.loaded = None;
             return;

@@ -20,6 +20,7 @@ utsim-lss-store = { path = "../utsim-lss-store" }
 # The UTSim model of a project (stage L4): read, run and draw it; open it in UTSim through
 # the launcher.
 utsim-model.workspace = true
+utsim-stats.workspace = true
 utsim-core.workspace = true
 # The data and analyses screen reads CSV and draws the charts (stage L3).
 utsim-quality.workspace = true

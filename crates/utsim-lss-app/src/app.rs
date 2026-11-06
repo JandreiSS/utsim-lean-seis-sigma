@@ -45,10 +45,11 @@ pub enum Nav {
     Reports,
     Analyses,
     Roadmap,
+    Experiments,
 }
 
 impl Nav {
-    pub const PROJECT: [Nav; 16] = [
+    pub const PROJECT: [Nav; 17] = [
         Nav::Overview,
         Nav::Roadmap,
         Nav::Charter,
@@ -62,6 +63,7 @@ impl Nav {
         Nav::Closure,
         Nav::Tools,
         Nav::Analyses,
+        Nav::Experiments,
         Nav::Model,
         Nav::Reports,
         Nav::Data,
@@ -88,6 +90,7 @@ impl Nav {
             Nav::Reports => "relatorios",
             Nav::Analyses => "analises",
             Nav::Roadmap => "roteiro",
+            Nav::Experiments => "experimentos",
         }
     }
 
@@ -119,6 +122,7 @@ impl Nav {
             Nav::Reports => text::l5::l5().nav_reports,
             Nav::Analyses => text::l3::l3().nav_analyses,
             Nav::Roadmap => text::l9::l9().nav_roadmap,
+            Nav::Experiments => text::l10::l10().nav_experiments,
         }
     }
 }
@@ -183,6 +187,8 @@ pub struct App {
     l3: screens::analyses::L3Ui,
     /// The DMAIC roadmap's zoom.
     roadmap: screens::roadmap::RoadmapUi,
+    /// The design of experiments.
+    exp: screens::experiments::ExpUi,
 }
 
 impl App {
@@ -234,6 +240,7 @@ impl App {
             l5: screens::reports::L5Ui::default(),
             l3: screens::analyses::L3Ui::default(),
             roadmap: screens::roadmap::RoadmapUi::default(),
+            exp: screens::experiments::ExpUi::default(),
         }
     }
 
@@ -781,6 +788,7 @@ impl App {
                 Nav::Reports => self.reports_screen(ui, &mut s),
                 Nav::Analyses => self.analyses_screen(ui, &mut s),
                 Nav::Roadmap => self.roadmap_screen(ui, &mut s),
+                Nav::Experiments => self.experiments_screen(ui, &mut s),
             });
         });
 

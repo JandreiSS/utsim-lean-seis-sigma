@@ -20,7 +20,7 @@ use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 18] = [
+pub const KINDS: [&str; 19] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -39,6 +39,7 @@ pub const KINDS: [&str; 18] = [
     "msa_vies",
     "msa_linearidade",
     "msa_atributos",
+    "experimento_fatorial",
 ];
 
 /// The analyses screen's state.
@@ -52,6 +53,8 @@ pub struct L3Ui {
     pub b: usize,
     pub c: usize,
     pub d: usize,
+    /// The factor columns of an experiment.
+    pub factors: Vec<usize>,
     pub numbers: [String; 4],
     pub chart: usize,
     pub flag: bool,
@@ -70,6 +73,7 @@ impl App {
     pub fn select_analysis(&mut self, dataset: utsim_lss_core::Id, kind: &str) {
         self.l3.dataset = Some(dataset);
         self.l3.kind = KINDS.iter().position(|k| *k == kind).unwrap_or(0);
+        self.l3.factors.clear();
     }
 
     pub(in crate::app) fn analyses_screen(&mut self, ui: &mut egui::Ui, s: &mut Session) {
@@ -329,6 +333,33 @@ impl App {
                         Self::column_combo(ui, "col_d", x.standard, table, &mut u.d);
                     }
                 }
+                "experimento_fatorial" => {
+                    let x = l10();
+                    if u.factors.is_empty() {
+                        let (f, r) = utsim_lss_core::experimentos::columns(&table.header);
+                        if f.len() >= 2 {
+                            u.factors = f;
+                            u.a = r.unwrap_or(0);
+                            if u.numbers[0].trim().is_empty() {
+                                u.numbers[0] = "2".into();
+                            }
+                        }
+                    }
+                    ui.label(x.fact_factors);
+                    for (i, h) in table.header.iter().enumerate() {
+                        let mut on = u.factors.contains(&i);
+                        if ui.checkbox(&mut on, h).changed() {
+                            if on {
+                                u.factors.push(i);
+                                u.factors.sort();
+                            } else {
+                                u.factors.retain(|c| *c != i);
+                            }
+                        }
+                    }
+                    Self::column_combo(ui, "col_a", x.fact_response, table, &mut u.a);
+                    numbox(ui, x.fact_order, 0, &mut u.numbers);
+                }
                 _ => {}
             }
         });
@@ -412,6 +443,11 @@ impl App {
                 response: u.c,
                 standard: u.flag.then_some(u.d),
             },
+            "experimento_fatorial" => Recipe::Factorial {
+                factors: u.factors.clone(),
+                response: u.a,
+                order: n(0).map_or(2, |x| x.max(1.0) as usize),
+            },
             _ => return Err("análise desconhecida".into()),
         })
     }
@@ -428,6 +464,9 @@ impl App {
         });
         for n in &o.notes {
             ui.weak(n);
+        }
+        for (i, pl) in o.plots.iter().enumerate() {
+            Self::extra_plot(ui, i, pl);
         }
         if o.series.is_empty() {
             return;
@@ -454,6 +493,44 @@ impl App {
             }
             p.points(Points::new(t.signals, sig).radius(4.0).color(theme::WARN));
         });
+    }
+
+    /// A further chart of a result: bars or lines over labelled points.
+    fn extra_plot(ui: &mut egui::Ui, i: usize, pl: &analises::Plot) {
+        ui.strong(&pl.title);
+        let labels = pl.labels.clone();
+        let fmt = move |m: egui_plot::GridMark, _r: &std::ops::RangeInclusive<f64>| {
+            let x = m.value;
+            if (x - x.round()).abs() < 1e-9 && x >= 0.0 {
+                labels.get(x.round() as usize).cloned().unwrap_or_default()
+            } else {
+                String::new()
+            }
+        };
+        Plot::new(("grafico_extra", i))
+            .height(180.0)
+            .legend(egui_plot::Legend::default())
+            .x_axis_formatter(fmt)
+            .show(ui, |p| {
+                for (name, ys) in &pl.series {
+                    if pl.bars {
+                        let bars: Vec<egui_plot::Bar> = ys
+                            .iter()
+                            .enumerate()
+                            .map(|(x, y)| egui_plot::Bar::new(x as f64, *y).width(0.6))
+                            .collect();
+                        p.bar_chart(egui_plot::BarChart::new(name.clone(), bars));
+                    } else {
+                        let pts: PlotPoints = ys
+                            .iter()
+                            .enumerate()
+                            .filter(|(_, y)| y.is_finite())
+                            .map(|(x, y)| [x as f64, *y])
+                            .collect();
+                        p.line(Line::new(name.clone(), pts));
+                    }
+                }
+            });
     }
 
     fn saved_analyses(&mut self, ui: &mut egui::Ui, s: &mut Session) {
