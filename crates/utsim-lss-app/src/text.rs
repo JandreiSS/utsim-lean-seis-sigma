@@ -32,6 +32,9 @@ pub struct Texts {
     pub title_hint: &'static str,
     pub parent_hint: &'static str,
     pub approach: &'static str,
+    /// Project template of a specialised line (`utsim_lss_core::modelos_linha`).
+    pub project_model: &'static str,
+    pub no_project_model: &'static str,
     pub create: &'static str,
     pub import_lssz: &'static str,
     pub import_hint: &'static str,
@@ -173,6 +176,8 @@ pub static PT_BR: Texts = Texts {
     title_hint: "título do projeto",
     parent_hint: "pasta onde criar (a pasta compartilhada da equipe, por exemplo)",
     approach: "Abordagem",
+    project_model: "Modelo de projeto",
+    no_project_model: "Nenhum (só a abordagem)",
     create: "Criar",
     import_lssz: "Importar um arquivo .lssz",
     import_hint: "caminho do arquivo .lssz",

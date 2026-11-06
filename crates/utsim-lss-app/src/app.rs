@@ -10,7 +10,7 @@ use serde_json::Value;
 use utsim_lss_core::domain::{self, Action, Approach, Column, fields};
 use utsim_lss_core::overview::Overview;
 use utsim_lss_core::tools::Tool;
-use utsim_lss_core::{Date, EntityRef, Id as Uid, Kind, kanban};
+use utsim_lss_core::{Date, EntityRef, Id as Uid, Kind, kanban, modelos_linha};
 use utsim_lss_store::user::{self, AppDirs, Identity, UserConfig};
 use utsim_lss_store::{Clock, SystemClock, lssz, project};
 
@@ -157,6 +157,8 @@ pub struct App {
     new_title: String,
     new_parent: String,
     new_approach: Approach,
+    /// Project template of a line for the new project (`modelos_linha`), if any.
+    new_model: Option<&'static str>,
     import_file: String,
     import_dest: String,
     export_dest: String,
@@ -217,6 +219,7 @@ impl App {
             new_title: String::new(),
             new_parent: String::new(),
             new_approach: Approach::Dmaic,
+            new_model: None,
             import_file: String::new(),
             import_dest: String::new(),
             export_dest: String::new(),
@@ -390,6 +393,25 @@ impl App {
             }
             None => false,
         }
+    }
+
+    /// Creates a project from a line's template (`modelos_linha`): its approach, and the
+    /// template recorded on the project, so its tollgates get the template's items.
+    pub fn create_line_project(
+        &mut self,
+        parent: &Path,
+        title: &str,
+        model: &modelos_linha::ProjectModel,
+    ) -> bool {
+        if !self.create_project(parent, title, model.approach) {
+            return false;
+        }
+        let Some(s) = self.session.as_mut() else {
+            return false;
+        };
+        let edit = modelos_linha::set(s.project(), model);
+        let r = s.apply(vec![edit]);
+        self.report(r).is_some()
     }
 
     pub fn close_project(&mut self) {
@@ -585,7 +607,25 @@ impl App {
                         }
                     });
                     ui.horizontal(|ui| {
+                        ui.label(t.project_model);
+                        let chosen = self.new_model.and_then(modelos_linha::find);
+                        egui::ComboBox::from_id_salt("modelo_projeto")
+                            .selected_text(chosen.map_or(t.no_project_model, |m| m.name))
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(&mut self.new_model, None, t.no_project_model);
+                                for m in &modelos_linha::MODELS {
+                                    ui.selectable_value(&mut self.new_model, Some(m.id), m.name)
+                                        .on_hover_text(m.description);
+                                }
+                            });
+                        // A template brings its approach.
+                        if let Some(m) = self.new_model.and_then(modelos_linha::find) {
+                            self.new_approach = m.approach;
+                        }
+                    });
+                    ui.horizontal(|ui| {
                         ui.label(t.approach);
+                        let before = self.new_approach;
                         egui::ComboBox::from_id_salt("abordagem")
                             .selected_text(text::approach_name(self.new_approach))
                             .show_ui(ui, |ui| {
@@ -597,13 +637,22 @@ impl App {
                                     );
                                 }
                             });
+                        if self.new_approach != before {
+                            // Another approach leaves the template.
+                            self.new_model = None;
+                        }
                         if ui.button(t.create).clicked() {
                             let (parent, title) = (
                                 PathBuf::from(self.new_parent.trim()),
                                 self.new_title.clone(),
                             );
-                            if self.create_project(&parent, &title, self.new_approach) {
+                            let created = match self.new_model.and_then(modelos_linha::find) {
+                                Some(m) => self.create_line_project(&parent, &title, m),
+                                None => self.create_project(&parent, &title, self.new_approach),
+                            };
+                            if created {
                                 self.new_title.clear();
+                                self.new_model = None;
                             }
                         }
                     });

@@ -387,3 +387,22 @@ fn every_tool_screen_draws() {
     app.nav = Nav::Actions;
     frames(&mut app, &ctx, 1);
 }
+
+#[test]
+fn a_project_from_a_line_template_records_it() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut app = app_in(&dir.path().join("config"));
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com.br"));
+    let model = utsim_lss_core::modelos_linha::find("kaizen_administrativo").unwrap();
+    assert!(app.create_line_project(dir.path(), "Reembolso", model));
+    let s = app.session().unwrap();
+    let project = s.state().entity(s.project()).unwrap();
+    assert_eq!(
+        project.text(utsim_lss_core::domain::fields::project::MODEL),
+        "kaizen_administrativo"
+    );
+    let p = utsim_lss_core::domain::Project::read(s.project(), project);
+    assert_eq!(p.approach, Approach::Kaizen);
+    let ctx = egui::Context::default();
+    frames(&mut app, &ctx, 2);
+}
