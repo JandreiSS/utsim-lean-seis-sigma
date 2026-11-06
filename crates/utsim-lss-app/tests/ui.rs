@@ -205,6 +205,23 @@ fn every_tool_screen_draws() {
                 o.add_item(d, voc::CTQ, Some(dr), vec![(voc::fields::USL, n(48))])
                     .unwrap();
             }
+            Tool::Vsm => {
+                use utsim_lss_core::tools::vsm;
+                for (name, c, inv) in [("Corte", 1.5, 0.0), ("Solda", 2.5, 40.0)] {
+                    o.add_item(
+                        d,
+                        vsm::PROCESS_ITEM,
+                        None,
+                        vec![
+                            (vsm::fields::NAME, t(name)),
+                            (vsm::fields::CYCLE, Value::from(c)),
+                            (vsm::fields::INVENTORY, Value::from(inv)),
+                            (vsm::fields::VALUE_ADDED, Value::from(true)),
+                        ],
+                    )
+                    .unwrap();
+                }
+            }
             Tool::Sipoc => {
                 o.add_item(d, sipoc::STEP, None, vec![(sipoc::TEXT, t("Cortar"))])
                     .unwrap();

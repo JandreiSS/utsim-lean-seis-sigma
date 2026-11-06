@@ -728,6 +728,7 @@ pub fn tool_name(t: Tool) -> &'static str {
         Tool::ControlPlan => "Plano de controle",
         Tool::ResponsePlan => "Plano de resposta",
         Tool::A3 => "A3",
+        Tool::Vsm => "Mapa do fluxo de valor",
     }
 }
 
@@ -766,6 +767,9 @@ pub fn tool_help(t: Tool) -> &'static str {
         }
         Tool::A3 => {
             "Uma página com o projeto inteiro, montada a partir dos outros entregáveis; acrescente as notas da equipe."
+        }
+        Tool::Vsm => {
+            "Cada processo com o tempo de ciclo, a disponibilidade e o estoque antes dele; com a demanda, o app calcula o takt, a escada do lead time e a eficiência do ciclo. Do estado atual sai o futuro."
         }
     }
 }

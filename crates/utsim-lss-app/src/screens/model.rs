@@ -48,6 +48,9 @@ pub enum JobOut {
     Shifting(Vec<Share>),
     Study(Box<StudyFile>),
     Observed(Box<Observed>),
+    /// The VSM page and the processes; whether to make the deliverable too.
+    Vsm(String, Vec<utsim_lss_core::tools::vsm::ModelProcess>, bool),
+    Spaghetti(String, Vec<simulacao::Travel>),
     Failed(String),
 }
 
@@ -86,6 +89,10 @@ pub struct L4Ui {
     pub to: String,
     /// The form "Lançar ganho estimado" of a saved study.
     pub gain: Option<GainForm>,
+    /// A VSM or spaghetti result waiting for the session (pages and edits).
+    pub pending: Option<JobOut>,
+    /// The distances of the last spaghetti diagram.
+    pub travels: Vec<simulacao::Travel>,
 }
 
 /// The form that turns a difference of a saved study into an estimated saving.
@@ -305,6 +312,7 @@ impl App {
             JobOut::Shifting(v) => self.l4.shares = Some(v),
             JobOut::Study(st) => self.l4.study = Some(*st),
             JobOut::Observed(o) => self.l4.observed = Some(*o),
+            o @ (JobOut::Vsm(..) | JobOut::Spaghetti(..)) => self.l4.pending = Some(o),
             JobOut::Failed(e) => self.set_status((texts().error)(&e), true),
         }
     }
@@ -403,9 +411,163 @@ impl App {
         }
     }
 
+    /// Saves a page in `dados/` and opens it.
+    fn save_page(&mut self, s: &Session, html: &str) {
+        match s.folder().add_data(html.as_bytes(), "html") {
+            Ok((file, _)) => {
+                let p = s.folder().data_path(&file);
+                let _ = open_with_system(&p);
+                self.set_status((l4().saved_at)(&p.display().to_string()), false);
+            }
+            Err(e) => self.set_status((texts().error)(&e.to_string()), true),
+        }
+    }
+
+    /// A VSM deliverable in Medir with the model's processes; its id.
+    fn vsm_deliverable(
+        &mut self,
+        s: &mut Session,
+        rows: &[utsim_lss_core::tools::vsm::ModelProcess],
+    ) -> Option<Id> {
+        use utsim_lss_core::tools::{self, Deliverable, Tool, vsm};
+        let id = s.new_id();
+        let phase = tools::default_phase(s.state(), s.project(), Tool::Vsm);
+        let mut e = Deliverable::create(s.project(), phase, Tool::Vsm, id, l10().vsm_current);
+        e.extend(vsm::header_edits(id, None, None, None, Some(false)));
+        {
+            let ids = s.ids();
+            e.extend(vsm::model_rows_edits(s.state(), s.project(), id, rows, ids));
+        }
+        let r = s.apply(e);
+        self.report(r)?;
+        self.selected_deliverable = Some(id);
+        self.set_status(l10().vsm_generated, false);
+        Some(id)
+    }
+
+    /// Generates the current VSM deliverable from the linked model, at once (tests and
+    /// tools; the button does it on the worker thread).
+    pub fn generate_vsm_from_model(&mut self) -> Option<Id> {
+        let mut s = self.session.take()?;
+        self.load_linked(&s);
+        let r = self
+            .l4
+            .loaded
+            .clone()
+            .and_then(|ld| simulacao::vsm_from_model(&ld.model).ok())
+            .and_then(|(_, rows)| self.vsm_deliverable(&mut s, &rows));
+        self.session = Some(s);
+        r
+    }
+
+    /// Saves the distances of a spaghetti diagram as an analysis of the model.
+    fn record_spaghetti(&mut self, s: &mut Session, ld: &Loaded, travels: Vec<simulacao::Travel>) {
+        let e = simulacao::record_analysis(
+            s.project(),
+            s.new_id(),
+            AnalysisKind::Spaghetti,
+            l10().spaghetti_page,
+            &ld.hash,
+            serde_json::to_value(&travels).unwrap_or(Value::Null),
+            1,
+            s.today(),
+        );
+        if self.commit(s, e) {
+            self.set_status(l10().spaghetti_saved, false);
+        }
+        self.l4.travels = travels;
+    }
+
+    /// Records the spaghetti distances of the linked model, at once (tests and tools).
+    pub fn record_spaghetti_from_model(&mut self) -> bool {
+        let Some(mut s) = self.session.take() else {
+            return false;
+        };
+        self.load_linked(&s);
+        let ok = match self.l4.loaded.clone() {
+            Some(ld) => match simulacao::spaghetti(&ld.model) {
+                Ok((_, tr)) => {
+                    self.record_spaghetti(&mut s, &ld, tr);
+                    true
+                }
+                Err(_) => false,
+            },
+            None => false,
+        };
+        self.session = Some(s);
+        ok
+    }
+
+    fn lean_maps(&mut self, ui: &mut egui::Ui, s: &mut Session, ld: &Loaded) {
+        let t = l10();
+        if let Some(out) = self.l4.pending.take() {
+            match out {
+                JobOut::Vsm(html, rows, make) => {
+                    if make {
+                        self.vsm_deliverable(s, &rows);
+                    } else {
+                        self.save_page(s, &html);
+                    }
+                }
+                JobOut::Spaghetti(html, travels) => {
+                    self.save_page(s, &html);
+                    self.record_spaghetti(s, ld, travels);
+                }
+                _ => {}
+            }
+        }
+        let busy = self.l4.job.is_some();
+        ui.horizontal_wrapped(|ui| {
+            for (label, make) in [(t.vsm_page, false), (t.vsm_generate, true)] {
+                if ui.add_enabled(!busy, egui::Button::new(label)).clicked() {
+                    let m = ld.model.clone();
+                    self.l4.spawn(
+                        t.working.to_string(),
+                        move || match simulacao::vsm_from_model(&m) {
+                            Ok((h, rows)) => JobOut::Vsm(h, rows, make),
+                            Err(e) => JobOut::Failed(e.to_string()),
+                        },
+                    );
+                }
+            }
+            if ui
+                .add_enabled(!busy, egui::Button::new(t.spaghetti_page))
+                .clicked()
+            {
+                let m = ld.model.clone();
+                self.l4.spawn(t.working.to_string(), move || {
+                    match simulacao::spaghetti(&m) {
+                        Ok((h, tr)) => JobOut::Spaghetti(h, tr),
+                        Err(e) => JobOut::Failed(e.to_string()),
+                    }
+                });
+            }
+        });
+        if !self.l4.travels.is_empty() {
+            ui.label(t.spaghetti_totals);
+            egui::Grid::new("espaguete").striped(true).show(ui, |ui| {
+                for h in [
+                    t.spaghetti_resource,
+                    t.spaghetti_trips,
+                    t.spaghetti_distance,
+                ] {
+                    ui.strong(h);
+                }
+                ui.end_row();
+                for tr in &self.l4.travels {
+                    ui.label(&tr.resource);
+                    ui.label(tr.trips.to_string());
+                    ui.label(crate::app::screens::show_number(tr.distance));
+                    ui.end_row();
+                }
+            });
+        }
+    }
+
     fn maps_section(&mut self, ui: &mut egui::Ui, s: &mut Session, ld: &Loaded) {
         let t = l4();
         ui.strong(t.maps);
+        self.lean_maps(ui, s, ld);
         let c = simulacao::carta(&ld.model);
         egui::Grid::new("carta").striped(true).show(ui, |ui| {
             for h in [

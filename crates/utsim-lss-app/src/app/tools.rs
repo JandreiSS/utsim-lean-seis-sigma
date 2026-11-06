@@ -11,12 +11,13 @@ use utsim_lss_core::domain;
 use utsim_lss_core::tools::ap::Ap;
 use utsim_lss_core::tools::{
     self, Deliverable, DeliverableStatus, Tool, a3, cause_effect as ce, fmea, ishikawa, item_ref,
-    pareto, plans, sipoc, voc, whys,
+    pareto, plans, sipoc, voc, vsm, whys,
 };
 use utsim_lss_core::{EntityRef, Id as Uid};
 
 use super::{App, Nav};
 use crate::session::Session;
+use crate::text::l10::l10;
 use crate::text::{self, texts, tool_texts};
 use crate::theme;
 
@@ -29,6 +30,10 @@ enum Col {
         &'static [(&'static str, &'static str)],
         f32,
     ),
+    /// A number (decimal comma), committed when the focus leaves.
+    Number(&'static str, &'static str, f32),
+    /// A yes or no box.
+    Check(&'static str, &'static str),
 }
 
 type Extra<'a> = &'a mut dyn FnMut(&mut App, &mut egui::Ui, &mut Session, Uid);
@@ -150,6 +155,7 @@ impl App {
             Some(Tool::ControlPlan) => self.control_plan(ui, s, d.id),
             Some(Tool::ResponsePlan) => self.response_plan(ui, s, d.id),
             Some(Tool::A3) => self.a3(ui, s, d.id),
+            Some(Tool::Vsm) => self.vsm(ui, s, d.id),
             None => {
                 ui.label(tt.unknown_tool);
             }
@@ -399,7 +405,10 @@ impl App {
             .show(ui, |ui| {
                 for c in cols {
                     match c {
-                        Col::Text(l, _, _) | Col::Choice(l, _, _, _) => ui.strong(*l),
+                        Col::Text(l, _, _)
+                        | Col::Choice(l, _, _, _)
+                        | Col::Number(l, _, _)
+                        | Col::Check(l, _) => ui.strong(*l),
                     };
                 }
                 if let Some((l, _)) = &extra {
@@ -421,6 +430,8 @@ impl App {
                                         .collect();
                                 self.combo_field(ui, s, r, field, &options, *w);
                             }
+                            Col::Number(_, field, w) => self.num_field(ui, s, r, field, *w),
+                            Col::Check(_, field) => self.check_field(ui, s, r, field, ""),
                         }
                     }
                     if let Some((_, f)) = &mut extra {
@@ -437,6 +448,129 @@ impl App {
             let r = s.add_item(del, kind, None, Vec::new());
             self.report(r);
         }
+    }
+
+    // ---- Value stream map -----------------------------------------------------------------
+
+    fn vsm(&mut self, ui: &mut egui::Ui, s: &mut Session, del: Uid) {
+        use vsm::fields as f;
+        let t = l10();
+        let h = vsm::header(s.state(), del);
+        let dr = Deliverable::entity_ref(del);
+        ui.strong(if h.future {
+            t.vsm_future
+        } else {
+            t.vsm_current
+        });
+        ui.horizontal_wrapped(|ui| {
+            ui.label(t.vsm_demand);
+            self.num_field(ui, s, dr, f::DEMAND, 70.0);
+            ui.label(t.vsm_available);
+            self.num_field(ui, s, dr, f::AVAILABLE, 70.0);
+            ui.label(t.vsm_unit);
+            self.text_field(ui, s, dr, f::TIME_UNIT, false, 50.0);
+        });
+        let cols = [
+            Col::Text(t.vsm_process, f::NAME, 130.0),
+            Col::Number(t.vsm_cycle, f::CYCLE, 60.0),
+            Col::Number(t.vsm_setup, f::SETUP, 50.0),
+            Col::Number(t.vsm_uptime, f::UPTIME, 60.0),
+            Col::Number(t.vsm_operators, f::OPERATORS, 45.0),
+            Col::Number(t.vsm_inventory, f::INVENTORY, 70.0),
+            Col::Check(t.vsm_va, f::VALUE_ADDED),
+        ];
+        self.item_table(ui, s, del, vsm::PROCESS_ITEM, &cols, None);
+        let procs = vsm::processes(s.state(), del);
+        let l = vsm::ladder(&procs, &h);
+        ui.add_space(6.0);
+        ui.strong(t.vsm_ladder);
+        let u = if h.unit.trim().is_empty() {
+            String::new()
+        } else {
+            format!(" {}", h.unit.trim())
+        };
+        let n = |x: f64| format!("{}{u}", crate::app::screens::show_number(x));
+        if l.takt.is_none() {
+            ui.weak(t.vsm_need_demand);
+        }
+        draw_ladder(ui, &l);
+        egui::Grid::new(("vsm_totais", del)).show(ui, |ui| {
+            let line = |ui: &mut egui::Ui, k: &str, v: String| {
+                ui.label(k);
+                ui.strong(v);
+                ui.end_row();
+            };
+            if let Some(x) = l.takt {
+                line(ui, t.vsm_takt, n(x));
+            }
+            if let Some(x) = l.lead_time {
+                line(ui, t.vsm_lead, n(x));
+            }
+            line(ui, t.vsm_va_time, n(l.value_added));
+            if let Some(x) = l.pce {
+                line(ui, t.vsm_pce, crate::app::screens::percent(x));
+            }
+            if let Some(x) = l.inventory_days {
+                line(ui, t.vsm_inv_days, crate::app::screens::show_number(x));
+            }
+        });
+        if !l.over_takt.is_empty() {
+            ui.colored_label(theme::WARN, (t.vsm_over_takt)(&l.over_takt.join(", ")));
+        }
+        if let Some(sl) = &l.slowest {
+            ui.label((t.vsm_slowest)(sl));
+        }
+        if let Some(from) = h.from {
+            let before = vsm::ladder(
+                &vsm::processes(s.state(), from),
+                &vsm::header(s.state(), from),
+            );
+            let name = tools::deliverables(s.state(), s.project())
+                .into_iter()
+                .find(|d| d.id == from)
+                .map(|d| d.name)
+                .unwrap_or_default();
+            ui.label((t.vsm_compare)(&name));
+            if let (Some(a), Some(b)) = (before.lead_time, l.lead_time) {
+                ui.label(format!("{}: {} → {}", t.vsm_lead, n(a), n(b)));
+            }
+            if let (Some(a), Some(b)) = (before.pce, l.pce) {
+                ui.label(format!(
+                    "{}: {} → {}",
+                    t.vsm_pce,
+                    crate::app::screens::percent(a),
+                    crate::app::screens::percent(b)
+                ));
+            }
+        } else if ui.button(t.vsm_make_future).clicked() {
+            self.make_future_vsm(s, del);
+        }
+    }
+
+    /// Creates the future state map from the current map `from` (the button); its id.
+    pub fn create_future_vsm(&mut self, from: Uid) -> Option<Uid> {
+        let mut s = self.session.take()?;
+        let r = self.make_future_vsm(&mut s, from);
+        self.session = Some(s);
+        r
+    }
+
+    /// Creates the future state map from a current one (Melhorar), as the button does.
+    pub(in crate::app) fn make_future_vsm(&mut self, s: &mut Session, from: Uid) -> Option<Uid> {
+        let ph = utsim_lss_core::domain::phases(s.state(), s.project());
+        let phase = ph.get(3.min(ph.len().saturating_sub(1))).map(|p| p.id);
+        let id = s.new_id();
+        let name = l10().vsm_future;
+        let mut e = Deliverable::create(s.project(), phase, Tool::Vsm, id, name);
+        {
+            let ids = s.ids();
+            e.extend(vsm::copy_edits(s.state(), s.project(), from, id, ids));
+        }
+        let r = s.apply(e);
+        self.report(r)?;
+        self.selected_deliverable = Some(id);
+        self.set_status(l10().vsm_future_made, false);
+        Some(id)
     }
 
     // ---- VOC and CTQ tree --------------------------------------------------------------
@@ -1559,5 +1693,68 @@ fn fishbone(ui: &mut egui::Ui, g: &ishikawa::Diagram) {
                 weak,
             );
         }
+    }
+}
+
+/// The lead time ladder: for each process, the wait of the inventory before it (the low
+/// step, orange) and its cycle time (the high step, green when it adds value).
+fn draw_ladder(ui: &mut egui::Ui, l: &vsm::Ladder) {
+    if l.steps.is_empty() {
+        return;
+    }
+    let t = l10();
+    let w = ui.available_width().clamp(320.0, 1100.0);
+    let (resp, painter) = ui.allocate_painter(egui::vec2(w, 96.0), egui::Sense::hover());
+    let r = resp.rect;
+    let n = l.steps.len() as f32;
+    let seg = r.width() / (2.0 * n);
+    let (hi, lo) = (r.top() + 30.0, r.top() + 62.0);
+    let text = ui.visuals().text_color();
+    let weak = ui.visuals().weak_text_color();
+    let font = egui::FontId::proportional(10.0);
+    let num = |x: f64| crate::app::screens::show_number((x * 100.0).round() / 100.0);
+    for (i, st) in l.steps.iter().enumerate() {
+        let x0 = r.left() + 2.0 * i as f32 * seg;
+        let x1 = x0 + seg;
+        let x2 = x1 + seg;
+        let wait = egui::Stroke::new(2.5, theme::WARN);
+        painter.line_segment([egui::pos2(x0, lo), egui::pos2(x1, lo)], wait);
+        painter.line_segment(
+            [egui::pos2(x1, lo), egui::pos2(x1, hi)],
+            egui::Stroke::new(1.0, weak),
+        );
+        let c = if st.value_added { theme::OK } else { weak };
+        painter.line_segment(
+            [egui::pos2(x1, hi), egui::pos2(x2, hi)],
+            egui::Stroke::new(2.5, c),
+        );
+        if i + 1 < l.steps.len() {
+            painter.line_segment(
+                [egui::pos2(x2, hi), egui::pos2(x2, lo)],
+                egui::Stroke::new(1.0, weak),
+            );
+        }
+        painter.text(
+            egui::pos2(x1 + seg / 2.0, hi - 4.0),
+            egui::Align2::CENTER_BOTTOM,
+            &st.name,
+            font.clone(),
+            text,
+        );
+        painter.text(
+            egui::pos2(x1 + seg / 2.0, hi + 4.0),
+            egui::Align2::CENTER_TOP,
+            format!("{} {}", t.vsm_proc, num(st.process)),
+            font.clone(),
+            c,
+        );
+        painter.text(
+            egui::pos2(x0 + seg / 2.0, lo + 4.0),
+            egui::Align2::CENTER_TOP,
+            st.wait
+                .map_or_else(|| "?".to_string(), |w| format!("{} {}", t.vsm_wait, num(w))),
+            font.clone(),
+            theme::WARN,
+        );
     }
 }
