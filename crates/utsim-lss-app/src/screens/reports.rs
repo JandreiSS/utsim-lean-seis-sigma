@@ -122,6 +122,7 @@ impl App {
                         Some(build::control_doc as fn(&_, Id, &_) -> Document),
                         t.control_plan,
                     ),
+                    Some(Tool::Vsm) => (Some(build::vsm_doc as fn(&_, Id, &_) -> Document), "VSM"),
                     _ => (None, ""),
                 };
                 if let Some(f) = doc
@@ -131,6 +132,22 @@ impl App {
                 }
             }
         });
+        let an = utsim_lss_core::analises::analyses(&st, p);
+        if !an.is_empty() {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(crate::text::l10::l10().report_analyses);
+                for a in an.iter().rev().take(20) {
+                    let label = if a.name.trim().is_empty() {
+                        a.recipe.as_ref().map_or("?", |r| r.label()).to_string()
+                    } else {
+                        a.name.clone()
+                    };
+                    if ui.button(label).clicked() {
+                        self.print(s, &build::analysis_doc(&st, p, a));
+                    }
+                }
+            });
+        }
         ui.separator();
         ui.strong(t.spreadsheet);
         ui.horizontal(|ui| {

@@ -1,12 +1,15 @@
 //! The documents of the reports (stage L5, `docs/plano_lean_seis_sigma.md`, 4.6): charter,
 //! tollgate report, minutes, FMEA, control plan, A3 (A3 landscape) and the certificate, built
 //! from the journal's state with the screens' texts, and the tables of the spreadsheet.
+//! Version 2 adds the charts: a saved analysis with its chart, the Pareto inside the A3 and
+//! the value stream map with its ladder.
 //! The rendering is [`utsim_lss_core::relatorios`].
 
+use utsim_lss_core::analises;
 use utsim_lss_core::certificacao::Certification;
 use utsim_lss_core::domain::{self, fields as df};
-use utsim_lss_core::relatorios::{Document, PageSize};
-use utsim_lss_core::tools::{self, Deliverable, Tool, a3, fmea, items, plans};
+use utsim_lss_core::relatorios::{Chart, Document, PageSize};
+use utsim_lss_core::tools::{self, Deliverable, Tool, a3, fmea, items, plans, vsm};
 use utsim_lss_core::{Date, Id, State, charter, kanban, meeting, risk, savings, tollgate};
 
 use crate::text::l1::{decision_name, field_label, response_name, risk_status_name};
@@ -382,6 +385,14 @@ pub fn a3_doc(state: &State, project: Id) -> Document {
             )
             .collect(),
     );
+    for p in tools::of_tool(state, project, Tool::Pareto) {
+        if let Some(c) = pareto_chart(state, p.id) {
+            d.chart(Chart {
+                title: format!("Pareto: {}", p.name),
+                ..c
+            });
+        }
+    }
     d.heading(t.a3_causes).bullets(
         a.root_causes
             .iter()
@@ -565,4 +576,194 @@ pub fn project_tables(state: &State, project: Id) -> Vec<(String, Vec<String>, V
         ds,
     ));
     out
+}
+
+// --- Charts (version 2) ----------------------------------------------------------------------
+
+/// The charts of the result of an analysis: the values with the limits and the signals
+/// (control chart, run of the data) and the further plots (effects of an experiment).
+pub fn outcome_charts(o: &analises::Outcome, title: &str) -> Vec<Chart> {
+    let mut v = Vec::new();
+    if !o.series.is_empty() {
+        let mut hlines = Vec::new();
+        if let Some((c, l, u)) = o.limits {
+            hlines.push(("LC".to_string(), c));
+            hlines.push(("LIC".to_string(), l));
+            hlines.push(("LSC".to_string(), u));
+        }
+        v.push(Chart {
+            title: title.to_string(),
+            bars: false,
+            labels: (1..=o.series.len()).map(|i| i.to_string()).collect(),
+            series: vec![("valores".to_string(), o.series.clone())],
+            hlines,
+            marks: o.signals.clone(),
+        });
+    }
+    for p in &o.plots {
+        v.push(Chart {
+            title: p.title.clone(),
+            bars: p.bars,
+            labels: p.labels.clone(),
+            series: p.series.clone(),
+            ..Chart::default()
+        });
+    }
+    v
+}
+
+/// The report of a saved analysis: the data set with its origin, the recipe, the numbers,
+/// the conclusion, the notes and the charts.
+pub fn analysis_doc(state: &State, project: Id, a: &analises::Analysis) -> Document {
+    let label = a.recipe.as_ref().map_or("", |r| r.label());
+    let mut d = Document::new(
+        if a.name.trim().is_empty() {
+            label
+        } else {
+            a.name.as_str()
+        },
+        &project_title(state, project),
+    );
+    let ds = a.dataset.and_then(|i| {
+        utsim_lss_core::dados::datasets(state, project)
+            .into_iter()
+            .find(|x| x.id == i)
+    });
+    d.kv(vec![
+        ("Análise".into(), label.to_string()),
+        (
+            "Conjunto de dados".into(),
+            ds.map(|x| x.labeled()).unwrap_or_default(),
+        ),
+        ("Hash do conjunto".into(), a.dataset_hash.clone()),
+        ("Data".into(), date(a.date)),
+        ("Conclusão".into(), a.verdict.clone()),
+    ]);
+    if !a.justification.trim().is_empty() {
+        d.kv(vec![("Justificativa".into(), a.justification.clone())]);
+    }
+    d.table(
+        "Resultado",
+        &["Medida", "Valor"],
+        a.outcome
+            .lines
+            .iter()
+            .map(|(k, v)| vec![k.clone(), crate::app::screens::show_number(*v)])
+            .collect(),
+        &[2.0, 1.0],
+    );
+    if !a.outcome.notes.is_empty() {
+        d.bullets(a.outcome.notes.clone());
+    }
+    for c in outcome_charts(&a.outcome, label) {
+        d.chart(c);
+    }
+    d
+}
+
+/// The chart of a Pareto deliverable: the bars and the cumulative percentage.
+pub fn pareto_chart(state: &State, deliverable: Id) -> Option<Chart> {
+    let p = tools::pareto::of_deliverable(state, deliverable);
+    if p.rows.is_empty() {
+        return None;
+    }
+    Some(Chart {
+        title: "Pareto".into(),
+        bars: true,
+        labels: p.rows.iter().map(|r| r.name.clone()).collect(),
+        series: vec![("%".into(), p.rows.iter().map(|r| r.pct).collect())],
+        hlines: vec![("80 %".into(), 80.0)],
+        marks: Vec::new(),
+    })
+}
+
+/// The report of a value stream map: the header, the processes, the ladder and the
+/// indicators (with the current map when it is a future one).
+pub fn vsm_doc(state: &State, project: Id, del: &Deliverable) -> Document {
+    let t = crate::text::l10::l10();
+    let h = vsm::header(state, del.id);
+    let procs = vsm::processes(state, del.id);
+    let l = vsm::ladder(&procs, &h);
+    let mut d = Document::new(&del.name, &project_title(state, project));
+    let n = |x: Option<f64>| x.map(crate::app::screens::show_number).unwrap_or_default();
+    let mut kv = vec![
+        (
+            "Estado".to_string(),
+            if h.future {
+                t.vsm_future
+            } else {
+                t.vsm_current
+            }
+            .to_string(),
+        ),
+        (t.vsm_demand.into(), n(h.demand)),
+        (t.vsm_available.into(), n(h.available)),
+        (t.vsm_unit.into(), h.unit.clone()),
+        (t.vsm_takt.into(), n(l.takt)),
+        (t.vsm_lead.into(), n(l.lead_time)),
+        (t.vsm_va_time.into(), n(Some(l.value_added))),
+        (
+            t.vsm_pce.into(),
+            l.pce.map(crate::app::screens::percent).unwrap_or_default(),
+        ),
+    ];
+    if let Some(from) = h.from {
+        let b = vsm::ladder(&vsm::processes(state, from), &vsm::header(state, from));
+        kv.push((format!("{} antes", t.vsm_lead), n(b.lead_time)));
+        kv.push((
+            format!("{} antes", t.vsm_pce),
+            b.pce.map(crate::app::screens::percent).unwrap_or_default(),
+        ));
+    }
+    d.kv(kv);
+    d.table(
+        "Processos",
+        &[
+            t.vsm_process,
+            t.vsm_cycle,
+            t.vsm_setup,
+            t.vsm_uptime,
+            t.vsm_operators,
+            t.vsm_inventory,
+            t.vsm_va,
+        ],
+        procs
+            .iter()
+            .map(|p| {
+                vec![
+                    p.name.clone(),
+                    n(p.cycle),
+                    n(p.setup),
+                    n(p.uptime.map(|u| u * 100.0)),
+                    n(p.operators),
+                    n(p.inventory),
+                    if p.value_added { "sim" } else { "não" }.to_string(),
+                ]
+            })
+            .collect(),
+        &[2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.8],
+    );
+    if !l.over_takt.is_empty() {
+        d.para(&(t.vsm_over_takt)(&l.over_takt.join(", ")));
+    }
+    if !l.steps.is_empty() {
+        d.chart(Chart {
+            title: t.vsm_ladder.into(),
+            bars: true,
+            labels: l.steps.iter().map(|s| s.name.clone()).collect(),
+            series: vec![
+                (
+                    t.vsm_wait.into(),
+                    l.steps.iter().map(|s| s.wait.unwrap_or(f64::NAN)).collect(),
+                ),
+                (
+                    t.vsm_proc.into(),
+                    l.steps.iter().map(|s| s.process).collect(),
+                ),
+            ],
+            hlines: Vec::new(),
+            marks: Vec::new(),
+        });
+    }
+    d
 }

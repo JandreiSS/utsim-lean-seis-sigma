@@ -125,3 +125,103 @@ fn value_stream_map_and_spaghetti_from_the_model() {
     let a = simulacao::model_analyses(s.state(), s.project());
     assert!(a.iter().any(|x| x.kind == AnalysisKind::Spaghetti));
 }
+
+#[test]
+fn charts_inside_the_reports() {
+    use serde_json::Value;
+    use utsim_lss_core::analises::{self, Recipe, Table};
+    use utsim_lss_core::dados::{self, DataOrigin, DatasetInput};
+    use utsim_lss_core::relatorios::{Block, Template, pdf};
+    use utsim_lss_core::tools::{self, Tool, pareto};
+    let dir = tempfile::tempdir().unwrap();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 13))),
+    );
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com"));
+    let work = dir.path().join("Drive");
+    std::fs::create_dir_all(&work).unwrap();
+    assert!(app.create_project(&work, "Rendimento", Approach::Dmaic));
+    let s = app.session_mut().unwrap();
+    let p = s.project();
+    let par = s.add_deliverable(Tool::Pareto, "Defeitos").unwrap();
+    for (n, c) in [("Rebarba", 30), ("Risco", 12), ("Mancha", 3)] {
+        s.add_item(
+            par,
+            pareto::ITEM,
+            None,
+            vec![
+                (pareto::fields::NAME, Value::from(n)),
+                (pareto::fields::COUNT, Value::from(c)),
+            ],
+        )
+        .unwrap();
+    }
+    let vm = s.add_deliverable(Tool::Vsm, "VSM atual").unwrap();
+    s.add_item(
+        vm,
+        vsm::PROCESS_ITEM,
+        None,
+        vec![
+            (vsm::fields::NAME, Value::from("Corte")),
+            (vsm::fields::CYCLE, Value::from(2.0)),
+            (vsm::fields::INVENTORY, Value::from(10.0)),
+        ],
+    )
+    .unwrap();
+    s.apply(vsm::header_edits(
+        vm,
+        Some(100.0),
+        Some(400.0),
+        Some("min"),
+        None,
+    ))
+    .unwrap();
+    // A 2² filled by hand, analysed and saved.
+    let csv = "A;B;y\n-1;-1;10\n1;-1;20\n-1;1;14\n1;1;30\n-1;-1;12\n1;-1;22\n-1;1;16\n1;1;28\n";
+    let (file, hash) = s.folder().add_data(csv.as_bytes(), "csv").unwrap();
+    let (columns, rows) = dados::shape(csv);
+    let ds_id = s.new_id();
+    let input = DatasetInput {
+        name: "Ensaios".into(),
+        origin: DataOrigin::Real,
+        file,
+        hash,
+        columns,
+        rows,
+        ..DatasetInput::default()
+    };
+    s.apply(dados::register(p, ds_id, &input)).unwrap();
+    let ds = dados::datasets(s.state(), p)[0].clone();
+    let r = Recipe::Factorial {
+        factors: vec![0, 1],
+        response: 2,
+        order: 2,
+    };
+    let o = analises::run(&r, &Table::parse(csv)).unwrap();
+    let id = s.new_id();
+    let today = s.today();
+    s.apply(analises::record(p, id, "Efeitos", &ds, &r, &o, today))
+        .unwrap();
+    let st = s.state().clone();
+    let charts = |d: &utsim_lss_core::relatorios::Document| {
+        d.blocks
+            .iter()
+            .filter(|b| matches!(b, Block::Chart(_)))
+            .count()
+    };
+    let a = &analises::analyses(&st, p)[0];
+    let ad = utsim_lss_app::reports::analysis_doc(&st, p, a);
+    assert_eq!(charts(&ad), 3, "Pareto dos efeitos, principais e AB");
+    let a3 = utsim_lss_app::reports::a3_doc(&st, p);
+    assert_eq!(charts(&a3), 1);
+    let vd = utsim_lss_app::reports::vsm_doc(&st, p, &tools::of_tool(&st, p, Tool::Vsm)[0]);
+    assert_eq!(charts(&vd), 1);
+    assert!(vd.plain_text().contains("Escada do lead time"));
+    for d in [ad, a3, vd] {
+        let b = pdf::render(&d, &Template::default(), "");
+        assert!(b.starts_with(b"%PDF-1.4"));
+        assert!(String::from_utf8_lossy(&b).contains(" re f 0 g"));
+    }
+}
