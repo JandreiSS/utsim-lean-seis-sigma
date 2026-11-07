@@ -294,11 +294,30 @@ fn every_l1_screen_draws_over_a_filled_project() {
         app.status()
     );
 
-    // Opening the portfolio folder itself lands on the portfolio screen.
+    // An idea sent by the 8D of UTSim Qualidade, with an attachment.
     app.close_project();
+    let anexo = shared.join("8D-0042.pdf");
+    std::fs::write(&anexo, b"%PDF-1.4 8D").unwrap();
+    let sent = utsim_lss_store::intake::submit_idea(
+        &shared.join("Carteira.lss"),
+        &me,
+        &utsim_lss_store::SystemClock,
+        &portfolio::Submission {
+            title: "Rebarba no furo".into(),
+            source: portfolio::SOURCE_8D.into(),
+            reference: "8D-0042".into(),
+            ..Default::default()
+        },
+        &[anexo],
+    )
+    .unwrap();
+
+    // Opening the portfolio folder itself lands on the portfolio screen.
     assert!(app.open_project(&shared.join("Carteira.lss")));
     assert_eq!(app.nav, Nav::Portfolio);
     frames(&mut app, &ctx, 3);
+    app.select_idea(sent);
+    frames(&mut app, &ctx, 2);
     assert!(
         app.status().is_none_or(|(_, err)| !err),
         "{:?}",

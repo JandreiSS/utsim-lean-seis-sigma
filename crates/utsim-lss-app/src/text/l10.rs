@@ -97,6 +97,11 @@ pub struct L10Texts {
     pub report_analyses: S,
     pub dash_pdf: S,
     pub dash_xlsx: S,
+    pub idea_from: fn(&str, &str) -> String,
+    pub idea_sent_by: fn(&str, &str) -> String,
+    pub idea_attachments: S,
+    pub open_file: S,
+    pub app_8d: S,
 }
 
 pub static PT_BR: L10Texts = L10Texts {
@@ -195,6 +200,17 @@ pub static PT_BR: L10Texts = L10Texts {
     report_analyses: "Análises (com gráfico):",
     dash_pdf: "Exportar PDF",
     dash_xlsx: "Exportar planilha (.xlsx)",
+    idea_from: |app, r| {
+        if r.is_empty() {
+            format!("Enviada pelo {app}")
+        } else {
+            format!("Enviada pelo {app}: {r}")
+        }
+    },
+    idea_sent_by: |who, on| format!("por {who} em {on}"),
+    idea_attachments: "Anexos",
+    open_file: "Abrir",
+    app_8d: "8D do UTSim Qualidade",
 };
 
 pub fn l10() -> &'static L10Texts {

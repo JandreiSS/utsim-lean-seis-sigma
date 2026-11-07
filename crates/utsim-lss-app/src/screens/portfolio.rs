@@ -322,11 +322,64 @@ impl App {
         self.prioritisation(ui, ps, &ranking);
     }
 
+    /// Selects an idea of the portfolio screen (tests and tools).
+    pub fn select_idea(&mut self, id: utsim_lss_core::Id) {
+        self.l1.portfolio.idea = Some(id);
+    }
+
+    /// Where an idea sent by another app came from, and its attachments.
+    fn idea_source(&mut self, ui: &mut egui::Ui, ps: &Session, idea: &Idea) {
+        let t = crate::text::l10::l10();
+        if let Some((app, reference)) = portfolio::source_of(idea) {
+            let app_name = if app == portfolio::SOURCE_8D {
+                t.app_8d.to_string()
+            } else {
+                app
+            };
+            let who = idea
+                .entity
+                .id(pf::SENT_BY)
+                .and_then(|p| ps.state().entity(p))
+                .map(|e| e.text(utsim_lss_core::domain::fields::person::NAME))
+                .unwrap_or_default();
+            let on = idea
+                .entity
+                .opt_text(pf::SENT_ON)
+                .and_then(|d| d.parse::<utsim_lss_core::Date>().ok())
+                .map(|d| d.format_br())
+                .unwrap_or_default();
+            ui.horizontal_wrapped(|ui| {
+                ui.strong((t.idea_from)(&app_name, &reference));
+                if !who.is_empty() || !on.is_empty() {
+                    ui.weak((t.idea_sent_by)(&who, &on));
+                }
+            });
+        }
+        let att = portfolio::attachments(ps.state(), idea.id);
+        if !att.is_empty() {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(t.idea_attachments);
+                for a in &att {
+                    let label = if a.name.is_empty() { &a.file } else { &a.name };
+                    if ui
+                        .small_button(format!("{label} · {}", t.open_file))
+                        .clicked()
+                    {
+                        let p =
+                            utsim_lss_store::intake::attachment_path(ps.folder().root(), &a.file);
+                        let _ = super::model::open_with_system(&p);
+                    }
+                }
+            });
+        }
+    }
+
     fn idea_panel(&mut self, ui: &mut egui::Ui, ps: &mut Session, idea: &Idea) {
         let tl = l1();
         let r = Idea::entity_ref(idea.id);
         let c = ps.project();
         self.presence_warning(ui, ps, r);
+        self.idea_source(ui, ps, idea);
         egui::Grid::new("ideia")
             .num_columns(2)
             .spacing([12.0, 6.0])
