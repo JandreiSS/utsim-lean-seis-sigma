@@ -20,7 +20,7 @@ use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 19] = [
+pub const KINDS: [&str; 26] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -40,6 +40,13 @@ pub const KINDS: [&str; 19] = [
     "msa_linearidade",
     "msa_atributos",
     "experimento_fatorial",
+    "variancias",
+    "kruskal_wallis",
+    "mediana_mood",
+    "friedman",
+    "anova_dois_fatores",
+    "regressao",
+    "tamanho_amostra",
 ];
 
 /// The analyses screen's state.
@@ -360,6 +367,61 @@ impl App {
                     Self::column_combo(ui, "col_a", x.fact_response, table, &mut u.a);
                     numbox(ui, x.fact_order, 0, &mut u.numbers);
                 }
+                "variancias" | "kruskal_wallis" | "mediana_mood" => {
+                    Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
+                    Self::column_combo(ui, "col_b", t.group, table, &mut u.b);
+                }
+                "friedman" => {
+                    let x = l10();
+                    Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
+                    Self::column_combo(ui, "col_b", x.p2_treatment, table, &mut u.b);
+                    Self::column_combo(ui, "col_c", x.p2_block, table, &mut u.c);
+                }
+                "anova_dois_fatores" => {
+                    let x = l10();
+                    Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
+                    Self::column_combo(ui, "col_b", x.p2_factor_a, table, &mut u.b);
+                    Self::column_combo(ui, "col_c", x.p2_factor_b, table, &mut u.c);
+                }
+                "regressao" => {
+                    let x = l10();
+                    Self::column_combo(ui, "col_a", x.p2_response, table, &mut u.a);
+                    ui.label(x.p2_predictors);
+                    for (i, h) in table.header.iter().enumerate() {
+                        if i == u.a {
+                            continue;
+                        }
+                        let mut on = u.factors.contains(&i);
+                        if ui.checkbox(&mut on, h).changed() {
+                            if on {
+                                u.factors.push(i);
+                                u.factors.sort();
+                            } else {
+                                u.factors.retain(|c| *c != i);
+                            }
+                        }
+                    }
+                }
+                "tamanho_amostra" => {
+                    let x = l10();
+                    let kinds = [x.p2_one_mean, x.p2_two_means, x.p2_two_props];
+                    egui::ComboBox::from_id_salt("tipo_amostra")
+                        .selected_text(kinds[u.chart.min(2)])
+                        .show_ui(ui, |ui| {
+                            for (i, k) in kinds.iter().enumerate() {
+                                ui.selectable_value(&mut u.chart, i, *k);
+                            }
+                        });
+                    let (la, lb) = if u.chart.min(2) == 2 {
+                        (x.p2_p1, x.p2_p2)
+                    } else {
+                        (x.p2_delta, x.p2_sd)
+                    };
+                    numbox(ui, la, 0, &mut u.numbers);
+                    numbox(ui, lb, 1, &mut u.numbers);
+                    numbox(ui, x.p2_power, 2, &mut u.numbers);
+                    numbox(ui, x.p2_alpha, 3, &mut u.numbers);
+                }
                 _ => {}
             }
         });
@@ -448,6 +510,47 @@ impl App {
                 response: u.a,
                 order: n(0).map_or(2, |x| x.max(1.0) as usize),
             },
+            "variancias" => Recipe::Variances {
+                col: u.a,
+                group: u.b,
+            },
+            "kruskal_wallis" => Recipe::KruskalWallis {
+                col: u.a,
+                group: u.b,
+            },
+            "mediana_mood" => Recipe::MoodMedian {
+                col: u.a,
+                group: u.b,
+            },
+            "friedman" => Recipe::Friedman {
+                value: u.a,
+                treatment: u.b,
+                block: u.c,
+            },
+            "anova_dois_fatores" => Recipe::TwoWayAnova {
+                value: u.a,
+                a: u.b,
+                b: u.c,
+            },
+            "regressao" => Recipe::Regression {
+                response: u.a,
+                predictors: u.factors.iter().copied().filter(|c| *c != u.a).collect(),
+            },
+            "tamanho_amostra" => {
+                let x = l10();
+                let (la, lb) = if u.chart.min(2) == 2 {
+                    (x.p2_p1, x.p2_p2)
+                } else {
+                    (x.p2_delta, x.p2_sd)
+                };
+                Recipe::SampleSize {
+                    kind: u.chart.min(2) as u8,
+                    a: need(0, la)?,
+                    b: need(1, lb)?,
+                    target: n(2).unwrap_or(0.8),
+                    alpha: n(3).unwrap_or(0.05),
+                }
+            }
             _ => return Err("análise desconhecida".into()),
         })
     }

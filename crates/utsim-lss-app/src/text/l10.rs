@@ -102,6 +102,21 @@ pub struct L10Texts {
     pub idea_attachments: S,
     pub open_file: S,
     pub app_8d: S,
+    pub p2_treatment: S,
+    pub p2_block: S,
+    pub p2_factor_a: S,
+    pub p2_factor_b: S,
+    pub p2_response: S,
+    pub p2_predictors: S,
+    pub p2_one_mean: S,
+    pub p2_two_means: S,
+    pub p2_two_props: S,
+    pub p2_delta: S,
+    pub p2_sd: S,
+    pub p2_p1: S,
+    pub p2_p2: S,
+    pub p2_power: S,
+    pub p2_alpha: S,
 }
 
 pub static PT_BR: L10Texts = L10Texts {
@@ -211,6 +226,21 @@ pub static PT_BR: L10Texts = L10Texts {
     idea_attachments: "Anexos",
     open_file: "Abrir",
     app_8d: "8D do UTSim Qualidade",
+    p2_treatment: "Tratamento",
+    p2_block: "Bloco",
+    p2_factor_a: "Fator A",
+    p2_factor_b: "Fator B",
+    p2_response: "Resposta (y)",
+    p2_predictors: "Preditores",
+    p2_one_mean: "Uma média contra um valor",
+    p2_two_means: "Duas médias",
+    p2_two_props: "Duas proporções",
+    p2_delta: "Diferença a detectar",
+    p2_sd: "Desvio-padrão",
+    p2_p1: "Proporção 1",
+    p2_p2: "Proporção 2",
+    p2_power: "Poder (0,8)",
+    p2_alpha: "Significância (0,05)",
 };
 
 pub fn l10() -> &'static L10Texts {

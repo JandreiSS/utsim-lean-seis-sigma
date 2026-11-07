@@ -127,6 +127,13 @@ pub fn kind_name(k: &str) -> &'static str {
         "msa_linearidade" => "MSA: linearidade",
         "msa_atributos" => "MSA: concordância de atributos",
         "experimento_fatorial" => "Experimento fatorial 2^k",
+        "variancias" => "Igualdade de variâncias (Levene e Bartlett)",
+        "kruskal_wallis" => "Kruskal-Wallis",
+        "mediana_mood" => "Teste da mediana de Mood",
+        "friedman" => "Friedman",
+        "anova_dois_fatores" => "ANOVA de dois fatores",
+        "regressao" => "Regressão linear",
+        "tamanho_amostra" => "Tamanho de amostra e poder",
         _ => "?",
     }
 }
