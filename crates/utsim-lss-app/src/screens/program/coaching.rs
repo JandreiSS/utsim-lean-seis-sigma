@@ -432,8 +432,23 @@ impl App {
                                     .evidence
                                     .iter()
                                     .map(|e| match e {
-                                        Evidence::Entry { level, text, .. } => {
-                                            format!("{}: {text}", mentoring_level_name(*level))
+                                        Evidence::Entry {
+                                            level,
+                                            text,
+                                            source,
+                                            ..
+                                        } => {
+                                            let from = if *source
+                                                == utsim_lss_core::mentoria::Source::Teaching
+                                            {
+                                                " (UTSim Ensino)"
+                                            } else {
+                                                ""
+                                            };
+                                            format!(
+                                                "{}{from}: {text}",
+                                                mentoring_level_name(*level)
+                                            )
                                         }
                                         Evidence::Deliverable { project, .. } => (tl
                                             .ev_deliverable)(
