@@ -94,10 +94,7 @@ impl L1Ui {
     /// Called when the project closes.
     pub fn close(&mut self) {
         self.portfolio.close();
-        *self = L1Ui {
-            start_dialog: self.start_dialog.take(),
-            ..L1Ui::default()
-        };
+        *self = L1Ui::default();
     }
 }
 

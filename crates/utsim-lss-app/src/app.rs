@@ -501,6 +501,7 @@ impl App {
                 }
                 ui.add_space(6.0);
                 ui.small(t.identity_note);
+                self.identity_extra(ui);
             });
         });
         if submit {
@@ -508,6 +509,10 @@ impl App {
             self.submit_identity(&n, &e);
         }
     }
+
+    /// More of the identity screen, below name and e-mail (the signing key of the team's
+    /// signatures goes here).
+    fn identity_extra(&mut self, _ui: &mut egui::Ui) {}
 
     fn start_screen(&mut self, ui: &mut egui::Ui) {
         let t = texts();
