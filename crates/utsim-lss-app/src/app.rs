@@ -20,6 +20,7 @@ use crate::theme;
 
 // Stage L1 screens (portfolio, charter versions, team, tollgates, risks, meetings,
 // schedule, savings, closing, folder picker).
+mod controle;
 #[path = "screens/mod.rs"]
 pub mod screens;
 mod tools;
@@ -191,6 +192,8 @@ pub struct App {
     roadmap: screens::roadmap::RoadmapUi,
     /// The design of experiments.
     exp: screens::experiments::ExpUi,
+    /// The control plan in operation, read on the twin (P5).
+    ctl: controle::CtlUi,
 }
 
 impl App {
@@ -244,6 +247,7 @@ impl App {
             l3: screens::analyses::L3Ui::default(),
             roadmap: screens::roadmap::RoadmapUi::default(),
             exp: screens::experiments::ExpUi::default(),
+            ctl: controle::CtlUi::default(),
         }
     }
 

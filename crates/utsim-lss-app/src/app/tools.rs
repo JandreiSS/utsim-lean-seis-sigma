@@ -212,7 +212,7 @@ impl App {
     // ---- Helpers -----------------------------------------------------------------------
 
     /// A choice bound to a field: writes as soon as another option is picked.
-    fn combo_field(
+    pub(super) fn combo_field(
         &mut self,
         ui: &mut egui::Ui,
         s: &mut Session,
@@ -1157,6 +1157,7 @@ impl App {
                 });
             }
         }
+        self.control_monitor(ui, s, del);
     }
 
     fn response_plan(&mut self, ui: &mut egui::Ui, s: &mut Session, del: Uid) {
