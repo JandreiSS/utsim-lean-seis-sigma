@@ -1,15 +1,15 @@
 //! Screens of stage L1, project management (`docs/plano_lean_seis_sigma.md`, 1.1 to 1.10):
 //! portfolio, charter with versions, team and RACI, phases and tollgates, risks, meetings
-//! and minutes, schedule with the Gantt, savings, closing and lessons, and the folder
-//! picker. A child module of [`crate::app`], so the screens use the same text boxes (with
+//! and minutes, schedule with the Gantt, savings, closing and lessons, and the opening
+//! screen. A child module of [`crate::app`], so the screens use the same text boxes (with
 //! the version seen when typing started) and the same status bar. Every change goes
 //! through [`Session::apply`], hence through the journal.
 
 mod actions;
 mod charter;
 mod closure;
+pub mod inicio;
 mod meetings;
-pub mod picker;
 mod portfolio;
 mod risks;
 mod savings;
@@ -44,7 +44,7 @@ pub(crate) use portfolio::PortfolioUi;
 /// What the L1 screens keep between frames (inputs being typed, selections).
 #[derive(Default)]
 pub struct L1Ui {
-    pub(crate) picker: picker::FolderPicker,
+    pub(crate) start_dialog: Option<inicio::Dialogo>,
     pub(crate) portfolio: PortfolioUi,
     // Charter.
     version_reason: String,
@@ -94,10 +94,7 @@ impl L1Ui {
     /// Called when the project closes.
     pub fn close(&mut self) {
         self.portfolio.close();
-        *self = L1Ui {
-            picker: std::mem::take(&mut self.picker),
-            ..L1Ui::default()
-        };
+        *self = L1Ui::default();
     }
 }
 

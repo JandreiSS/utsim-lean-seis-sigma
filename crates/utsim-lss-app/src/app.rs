@@ -12,14 +12,19 @@ use utsim_lss_core::overview::Overview;
 use utsim_lss_core::tools::Tool;
 use utsim_lss_core::{Date, EntityRef, Id as Uid, Kind, kanban, modelos_linha};
 use utsim_lss_store::user::{self, AppDirs, Identity, UserConfig};
-use utsim_lss_store::{Clock, SystemClock, lssz, project};
+use utsim_lss_store::{Clock, SystemClock};
 
 use crate::session::Session;
 use crate::text::{self, texts};
 use crate::theme;
 
+const LSSZ: utsim_ui_tema::arquivos::Filtro = utsim_ui_tema::arquivos::Filtro {
+    nome: "Projeto compactado (.lssz)",
+    extensoes: &[utsim_lss_store::lssz::EXTENSION],
+};
+
 // Stage L1 screens (portfolio, charter versions, team, tollgates, risks, meetings,
-// schedule, savings, closing, folder picker).
+// schedule, savings, closing, opening screen).
 mod controle;
 #[path = "screens/mod.rs"]
 pub mod screens;
@@ -154,7 +159,6 @@ pub struct App {
     name_input: String,
     email_input: String,
     identity_error: Option<String>,
-    open_input: String,
     new_title: String,
     new_parent: String,
     new_approach: Approach,
@@ -218,7 +222,6 @@ impl App {
             name_input: String::new(),
             email_input: String::new(),
             identity_error: None,
-            open_input: String::new(),
             new_title: String::new(),
             new_parent: String::new(),
             new_approach: Approach::Dmaic,
@@ -431,6 +434,7 @@ impl App {
 
     /// The whole window.
     pub fn draw(&mut self, ui: &mut egui::Ui) {
+        utsim_ui_tema::maximizar_no_inicio(ui.ctx());
         if self.theme_applied != Some(self.config.theme) {
             theme::apply(ui.ctx(), self.config.theme);
             self.theme_applied = Some(self.config.theme);
@@ -445,82 +449,70 @@ impl App {
         self.after_frame(ui.ctx());
     }
 
-    /// The folder picker, and switching to another project asked by a screen (after the
-    /// frame, when no session is borrowed).
-    fn after_frame(&mut self, ctx: &egui::Context) {
-        self.l1.picker.show(ctx);
-        if let Some((target, path)) = self.l1.picker.take() {
-            use screens::picker::Target;
-            let p = path.display().to_string();
-            match target {
-                Target::OpenProject => self.open_input = p,
-                Target::NewProjectParent => self.new_parent = p,
-                Target::ImportFile => self.import_file = p,
-                Target::ImportDest => self.import_dest = p,
-            }
-        }
+    /// Switching to another project asked by a screen (after the frame, when no session is
+    /// borrowed).
+    fn after_frame(&mut self, _ctx: &egui::Context) {
         if let Some(p) = self.l1.portfolio.open_request.take() {
             self.close_project();
             self.open_project(&p);
         }
     }
 
-    /// Opens the folder picker for one of the start screen's boxes.
-    pub fn browse(&mut self, target: screens::picker::Target) {
-        use screens::picker::Target;
-        let start = match target {
-            Target::OpenProject => self.open_input.clone(),
-            Target::NewProjectParent => self.new_parent.clone(),
-            Target::ImportFile => self.import_file.clone(),
-            Target::ImportDest => self.import_dest.clone(),
-        };
-        self.l1.picker.open(target, &start);
-    }
-
-    /// Whether the folder picker is open (tests).
-    pub fn picker_open(&self) -> bool {
-        self.l1.picker.is_open()
-    }
-
     fn identity_screen(&mut self, ui: &mut egui::Ui) {
         let t = texts();
-        ui.vertical_centered(|ui| {
-            ui.add_space(48.0);
-            ui.heading(t.identity_title);
-            ui.add_space(8.0);
-            ui.set_max_width(520.0);
-            ui.label(t.identity_intro);
-            ui.add_space(16.0);
-        });
         let mut submit = false;
-        ui.vertical_centered(|ui| {
-            egui::Grid::new("identidade")
-                .num_columns(2)
-                .spacing([12.0, 8.0])
-                .show(ui, |ui| {
-                    ui.label(t.identity_name);
-                    ui.add(egui::TextEdit::singleline(&mut self.name_input).desired_width(300.0));
-                    ui.end_row();
-                    ui.label(t.identity_email);
-                    let r = ui.add(
-                        egui::TextEdit::singleline(&mut self.email_input).desired_width(300.0),
-                    );
-                    submit |= r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
-                    ui.end_row();
-                });
-            ui.add_space(8.0);
-            submit |= ui.button(t.continue_).clicked();
-            if let Some(e) = &self.identity_error {
-                ui.colored_label(ui.visuals().error_fg_color, e);
-            }
-            ui.add_space(12.0);
-            ui.small(t.identity_note);
+        utsim_ui_tema::abertura::coluna(ui, 1120.0, |ui| {
+            ui.add_space(28.0);
+            utsim_ui_tema::abertura::cabecalho(
+                ui,
+                t.app_name,
+                "Projetos Lean Seis Sigma",
+                screens::inicio::COR,
+                Some(screens::inicio::ICONE),
+            );
+            ui.add_space(22.0);
+            utsim_ui_tema::abertura::quadro_destaque(screens::inicio::COR).show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.label(egui::RichText::new(t.identity_title).strong().size(16.0));
+                ui.label(egui::RichText::new(t.identity_intro).weak());
+                ui.add_space(8.0);
+                egui::Grid::new("identidade")
+                    .num_columns(2)
+                    .spacing([12.0, 8.0])
+                    .show(ui, |ui| {
+                        ui.label(t.identity_name);
+                        ui.add(
+                            egui::TextEdit::singleline(&mut self.name_input).desired_width(300.0),
+                        );
+                        ui.end_row();
+                        ui.label(t.identity_email);
+                        let r = ui.add(
+                            egui::TextEdit::singleline(&mut self.email_input).desired_width(300.0),
+                        );
+                        submit |= r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+                        ui.end_row();
+                    });
+                ui.add_space(8.0);
+                submit |= ui
+                    .add(utsim_ui_tema::widgets::primary(t.continue_))
+                    .clicked();
+                if let Some(e) = &self.identity_error {
+                    ui.colored_label(ui.visuals().error_fg_color, e);
+                }
+                ui.add_space(6.0);
+                ui.small(t.identity_note);
+                self.identity_extra(ui);
+            });
         });
         if submit {
             let (n, e) = (self.name_input.clone(), self.email_input.clone());
             self.submit_identity(&n, &e);
         }
     }
+
+    /// More of the identity screen, below name and e-mail (the signing key of the team's
+    /// signatures goes here).
+    fn identity_extra(&mut self, _ui: &mut egui::Ui) {}
 
     fn start_screen(&mut self, ui: &mut egui::Ui) {
         let t = texts();
@@ -546,181 +538,7 @@ impl App {
             ui.add_space(4.0);
         });
         egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui));
-        egui::CentralPanel::default().show(ui, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                ui.set_max_width(760.0);
-                ui.heading(t.recent);
-                let mut open = None;
-                if self.config.recent.is_empty() {
-                    ui.label(t.no_recent);
-                }
-                for p in &self.config.recent {
-                    ui.horizontal(|ui| {
-                        let exists = project::is_project(p);
-                        let name = p
-                            .file_stem()
-                            .map(|s| s.to_string_lossy().into_owned())
-                            .unwrap_or_default();
-                        if ui.add_enabled(exists, egui::Button::new(name)).clicked() {
-                            open = Some(p.clone());
-                        }
-                        ui.weak(p.display().to_string());
-                        if !exists {
-                            ui.weak(format!("({})", t.missing_folder));
-                        }
-                    });
-                }
-                if let Some(p) = open {
-                    self.open_project(&p);
-                }
-                ui.add_space(16.0);
-
-                theme::card(ui).show(ui, |ui| {
-                    ui.strong(t.open_folder);
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.open_input)
-                                .hint_text(t.path_hint)
-                                .desired_width(520.0),
-                        );
-                        if ui.button(t.open).clicked() {
-                            let p = PathBuf::from(self.open_input.trim());
-                            self.open_project(&p);
-                        }
-                        if ui.button(text::l1::l1().browse).clicked() {
-                            self.browse(screens::picker::Target::OpenProject);
-                        }
-                    });
-                });
-                ui.add_space(8.0);
-                theme::card(ui).show(ui, |ui| {
-                    ui.strong(t.new_project);
-                    ui.add(
-                        egui::TextEdit::singleline(&mut self.new_title)
-                            .hint_text(t.title_hint)
-                            .desired_width(520.0),
-                    );
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.new_parent)
-                                .hint_text(t.parent_hint)
-                                .desired_width(520.0),
-                        );
-                        if ui.button(text::l1::l1().browse).clicked() {
-                            self.browse(screens::picker::Target::NewProjectParent);
-                        }
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label(t.project_model);
-                        let chosen = self.new_model.and_then(modelos_linha::find);
-                        egui::ComboBox::from_id_salt("modelo_projeto")
-                            .selected_text(chosen.map_or(t.no_project_model, |m| m.name))
-                            .show_ui(ui, |ui| {
-                                ui.selectable_value(&mut self.new_model, None, t.no_project_model);
-                                for m in &modelos_linha::MODELS {
-                                    ui.selectable_value(&mut self.new_model, Some(m.id), m.name)
-                                        .on_hover_text(m.description);
-                                }
-                            });
-                        // A template brings its approach.
-                        if let Some(m) = self.new_model.and_then(modelos_linha::find) {
-                            self.new_approach = m.approach;
-                        }
-                    });
-                    ui.horizontal(|ui| {
-                        ui.label(t.approach);
-                        let before = self.new_approach;
-                        egui::ComboBox::from_id_salt("abordagem")
-                            .selected_text(text::approach_name(self.new_approach))
-                            .show_ui(ui, |ui| {
-                                for a in Approach::ALL {
-                                    ui.selectable_value(
-                                        &mut self.new_approach,
-                                        a,
-                                        text::approach_name(a),
-                                    );
-                                }
-                            });
-                        if self.new_approach != before {
-                            // Another approach leaves the template.
-                            self.new_model = None;
-                        }
-                        if ui.button(t.create).clicked() {
-                            let (parent, title) = (
-                                PathBuf::from(self.new_parent.trim()),
-                                self.new_title.clone(),
-                            );
-                            let created = match self.new_model.and_then(modelos_linha::find) {
-                                Some(m) => self.create_line_project(&parent, &title, m),
-                                None => self.create_project(&parent, &title, self.new_approach),
-                            };
-                            if created {
-                                self.new_title.clear();
-                                self.new_model = None;
-                            }
-                        }
-                    });
-                    ui.small(t.shared_folder_tip);
-                });
-                ui.add_space(8.0);
-                theme::card(ui).show(ui, |ui| {
-                    let t6 = text::l6::l6();
-                    ui.strong(t6.create_program);
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.new_program)
-                                .hint_text(t6.program_name_hint)
-                                .desired_width(420.0),
-                        );
-                        if ui.button(t.create).clicked() {
-                            let (parent, name) = (
-                                PathBuf::from(self.new_parent.trim()),
-                                self.new_program.clone(),
-                            );
-                            if self.create_program(&parent, &name) {
-                                self.new_program.clear();
-                            }
-                        }
-                    });
-                    ui.small(t6.program_tip);
-                });
-                ui.add_space(8.0);
-                theme::card(ui).show(ui, |ui| {
-                    ui.strong(t.import_lssz);
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.import_file)
-                                .hint_text(t.import_hint)
-                                .desired_width(520.0),
-                        );
-                        if ui.button(text::l1::l1().browse).clicked() {
-                            self.browse(screens::picker::Target::ImportFile);
-                        }
-                    });
-                    ui.horizontal(|ui| {
-                        ui.add(
-                            egui::TextEdit::singleline(&mut self.import_dest)
-                                .hint_text(t.import_dest_hint)
-                                .desired_width(420.0),
-                        );
-                        if ui.button(text::l1::l1().browse).clicked() {
-                            self.browse(screens::picker::Target::ImportDest);
-                        }
-                        if ui.button(t.import).clicked() {
-                            let (file, dest) = (
-                                PathBuf::from(self.import_file.trim()),
-                                PathBuf::from(self.import_dest.trim()),
-                            );
-                            let r = lssz::import(&file, &dest);
-                            if let Some(root) = self.report(r) {
-                                self.set_status((t.imported)(&root.display().to_string()), false);
-                                self.open_project(&root);
-                            }
-                        }
-                    });
-                });
-            });
-        });
+        egui::CentralPanel::default().show(ui, |ui| self.start_body(ui));
     }
 
     fn theme_picker(&mut self, ui: &mut egui::Ui) {
@@ -1390,11 +1208,15 @@ impl App {
         ui.weak(t.data_intro);
         ui.add_space(8.0);
         ui.horizontal(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.export_dest)
-                    .hint_text(t.export_dest_hint)
-                    .desired_width(460.0),
-            );
+            utsim_ui_tema::arquivos::campo(
+                ui,
+                &mut self.export_dest,
+                utsim_ui_tema::arquivos::Tipo::Salvar,
+                "Exportar dados",
+                &[LSSZ],
+                460.0,
+            )
+            .on_hover_text(t.export_dest_hint);
             if ui.button(t.export_lssz).clicked() {
                 let dest = PathBuf::from(self.export_dest.trim());
                 let res = s.export(&dest);

@@ -1,7 +1,7 @@
 //! Stage L1 screens drawn without a window (egui's headless context), over a project
 //! filled through the journal: portfolio, charter versions, team and RACI, tollgates,
 //! board with WIP limits and linked cards, risks, meetings, schedule with the Gantt,
-//! savings, closing and lessons; the folder picker; the WIP rule through the session.
+//! savings, closing and lessons; the WIP rule through the session.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -9,7 +9,6 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use eframe::egui;
 use serde_json::Value;
 use utsim_lss_app::App;
-use utsim_lss_app::app::screens::picker::Target;
 use utsim_lss_app::app::{Nav, Screen};
 use utsim_lss_app::session::Session;
 use utsim_lss_core::domain::{Approach, Column, RoleKind, SavingCategory, fields};
@@ -340,23 +339,6 @@ fn portfolio_screen_offers_to_create_the_portfolio() {
         "{:?}",
         app.status()
     );
-}
-
-#[test]
-fn folder_picker_opens_from_the_start_screen() {
-    let dir = tempfile::tempdir().unwrap();
-    let ctx = egui::Context::default();
-    let mut app = app_in(&dir.path().join("config"));
-    app.submit_identity("Ana", "ana@x.com");
-    assert_eq!(app.screen, Screen::Start);
-    assert!(!app.picker_open());
-    app.browse(Target::NewProjectParent);
-    assert!(app.picker_open());
-    frames(&mut app, &ctx, 2);
-    assert!(app.picker_open(), "stays open until a choice");
-    app.browse(Target::ImportFile);
-    frames(&mut app, &ctx, 1);
-    assert!(app.picker_open());
 }
 
 #[test]
