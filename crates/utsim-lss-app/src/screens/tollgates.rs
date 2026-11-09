@@ -198,7 +198,7 @@ impl App {
                     } else {
                         ui.weak(it.check.as_ref().map(check_name).unwrap_or_default());
                     }
-                    if ui.small_button("✕").on_hover_text(tl.remove_item).clicked() {
+                    if ui.small_button("✖").on_hover_text(tl.remove_item).clicked() {
                         remove = Some(e);
                     }
                     ui.end_row();

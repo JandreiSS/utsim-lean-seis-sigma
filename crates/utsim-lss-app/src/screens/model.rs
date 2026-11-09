@@ -835,7 +835,7 @@ impl App {
                             .desired_rows(2)
                             .desired_width(360.0),
                     );
-                    if ui.small_button("✕").clicked() {
+                    if ui.small_button("✖").clicked() {
                         remove = Some(i);
                     }
                 }

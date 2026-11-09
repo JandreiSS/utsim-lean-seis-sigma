@@ -239,12 +239,27 @@ impl App {
             let n = self.exp.spec.factors.len();
             for (i, f) in self.exp.spec.factors.iter_mut().enumerate() {
                 ui.label(utsim_stats::doe::letter(i).to_string());
-                ui.add(egui::TextEdit::singleline(&mut f.name).desired_width(120.0));
-                ui.add(egui::TextEdit::singleline(&mut f.low).desired_width(110.0));
-                ui.add(egui::TextEdit::singleline(&mut f.high).desired_width(110.0));
-                ui.add(egui::TextEdit::singleline(&mut f.center).desired_width(90.0));
-                ui.add(egui::TextEdit::singleline(&mut f.key).desired_width(150.0));
-                if n > 2 && ui.small_button("✕").clicked() {
+                ui.add_sized(
+                    [120.0, ui.spacing().interact_size.y],
+                    egui::TextEdit::singleline(&mut f.name),
+                );
+                ui.add_sized(
+                    [110.0, ui.spacing().interact_size.y],
+                    egui::TextEdit::singleline(&mut f.low),
+                );
+                ui.add_sized(
+                    [110.0, ui.spacing().interact_size.y],
+                    egui::TextEdit::singleline(&mut f.high),
+                );
+                ui.add_sized(
+                    [90.0, ui.spacing().interact_size.y],
+                    egui::TextEdit::singleline(&mut f.center),
+                );
+                ui.add_sized(
+                    [150.0, ui.spacing().interact_size.y],
+                    egui::TextEdit::singleline(&mut f.key),
+                );
+                if n > 2 && ui.small_button("✖").clicked() {
                     remove = Some(i);
                 }
                 ui.end_row();

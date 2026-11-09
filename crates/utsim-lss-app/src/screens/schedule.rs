@@ -134,7 +134,7 @@ impl App {
                     } else {
                         ui.label("");
                     }
-                    if ui.small_button("✕").on_hover_text(t.delete).clicked() {
+                    if ui.small_button("✖").on_hover_text(t.delete).clicked() {
                         remove = Some(e);
                     }
                     ui.end_row();
@@ -167,7 +167,7 @@ impl App {
                 ui.horizontal(|ui| {
                     ui.label(d.format_br());
                     ui.label(name);
-                    if ui.small_button("✕").clicked() {
+                    if ui.small_button("✖").clicked() {
                         remove = Some(*id);
                     }
                 });

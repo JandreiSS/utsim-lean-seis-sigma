@@ -770,3 +770,22 @@ pub fn vsm_doc(state: &State, project: Id, del: &Deliverable) -> Document {
     }
     d
 }
+
+/// The cover and the table of contents of a long document (A4 with three headings or
+/// more): the app, the title, the subtitle, who printed it, when, and the project or
+/// program it came from. Short ones (the A3, the certificate, a minutes) stay as they are.
+pub fn dress(doc: &mut Document, author: &str, date: &str, source: &str) {
+    if doc.size != PageSize::A4Portrait || doc.headings().len() < 3 || doc.cover.is_some() {
+        return;
+    }
+    doc.cover = Some(utsim_lss_core::relatorios::Cover {
+        app: "UTSim Seis Sigma".into(),
+        title: doc.title.clone(),
+        subtitle: doc.subtitle.clone(),
+        author: author.into(),
+        date: date.into(),
+        source: source.into(),
+        ..Default::default()
+    });
+    doc.toc = true;
+}

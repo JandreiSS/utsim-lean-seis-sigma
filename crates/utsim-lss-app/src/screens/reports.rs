@@ -60,7 +60,14 @@ impl App {
     /// Writes a PDF of `doc` into `relatorios/` and opens it.
     pub(in crate::app) fn print(&mut self, s: &Session, doc: &Document) -> Option<PathBuf> {
         let t = self.report_template(s);
-        let bytes = pdf::render(doc, &t, &self.footer(s));
+        let mut doc = doc.clone();
+        build::dress(
+            &mut doc,
+            &s.folder().me().name,
+            &s.today().format_br(),
+            &s.folder().title(),
+        );
+        let bytes = pdf::render(&doc, &t, &self.footer(s));
         self.save_report(s, &file_name(&doc.title, "pdf"), &bytes)
     }
 

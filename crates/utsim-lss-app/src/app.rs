@@ -924,12 +924,17 @@ impl App {
                 s.state().entity(entity.id).and_then(|e| e.version(field)),
             ),
         };
-        let edit = if multiline {
-            egui::TextEdit::multiline(&mut buf).desired_rows(3)
+        // A single line takes its width even in a grid column that started narrow.
+        let r = if multiline {
+            ui.add(
+                egui::TextEdit::multiline(&mut buf)
+                    .desired_rows(3)
+                    .desired_width(width),
+            )
         } else {
-            egui::TextEdit::singleline(&mut buf)
+            let h = ui.spacing().interact_size.y;
+            ui.add_sized([width, h], egui::TextEdit::singleline(&mut buf))
         };
-        let r = ui.add(edit.desired_width(width));
         if r.has_focus() {
             self.drafts.insert(
                 key.clone(),

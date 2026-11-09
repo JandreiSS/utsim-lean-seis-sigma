@@ -1000,6 +1000,13 @@ impl App {
         };
         let (name, bytes) = match how {
             Export::Pdf | Export::Annual => {
+                let mut doc = doc.clone();
+                crate::reports::dress(
+                    &mut doc,
+                    &s.folder().me().name,
+                    &d.today.format_br(),
+                    &s.folder().title(),
+                );
                 let tp = self.report_template(s);
                 let footer =
                     (crate::text::l5::l5().printed_by)(&s.folder().me().name, &d.today.format_br());
