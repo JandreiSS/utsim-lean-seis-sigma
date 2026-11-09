@@ -598,6 +598,7 @@ pub fn outcome_charts(o: &analises::Outcome, title: &str) -> Vec<Chart> {
             series: vec![("valores".to_string(), o.series.clone())],
             hlines,
             marks: o.signals.clone(),
+            ..Chart::default()
         });
     }
     for p in &o.plots {
@@ -671,9 +672,12 @@ pub fn pareto_chart(state: &State, deliverable: Id) -> Option<Chart> {
         title: "Pareto".into(),
         bars: true,
         labels: p.rows.iter().map(|r| r.name.clone()).collect(),
-        series: vec![("%".into(), p.rows.iter().map(|r| r.pct).collect())],
-        hlines: vec![("80 %".into(), 80.0)],
-        marks: Vec::new(),
+        series: vec![(
+            "ocorrências".into(),
+            p.rows.iter().map(|r| r.value).collect(),
+        )],
+        kind: utsim_lss_core::relatorios::ChartKind::Pareto,
+        ..Chart::default()
     })
 }
 
@@ -761,8 +765,7 @@ pub fn vsm_doc(state: &State, project: Id, del: &Deliverable) -> Document {
                     l.steps.iter().map(|s| s.process).collect(),
                 ),
             ],
-            hlines: Vec::new(),
-            marks: Vec::new(),
+            ..Chart::default()
         });
     }
     d
