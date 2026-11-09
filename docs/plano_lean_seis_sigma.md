@@ -680,7 +680,7 @@ plano; Haiku para tarefas mecânicas).
 | P6 DMADV e ferramentas Lean | QFD, Pugh, tolerâncias por Monte Carlo, kaizen rápido completo, PDCA, poka-yoke, 5S, SMED, trabalho padronizado e balanceamento | 22–30 | Opus 5–7; Sonnet 17–23 |
 | P7 Equipe avançada | conflito por parágrafo, assinatura ed25519 das aprovações, cadeia de hash conferida na abertura, visão "minhas ações" da carteira, acesso pela rede local com token | 12–18 | Opus 7–10; Sonnet 5–8 |
 | P8 Idiomas | extração dos textos, inglês e espanhol, revisão de termos | 6–10 | Haiku 2–3; Sonnet 4–7 |
-| P9 Programa ampliado | análise dos itens das provas (dificuldade e discriminação), certificados e papéis assinados com a chave do MBB (usa P7), comparação entre unidades e tendências nos painéis, avaliação de reação das turmas, importação periódica de pessoas e áreas por CSV do RH, relatório anual do programa | 14–20 | Opus 6–8; Sonnet 7–10; Haiku 1–2 |
+| P9 Programa ampliado | (**feita a maior parte** em 2026-11-08: análise dos itens, avaliação de reação, importação de pessoas por CSV, comparação entre unidades e relatório anual; ficam os certificados e papéis assinados, que dependem da P7) análise dos itens das provas (dificuldade e discriminação), certificados e papéis assinados com a chave do MBB (usa P7), comparação entre unidades e tendências nos painéis, avaliação de reação das turmas, importação periódica de pessoas e áreas por CSV do RH, relatório anual do programa | 14–20 | Opus 6–8; Sonnet 7–10; Haiku 1–2 |
 | **Total depois do MVP** (P2 a P9) | | **146–208** | Opus ≈ 80–113; Sonnet ≈ 63–90; Haiku ≈ 3–5 |
 | **Total geral** | | **424–593** | |
 

@@ -144,6 +144,11 @@ pub struct L10Texts {
     pub people_import_button: S,
     pub people_report: fn(usize, usize, usize, usize) -> String,
     pub people_line: fn(usize, &str) -> String,
+    pub dash_annual: S,
+    pub annual_title: fn(i32) -> String,
+    pub annual_kpis: S,
+    pub annual_units: S,
+    pub annual_detail: S,
 }
 
 pub static PT_BR: L10Texts = L10Texts {
@@ -297,6 +302,11 @@ pub static PT_BR: L10Texts = L10Texts {
         format!("{c} novas, {u} atualizadas, {s} sem mudança, {e} linhas com problema")
     },
     people_line: |n, why| format!("linha {n}: {why}"),
+    dash_annual: "Relatório anual (PDF)",
+    annual_title: |y| format!("Relatório anual do programa {y}"),
+    annual_kpis: "Indicadores do ano, com a meta e o ano anterior",
+    annual_units: "Comparação entre as unidades",
+    annual_detail: "Detalhe do programa",
 };
 
 pub fn l10() -> &'static L10Texts {

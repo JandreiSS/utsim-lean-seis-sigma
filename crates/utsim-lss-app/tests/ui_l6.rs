@@ -432,7 +432,7 @@ Zeca Prado;zeca@empresa.com;GB;6
             let bytes = std::fs::read(&f).unwrap();
             assert!(f.starts_with(root.join("relatorios")), "{f:?}");
             match how {
-                Export::Pdf => {
+                Export::Pdf | Export::Annual => {
                     assert!(bytes.starts_with(b"%PDF-1.4"));
                     assert!(String::from_utf8_lossy(&bytes).contains(" re f 0 g"));
                 }
@@ -440,6 +440,15 @@ Zeca Prado;zeca@empresa.com;GB;6
             }
         }
     }
+    // The annual report: indicators, units and the MBB detail, with charts.
+    app.pnav = ProgramNav::LeadershipDashboard;
+    app.request_dashboard_export(true, Export::Annual);
+    frames(&mut app, &ctx, 1);
+    no_error(&app, "relatório anual");
+    let f = app.last_dashboard_export().unwrap().to_path_buf();
+    assert!(f.file_name().unwrap().to_string_lossy().contains("anual"));
+    let bytes = std::fs::read(&f).unwrap();
+    assert!(bytes.starts_with(b"%PDF-1.4"));
     app.close_project();
 
     // Every screen, as the belt: the MBB's views show a refusal, never an error.

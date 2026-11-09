@@ -10,7 +10,7 @@ use utsim_lss_core::domain::SavingStatus;
 use utsim_lss_core::painel::{self, Filter, Inputs, Kpi};
 use utsim_lss_core::perfis::Action;
 use utsim_lss_core::programa::{self, Stage};
-use utsim_lss_core::relatorios::{Chart, Document, pdf};
+use utsim_lss_core::relatorios::{Block, Chart, Document, pdf};
 use utsim_lss_core::savings::Category;
 
 use super::{Data, instant};
@@ -552,6 +552,9 @@ impl App {
 pub enum Export {
     Pdf,
     Xlsx,
+    /// The annual report of the program (PDF): the leadership indicators with target and
+    /// last year, the comparison between the units and the MBB detail.
+    Annual,
 }
 
 const STATES: [SavingStatus; 4] = [
@@ -795,6 +798,88 @@ fn mbb_doc(s: &Session, d: &Data, f: &Filter) -> Document {
     doc
 }
 
+/// The annual report of the program: the six indicators of the year with target and last
+/// year, the same indicators unit by unit (with the charts of validated savings and closed
+/// projects), and the detail of the MBB dashboard.
+fn annual_doc(s: &Session, d: &Data, year: i32) -> Document {
+    let tl = l6();
+    let t = crate::text::l10::l10();
+    let all = Filter {
+        unit: None,
+        year: Some(year),
+    };
+    let mut doc = leadership_doc(s, d, year, &all);
+    doc.title = (t.annual_title)(year);
+    // The leadership document starts with the instant and the table of the indicators.
+    doc.blocks.insert(1, Block::Heading(t.annual_kpis.into()));
+    let inputs = Inputs {
+        state: s.state(),
+        program: d.program,
+        projects: &d.records,
+        ideas: &d.ideas,
+        members: &d.members,
+        opportunities: &d.opps,
+        reviews: &d.reviews,
+        today: d.today,
+    };
+    let units: Vec<&programa::Unit> = d.units.iter().collect();
+    if !units.is_empty() {
+        doc.heading(t.annual_units);
+        let per: Vec<Vec<painel::KpiValue>> = units
+            .iter()
+            .map(|u| {
+                painel::leadership(
+                    &inputs,
+                    year,
+                    &Filter {
+                        unit: Some(u.id),
+                        year: Some(year),
+                    },
+                )
+            })
+            .collect();
+        let mut head = vec![tl.unit];
+        head.extend(Kpi::ALL.iter().map(|k| kpi_name(*k)));
+        let value =
+            |ks: &[painel::KpiValue], k: Kpi| ks.iter().find(|x| x.kpi == k).map(|x| x.value);
+        doc.table(
+            t.annual_units,
+            &head,
+            units
+                .iter()
+                .zip(&per)
+                .map(|(u, ks)| {
+                    let mut r = vec![u.name.clone()];
+                    r.extend(Kpi::ALL.iter().map(|k| match value(ks, *k) {
+                        Some(v) if *k == Kpi::ValidatedSavings => money(v),
+                        Some(v) => show_number((v * 10.0).round() / 10.0),
+                        None => String::new(),
+                    }));
+                    r
+                })
+                .collect(),
+            &[],
+        );
+        for k in [Kpi::ValidatedSavings, Kpi::ProjectsClosed] {
+            doc.chart(Chart {
+                title: kpi_name(k).into(),
+                bars: true,
+                labels: units.iter().map(|u| u.name.clone()).collect(),
+                series: vec![(
+                    String::new(),
+                    per.iter().map(|ks| value(ks, k).unwrap_or(0.0)).collect(),
+                )],
+                ..Chart::default()
+            });
+        }
+    }
+    doc.blocks.push(Block::PageBreak);
+    doc.heading(t.annual_detail);
+    let detail = mbb_doc(s, d, &all);
+    doc.blocks.extend(detail.blocks);
+    doc
+}
+
 /// The leadership dashboard as a document: the six indicators with target, last year and
 /// rule, and the validated savings per unit. No personal data, as on the screen.
 fn leadership_doc(s: &Session, d: &Data, year: i32, f: &Filter) -> Document {
@@ -891,6 +976,9 @@ impl App {
             if ui.button(t.dash_xlsx).clicked() {
                 self.l6.export = Some((leadership, Export::Xlsx, true));
             }
+            if leadership && ui.button(t.dash_annual).clicked() {
+                self.l6.export = Some((true, Export::Annual, true));
+            }
         });
     }
 
@@ -903,13 +991,15 @@ impl App {
             return;
         }
         self.l6.export = None;
-        let doc = if leadership {
+        let doc = if how == Export::Annual {
+            annual_doc(s, d, year)
+        } else if leadership {
             leadership_doc(s, d, year, f)
         } else {
             mbb_doc(s, d, f)
         };
         let (name, bytes) = match how {
-            Export::Pdf => {
+            Export::Pdf | Export::Annual => {
                 let tp = self.report_template(s);
                 let footer =
                     (crate::text::l5::l5().printed_by)(&s.folder().me().name, &d.today.format_br());
