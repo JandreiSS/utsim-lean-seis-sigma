@@ -16,6 +16,8 @@ use utsim_lss_core::tools::{
 use utsim_lss_core::{EntityRef, Id as Uid};
 
 use super::{App, Nav};
+
+mod lean;
 use crate::session::Session;
 use crate::text::l10::l10;
 use crate::text::{self, texts, tool_texts};
@@ -156,6 +158,12 @@ impl App {
             Some(Tool::ResponsePlan) => self.response_plan(ui, s, d.id),
             Some(Tool::A3) => self.a3(ui, s, d.id),
             Some(Tool::Vsm) => self.vsm(ui, s, d.id),
+            Some(Tool::Selection) => self.selection(ui, s, d.id),
+            Some(Tool::FiveS) => self.five_s(ui, s, d.id),
+            Some(Tool::Smed) => self.smed(ui, s, d.id),
+            Some(Tool::StandardWork) => self.standard_work(ui, s, d.id),
+            Some(Tool::KaizenEvent) => self.kaizen_event(ui, s, d.id),
+            Some(Tool::Pdca) => self.pdca(ui, s, d.id),
             None => {
                 ui.label(tt.unknown_tool);
             }
