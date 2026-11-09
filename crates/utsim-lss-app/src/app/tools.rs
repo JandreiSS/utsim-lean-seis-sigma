@@ -1255,11 +1255,15 @@ impl App {
                 ui.colored_label(theme::WARN, (tt.ap_non_monotone)(bad));
             }
             ui.horizontal(|ui| {
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.ap_csv_path)
-                        .hint_text(tt.ap_csv_hint)
-                        .desired_width(300.0),
-                );
+                utsim_ui_tema::arquivos::campo(
+                    ui,
+                    &mut self.ap_csv_path,
+                    utsim_ui_tema::arquivos::Tipo::Abrir,
+                    "Escolher a tabela",
+                    &[utsim_ui_tema::arquivos::CSV],
+                    300.0,
+                )
+                .on_hover_text(tt.ap_csv_hint);
                 ui.add(
                     egui::TextEdit::singleline(&mut self.ap_table_name)
                         .hint_text(tt.ap_name_hint)

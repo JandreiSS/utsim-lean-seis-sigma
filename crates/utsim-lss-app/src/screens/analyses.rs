@@ -173,11 +173,15 @@ impl App {
     fn import_section(&mut self, ui: &mut egui::Ui, s: &mut Session) {
         let t = l3();
         ui.horizontal(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.l3.import_path)
-                    .hint_text(t.csv_hint)
-                    .desired_width(320.0),
-            );
+            utsim_ui_tema::arquivos::campo(
+                ui,
+                &mut self.l3.import_path,
+                utsim_ui_tema::arquivos::Tipo::Abrir,
+                "Escolher a tabela",
+                &[utsim_ui_tema::arquivos::CSV],
+                320.0,
+            )
+            .on_hover_text(t.csv_hint);
             egui::ComboBox::from_id_salt("origem_importacao")
                 .selected_text(origin_name(self.l3.import_origin))
                 .show_ui(ui, |ui| {

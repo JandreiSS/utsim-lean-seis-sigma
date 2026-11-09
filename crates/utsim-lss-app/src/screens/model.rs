@@ -352,11 +352,15 @@ impl App {
             ui.label(t.no_link);
         }
         ui.horizontal(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.l4.path_input)
-                    .hint_text(t.path_hint)
-                    .desired_width(380.0),
-            );
+            utsim_ui_tema::arquivos::campo(
+                ui,
+                &mut self.l4.path_input,
+                utsim_ui_tema::arquivos::Tipo::Abrir,
+                "Escolher o modelo",
+                &[utsim_ui_tema::arquivos::RON],
+                380.0,
+            )
+            .on_hover_text(t.path_hint);
             ui.checkbox(&mut self.l4.copy, t.copy_into_project);
             if ui.button(t.link).clicked() {
                 self.link_model(s, link.map(|l| l.id));
