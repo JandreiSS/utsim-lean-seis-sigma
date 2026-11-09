@@ -4,9 +4,11 @@
 
 use eframe::egui;
 use utsim_lss_core::Date;
+use utsim_lss_core::Id;
 use utsim_lss_core::formacao::{self, Attendance, curriculum};
 use utsim_lss_core::mentoria;
 use utsim_lss_core::perfis::Action;
+use utsim_lss_store::program::TrainingFolder;
 
 use super::Data;
 use super::training::{LEVELS, level_combo};
@@ -34,6 +36,50 @@ impl App {
         self.class_picker(ui, d);
         if let Some(k) = d.tr.class(self.l6.l7.class).cloned() {
             self.sessions_section(ui, s, d, &k);
+            self.reaction_summary(ui, s, d, k.id);
+        }
+    }
+
+    /// The summary of the reaction evaluation of a class (only from three answers).
+    fn reaction_summary(&mut self, ui: &mut egui::Ui, s: &Session, d: &Data, class: Id) {
+        use utsim_lss_core::formacao::reacao;
+        let t = crate::text::l10::l10();
+        ui.separator();
+        ui.strong(t.reaction_title);
+        let Some(cs) = self.training_state(s, d, TrainingFolder::Class(class)) else {
+            return;
+        };
+        let all = reacao::reactions(&cs);
+        match reacao::summary(&all, class) {
+            None => {
+                ui.weak((t.reaction_few)(reacao::MIN_ANSWERS));
+            }
+            Some(sm) => {
+                ui.label((t.reaction_n)(sm.n));
+                egui::Grid::new(("reacao_resumo", class))
+                    .striped(true)
+                    .show(ui, |ui| {
+                        for (i, st) in reacao::STATEMENTS.iter().enumerate() {
+                            ui.label(*st);
+                            ui.label(
+                                sm.means[i]
+                                    .map(|m| {
+                                        crate::app::screens::show_number((m * 10.0).round() / 10.0)
+                                    })
+                                    .unwrap_or_default(),
+                            );
+                            ui.label(
+                                sm.agree[i]
+                                    .map(crate::app::screens::percent)
+                                    .unwrap_or_default(),
+                            );
+                            ui.end_row();
+                        }
+                    });
+                for c in &sm.comments {
+                    ui.weak(format!("“{c}”"));
+                }
+            }
         }
     }
 

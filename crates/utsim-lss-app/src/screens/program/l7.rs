@@ -99,6 +99,8 @@ pub struct L7Ui {
     pub(crate) exam_mode_on: Option<Id>,
     /// Restricted folders opened (bank, grades, classes).
     pub(crate) folders: BTreeMap<TrainingFolder, Session>,
+    /// The reaction evaluation being filled, by class: scores (0 = blank) and comment.
+    pub(crate) reaction: BTreeMap<Id, ([u8; 5], String)>,
 }
 
 impl L7Ui {

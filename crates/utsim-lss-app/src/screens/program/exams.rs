@@ -435,6 +435,14 @@ impl App {
                     });
             });
         }
+        let mine: Vec<exams::ExamResult> = results
+            .iter()
+            .filter(|r| r.class == Some(k.id))
+            .cloned()
+            .collect();
+        if !mine.is_empty() {
+            item_analysis(ui, k.id, &mine, bank);
+        }
     }
 
     fn grade_answers(
@@ -560,4 +568,61 @@ pub fn answers_value(typed: &BTreeMap<Id, String>, paper: &exams::Paper) -> BTre
         out.insert(it.question, v);
     }
     out
+}
+
+/// The analysis of the items of the papers graded in a class.
+fn item_analysis(
+    ui: &mut egui::Ui,
+    class: Id,
+    results: &[exams::ExamResult],
+    bank: &[exams::Question],
+) {
+    use utsim_lss_core::formacao::itens::{self, Flag};
+    let t = crate::text::l10::l10();
+    egui::CollapsingHeader::new(t.items_title)
+        .id_salt(("itens", class))
+        .show(ui, |ui| {
+            ui.weak(t.items_intro);
+            egui::Grid::new(("itens_grade", class))
+                .striped(true)
+                .show(ui, |ui| {
+                    for h in [
+                        t.items_question,
+                        t.items_n,
+                        t.items_difficulty,
+                        t.items_discrimination,
+                        t.items_rest,
+                        t.items_flag,
+                    ] {
+                        ui.strong(h);
+                    }
+                    ui.end_row();
+                    for st in itens::analysis(results) {
+                        let text = bank
+                            .iter()
+                            .find(|q| q.id == st.question)
+                            .map(|q| q.statement.chars().take(60).collect::<String>())
+                            .unwrap_or_else(|| st.question.short());
+                        ui.label(text);
+                        ui.label(st.n.to_string());
+                        ui.label(crate::app::screens::percent(st.difficulty));
+                        ui.label(st.discrimination.map_or("-".into(), |d| format!("{d:.2}")));
+                        ui.label(st.item_rest.map_or("-".into(), |d| format!("{d:.2}")));
+                        let (msg, warn) = match st.flag {
+                            Flag::Good => (t.flag_good, false),
+                            Flag::TooEasy => (t.flag_easy, true),
+                            Flag::TooHard => (t.flag_hard, true),
+                            Flag::Weak => (t.flag_weak, true),
+                            Flag::Negative => (t.flag_negative, true),
+                            Flag::FewPapers => (t.flag_few, false),
+                        };
+                        if warn {
+                            ui.colored_label(crate::theme::WARN, msg);
+                        } else {
+                            ui.label(msg);
+                        }
+                        ui.end_row();
+                    }
+                });
+        });
 }

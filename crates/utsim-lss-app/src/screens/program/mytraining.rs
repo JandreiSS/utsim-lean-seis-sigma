@@ -4,8 +4,8 @@
 //! machine), the grades and the certifications with their validity.
 
 use eframe::egui;
-use utsim_lss_core::certificacao;
 use utsim_lss_core::formacao::{self, exams, exams::QuestionKind};
+use utsim_lss_core::{Id, certificacao};
 use utsim_lss_store::program::TrainingFolder;
 
 use super::Data;
@@ -89,6 +89,7 @@ impl App {
                     if r.passed { t.passed } else { t.failed },
                 ));
             }
+            self.reaction_form(ui, s, d, k.id, &cs);
         }
         ui.separator();
         ui.strong(t.my_certifications);
@@ -199,5 +200,72 @@ impl App {
                 self.l6.l7.exam_mode_on = None;
             }
         });
+    }
+}
+
+impl App {
+    /// The trainee's reaction evaluation of a class (once; nothing after sending).
+    fn reaction_form(
+        &mut self,
+        ui: &mut egui::Ui,
+        s: &mut Session,
+        d: &Data,
+        class: Id,
+        cs: &utsim_lss_core::State,
+    ) {
+        use utsim_lss_core::formacao::reacao;
+        let t = crate::text::l10::l10();
+        let sent = reacao::reactions(cs)
+            .iter()
+            .any(|r| r.class == Some(class) && r.person == Some(d.me) && r.sent);
+        egui::CollapsingHeader::new(t.reaction_title)
+            .id_salt(("reacao", class))
+            .show(ui, |ui| {
+                if sent {
+                    ui.label(t.reaction_sent);
+                    return;
+                }
+                ui.weak(t.reaction_intro);
+                let entry = self.l6.l7.reaction.entry(class).or_default();
+                for (i, st) in reacao::STATEMENTS.iter().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(*st);
+                        for v in 1..=5u8 {
+                            ui.selectable_value(&mut entry.0[i], v, v.to_string());
+                        }
+                    });
+                }
+                ui.add(
+                    egui::TextEdit::multiline(&mut entry.1)
+                        .hint_text(t.reaction_comment)
+                        .desired_rows(2),
+                );
+            });
+        if sent {
+            return;
+        }
+        if ui.small_button(t.reaction_send).clicked() {
+            let (scores, comment) = self.l6.l7.reaction.get(&class).cloned().unwrap_or_default();
+            self.send_reaction_in(s, d, class, scores, &comment);
+        }
+    }
+
+    pub(in crate::app) fn send_reaction_in(
+        &mut self,
+        s: &mut Session,
+        d: &Data,
+        class: Id,
+        scores: [u8; 5],
+        comment: &str,
+    ) -> bool {
+        use utsim_lss_core::formacao::reacao;
+        let sc: [Option<u8>; 5] = scores.map(|v| (v > 0).then_some(v));
+        let e = reacao::answer(class, s.new_id(), d.me, &sc, comment, d.today);
+        let ok = self.write_training(s, d, TrainingFolder::Class(class), e);
+        if ok {
+            self.l6.l7.reaction.remove(&class);
+            self.set_status(crate::text::l10::l10().reaction_thanks, false);
+        }
+        ok
     }
 }

@@ -421,6 +421,53 @@ fn every_l7_screen_draws_over_a_green_belt_wave() {
     assert!(s.unauthorized().is_empty(), "{:?}", s.unauthorized());
     s.close();
 
+    // The trainee's reaction evaluation of the class: hers only, once.
+    {
+        use utsim_lss_core::formacao::reacao;
+        let w = TrainingWriters {
+            staff: vec![ana.person, ivo.person],
+            students: vec![bia.person],
+        };
+        let mut bs = Session::open_training(
+            &class_path,
+            &bia,
+            clock(57),
+            TrainingFolder::Class(class),
+            pg,
+            w,
+            false,
+        )
+        .unwrap();
+        let rid = bs.new_id();
+        let scores = [Some(5), Some(4), Some(5), Some(3), Some(5)];
+        commit(
+            &mut bs,
+            reacao::answer(class, rid, bia.person, &scores, "Gostei", today),
+        );
+        assert!(
+            bs.apply(reacao::answer(
+                class,
+                rid,
+                bia.person,
+                &[Some(1); 5],
+                "",
+                today
+            ))
+            .is_err(),
+            "sent: no more changes"
+        );
+        let other = bs.new_id();
+        assert!(
+            bs.apply(reacao::answer(class, other, ivo.person, &scores, "", today))
+                .is_err(),
+            "not someone else's"
+        );
+        let r = reacao::reactions(bs.state());
+        assert_eq!(r.len(), 1);
+        assert_eq!(reacao::summary(&r, class), None, "one answer: no summary");
+        bs.close();
+    }
+
     // Every L7 screen as the MBB, the instructor and the trainee.
     for (who, a) in [
         ("mbb", &mut app),
