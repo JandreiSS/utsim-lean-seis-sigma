@@ -348,6 +348,85 @@ fn every_tool_screen_draws() {
                 .unwrap();
             }
             Tool::A3 => {}
+            Tool::Selection => {
+                use utsim_lss_core::tools::lean::selection as sel;
+                let c = o
+                    .add_item(
+                        d,
+                        sel::CRITERION,
+                        None,
+                        vec![(sel::fields::NAME, t("Custo"))],
+                    )
+                    .unwrap();
+                let a = o
+                    .add_item(
+                        d,
+                        sel::OPTION,
+                        None,
+                        vec![(sel::fields::NAME, t("Gabarito"))],
+                    )
+                    .unwrap();
+                o.apply(vec![utsim_lss_core::tools::lean::set_score(a, c, Some(4))])
+                    .unwrap();
+            }
+            Tool::FiveS => {
+                use utsim_lss_core::tools::lean::five_s;
+                let e = five_s::starter_edits(o.state(), o.project(), d, || o.new_id());
+                o.apply(e).unwrap();
+                o.add_item(
+                    d,
+                    five_s::AUDIT,
+                    None,
+                    vec![(five_s::fields::DATE, t("2026-11-09"))],
+                )
+                .unwrap();
+            }
+            Tool::Smed => {
+                use utsim_lss_core::tools::lean::changeover as c;
+                o.add_item(
+                    d,
+                    c::ACTIVITY,
+                    None,
+                    vec![(c::fields::TIME, n(10)), (c::fields::CLASS, t("interna"))],
+                )
+                .unwrap();
+            }
+            Tool::StandardWork => {
+                use utsim_lss_core::tools::lean::standard_work as w;
+                o.set_field(
+                    tools::Deliverable::entity_ref(d),
+                    w::fields::TAKT,
+                    n(60),
+                    None,
+                )
+                .unwrap();
+                o.add_item(
+                    d,
+                    w::ELEMENT,
+                    None,
+                    vec![
+                        (w::fields::OPERATOR, t("Ana")),
+                        (w::fields::MANUAL, n(20)),
+                        (w::fields::AUTO, n(30)),
+                    ],
+                )
+                .unwrap();
+            }
+            Tool::KaizenEvent => {
+                use utsim_lss_core::tools::kaizen;
+                let e = kaizen::template_edits(o.state(), o.project(), d, || o.new_id());
+                o.apply(e).unwrap();
+            }
+            Tool::Pdca => {
+                use utsim_lss_core::tools::pdca;
+                o.add_item(
+                    d,
+                    pdca::CYCLE,
+                    None,
+                    vec![(pdca::fields::HYPOTHESIS, t("Segundo caixa"))],
+                )
+                .unwrap();
+            }
         }
     }
     o.close();
@@ -376,7 +455,11 @@ fn every_tool_screen_draws() {
     }
     // The A3 sees the other deliverables; the FMEA card is on the board.
     let s = app.session().unwrap();
-    let page = tools::a3::compose(s.state(), s.project(), ids.last().copied());
+    let a3 = Tool::ALL
+        .iter()
+        .position(|t| *t == Tool::A3)
+        .map(|i| ids[i]);
+    let page = tools::a3::compose(s.state(), s.project(), a3);
     assert_eq!(page.fmea_high.len(), 1);
     assert_eq!(page.critical_gaps, 1);
     assert_eq!(page.pareto_vital.len(), 1);

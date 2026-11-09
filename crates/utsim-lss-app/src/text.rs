@@ -734,6 +734,12 @@ pub fn tool_name(t: Tool) -> &'static str {
         Tool::ResponsePlan => "Plano de resposta",
         Tool::A3 => "A3",
         Tool::Vsm => "Mapa do fluxo de valor",
+        Tool::Selection => "Seleção de soluções",
+        Tool::FiveS => "Auditoria 5S",
+        Tool::Smed => "SMED (troca rápida)",
+        Tool::StandardWork => "Trabalho padronizado",
+        Tool::KaizenEvent => "Evento kaizen",
+        Tool::Pdca => "Ciclos PDCA",
     }
 }
 
@@ -775,6 +781,24 @@ pub fn tool_help(t: Tool) -> &'static str {
         }
         Tool::Vsm => {
             "Cada processo com o tempo de ciclo, a disponibilidade e o estoque antes dele; com a demanda, o app calcula o takt, a escada do lead time e a eficiência do ciclo. Do estado atual sai o futuro."
+        }
+        Tool::Selection => {
+            "Compare soluções ou conceitos por critérios com peso: na matriz ponderada cada opção recebe de 1 a 5; na de Pugh, melhor (+), igual (S) ou pior (−) que a referência. Impacto e esforço montam a grade de prioridade."
+        }
+        Tool::FiveS => {
+            "A lista de verificação por senso e as auditorias da área, cada pergunta com nota de 0 a 4. O app soma por senso, mostra o radar da última auditoria e a evolução."
+        }
+        Tool::Smed => {
+            "Cada atividade da troca com o tempo e a classe: interna (máquina parada) ou externa (máquina rodando). Diga o que cada uma vira depois do estudo; o tempo de setup é a soma das internas."
+        }
+        Tool::StandardWork => {
+            "Os elementos de cada operador com os tempos manual, automático e de deslocamento. Com o takt, o app monta a tabela de combinação, o balanceamento e o número mínimo de operadores."
+        }
+        Tool::KaizenEvent => {
+            "O preparo, a pauta dos 3 a 5 dias, as pendências (que vão ao quadro de ações) e o acompanhamento em 30, 60 e 90 dias."
+        }
+        Tool::Pdca => {
+            "Cada ciclo registra a hipótese, o que foi feito, o que se verificou e o que se padronizou ou ajustou. O ciclo seguinte parte do que o anterior aprendeu."
         }
     }
 }
@@ -936,6 +960,7 @@ mod tests {
 pub mod l1;
 pub mod l10;
 pub mod l11;
+pub mod l12;
 pub mod l3;
 pub mod l4;
 pub mod l5;
