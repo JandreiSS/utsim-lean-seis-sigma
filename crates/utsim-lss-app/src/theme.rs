@@ -5,8 +5,8 @@ use eframe::egui::{self, Color32, CornerRadius, Theme, ThemePreference, vec2};
 use utsim_lss_store::user;
 
 /// Accent (selection, links, the current phase).
-pub const ACCENT_DARK: Color32 = Color32::from_rgb(72, 140, 220);
-pub const ACCENT_LIGHT: Color32 = Color32::from_rgb(28, 98, 180);
+pub const ACCENT_DARK: Color32 = Color32::from_rgb(52, 150, 82);
+pub const ACCENT_LIGHT: Color32 = Color32::from_rgb(30, 120, 62);
 /// Warnings (conflicts, overdue).
 pub const WARN: Color32 = Color32::from_rgb(224, 150, 40);
 /// Met, valid, passed.
