@@ -168,6 +168,10 @@ pub struct L6Ui {
     grant_unit: Option<Id>,
     /// The training screens (stage L7).
     pub(crate) l7: l7::L7Ui,
+    /// The report of the last import of people (P9).
+    pub(crate) people_report: Option<utsim_lss_core::pessoas::Report>,
+    /// An import asked from outside the screen (tests and tools), done on the next draw.
+    pub(crate) people_pending: Option<std::path::PathBuf>,
     /// A dashboard export asked: leadership (or MBB), format, open the file.
     pub(crate) export: Option<(bool, dashboards::Export, bool)>,
     /// The file of the last dashboard export.

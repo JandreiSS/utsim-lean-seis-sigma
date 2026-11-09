@@ -146,6 +146,7 @@ impl App {
                     ui.end_row();
                 }
             });
+        self.people_import(ui, s, d);
         ui.horizontal(|ui| {
             ui.add(
                 egui::TextEdit::singleline(self.l6.input("pessoa_nome"))
@@ -378,5 +379,74 @@ fn reason_text(r: &Reason) -> String {
         Reason::SameUnit(false) => tl.r_other_unit.to_string(),
         Reason::SameArea => tl.r_same_area.to_string(),
         Reason::Experience { tools, of } => (tl.r_experience)(*tools, *of),
+    }
+}
+
+impl App {
+    /// Imports the people of the CSV at `path` on the next draw of the Capacity screen.
+    pub fn request_people_import(&mut self, path: &std::path::Path) {
+        self.l6.people_pending = Some(path.to_path_buf());
+    }
+
+    /// The report of the last import of people.
+    pub fn people_report(&self) -> Option<&utsim_lss_core::pessoas::Report> {
+        self.l6.people_report.as_ref()
+    }
+
+    fn people_import(&mut self, ui: &mut egui::Ui, s: &mut Session, d: &Data) {
+        let t = crate::text::l10::l10();
+        if let Some(p) = self.l6.people_pending.take() {
+            self.import_people_from(s, d, &p);
+        }
+        ui.horizontal(|ui| {
+            ui.label(t.people_import);
+            ui.add(
+                egui::TextEdit::singleline(self.l6.input("pessoas_csv"))
+                    .hint_text(t.people_import_hint)
+                    .desired_width(320.0),
+            );
+            if ui.button(t.people_import_button).clicked() {
+                let path = self.l6.input("pessoas_csv").trim().to_string();
+                self.import_people_from(s, d, std::path::Path::new(&path));
+            }
+        });
+        if let Some(r) = &self.l6.people_report {
+            ui.label((t.people_report)(
+                r.created.len(),
+                r.updated.len(),
+                r.unchanged,
+                r.errors.len(),
+            ));
+            for (n, why) in &r.errors {
+                ui.colored_label(theme::WARN, (t.people_line)(*n, why));
+            }
+        }
+    }
+
+    /// Imports the people of a CSV of HR into the program (the button); whether it worked.
+    pub(in crate::app) fn import_people_from(
+        &mut self,
+        s: &mut Session,
+        d: &Data,
+        path: &std::path::Path,
+    ) -> bool {
+        if !self.may_do(s, Action::ManagePeople, None) {
+            return false;
+        }
+        let bytes = match std::fs::read(path) {
+            Ok(b) => b,
+            Err(e) => {
+                self.set_status((texts().error)(&e.to_string()), true);
+                return false;
+            }
+        };
+        let (text, _) = utsim_quality::data::decode(&bytes);
+        let (e, r) = {
+            let ids = s.ids();
+            utsim_lss_core::pessoas::import(s.state(), d.program, &text, ids)
+        };
+        let ok = self.commit(s, e);
+        self.l6.people_report = Some(r);
+        ok
     }
 }

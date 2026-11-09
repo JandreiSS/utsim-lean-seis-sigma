@@ -390,6 +390,30 @@ fn every_l6_screen_draws_over_a_filled_program() {
         assert_eq!(app.screen, Screen::Project, "{nav:?}");
         no_error(&app, &format!("{nav:?}"));
     }
+    // People imported from HR's CSV on the Capacity screen.
+    let csv = root.parent().unwrap().join("pessoas.csv");
+    std::fs::write(
+        &csv,
+        "nome;email;nivel;horas_semana
+Zeca Prado;zeca@empresa.com;GB;6
+;sem@nome;;
+",
+    )
+    .unwrap();
+    app.request_people_import(&csv);
+    app.pnav = ProgramNav::Capacity;
+    frames(&mut app, &ctx, 1);
+    let rep = app
+        .people_report()
+        .expect("relatório da importação")
+        .clone();
+    assert_eq!(rep.created, vec!["Zeca Prado".to_string()]);
+    assert_eq!(rep.errors.len(), 1);
+    assert!(
+        utsim_lss_core::programa::members(app.session().unwrap().state())
+            .iter()
+            .any(|m| m.email == "zeca@empresa.com")
+    );
     // Both dashboards exported to PDF and to the spreadsheet, into relatorios/.
     use utsim_lss_app::app::screens::program::dashboards::Export;
     for (nav, leadership) in [

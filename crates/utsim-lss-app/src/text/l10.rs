@@ -139,6 +139,11 @@ pub struct L10Texts {
     pub reaction_thanks: S,
     pub reaction_few: fn(usize) -> String,
     pub reaction_n: fn(usize) -> String,
+    pub people_import: S,
+    pub people_import_hint: S,
+    pub people_import_button: S,
+    pub people_report: fn(usize, usize, usize, usize) -> String,
+    pub people_line: fn(usize, &str) -> String,
 }
 
 pub static PT_BR: L10Texts = L10Texts {
@@ -285,6 +290,13 @@ pub static PT_BR: L10Texts = L10Texts {
     reaction_thanks: "Avaliação enviada. Obrigado!",
     reaction_few: |n| format!("O resumo aparece a partir de {n} respostas enviadas."),
     reaction_n: |n| format!("{n} respostas: média de cada afirmação e quantos concordam (4 ou 5)"),
+    people_import: "Importar pessoas (CSV do RH)",
+    people_import_hint: "caminho do CSV: nome; email; unidade; area; nivel; horas_semana",
+    people_import_button: "Importar",
+    people_report: |c, u, s, e| {
+        format!("{c} novas, {u} atualizadas, {s} sem mudança, {e} linhas com problema")
+    },
+    people_line: |n, why| format!("linha {n}: {why}"),
 };
 
 pub fn l10() -> &'static L10Texts {
