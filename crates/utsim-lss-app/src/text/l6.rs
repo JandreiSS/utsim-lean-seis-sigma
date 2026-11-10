@@ -2,6 +2,7 @@
 //! pipeline and committee, capacity and assignment, coaching and competence map, tollgate
 //! reviews, dashboards, profiles and personal data), in a catalogue of their own.
 
+use crate::text::{Language, language};
 use utsim_lss_core::mentoria::{Form, Level, Target};
 use utsim_lss_core::painel::Kpi;
 use utsim_lss_core::perfis::{Action, Profile};
@@ -610,20 +611,681 @@ pub static PT_BR: L6Texts = L6Texts {
     unauthorized_line: |p, k, f, a| format!("{p}: {k}.{f} (exige: {a})"),
 };
 
+pub static EN: L6Texts = L6Texts {
+    nav_program: "Deployment program",
+    nav_structure: "Structure and targets",
+    nav_scoreboard: "Scoreboard",
+    nav_pipeline: "Funnel and committee",
+    nav_capacity: "Capacity and assignment",
+    nav_coaching: "Coaching and competences",
+    nav_reviews: "Tollgate reviews",
+    nav_mbb: "MBB dashboard",
+    nav_leadership: "Leadership dashboard",
+    nav_profiles: "Profiles and personal data",
+    rescan: "Read the folders again",
+    data_of: |t| format!("Data of {t}"),
+    found: |c, p| {
+        format!(
+            "{c} {}, {p} {}",
+            if c == 1 { "portfolio" } else { "portfolios" },
+            if p == 1 { "project" } else { "projects" }
+        )
+    },
+    no_profile: "You have no profile in this program",
+    my_profiles: |p| format!("Your profile: {p}"),
+    unauthorized_banner: |n| {
+        if n == 1 {
+            "1 unauthorized operation, without effect".to_string()
+        } else {
+            format!("{n} unauthorized operations, without effect")
+        }
+    },
+    view_denied: |e| format!("This view is not for your profile: {e}."),
+    open_log_from_program: "This is a coaching journal: open the program folder and choose the belt under Coaching.",
+    log_not_yours: "The coaching journal is seen only by the MBB and the belt themselves.",
+    create_program: "New deployment program",
+    program_name_hint: "program name (for example, Company LSS Program)",
+    program_tip: "The program folder sits next to the portfolios and projects (or above the unit folders), in the same shared folder.",
+    program_created: |p| format!("Program created in {p}"),
+    default_program_name: "LSS Program",
+
+    year: "Year",
+    unit: "Unit",
+    all_units: "all units",
+    no_unit: "no unit",
+    choose_unit: "Choose the unit",
+    choose_level: "level",
+    choose_person: "Choose the person",
+    person: "Person",
+    people: "Program people",
+    level: "Level",
+    no_level: "no level",
+    metric: "Indicator",
+    target: "Target",
+    value_hint: "value",
+    reason_hint: "reason",
+    minutes_hint: "minutes",
+    phase: "Phase",
+    phase_hint: "phase",
+    project: "Project",
+    projects: "Projects",
+    no_project: "no project",
+    belt: "Belt",
+    tool: "Tool",
+    approach: "Approach",
+    category: "Category",
+    count: "Count",
+    no_data: "No data yet.",
+    minutes: "Minutes",
+    planned_tools_hint: "tools, separated by commas (fmea, msa...)",
+
+    structure_intro: "The program sits above the portfolios: one portfolio per business unit, each with its projects. Weighted objectives, broken down by unit, and annual targets per unit.",
+    program_name: "Program name",
+    cadence: "Days between selection committees",
+    limits: "Limit of simultaneous projects",
+    mentees: "mentees",
+    champion_limit: "champion",
+    limits_now: |y, g, b, m, c| {
+        format!(
+            "In use: yellow {y}, green {g}, black {b} (up to {m} green belts in coaching), champion {c} projects."
+        )
+    },
+    review_target: "Review target time (min)",
+    retention: "Personal data retention (months)",
+    units: "Business units",
+    champion: "Champion",
+    sponsor: "Sponsor",
+    headcount: "People",
+    portfolio: "Portfolio",
+    no_portfolio: "no portfolio",
+    new_unit_hint: "new business unit",
+    objectives: "Strategic objectives",
+    objectives_tip: "Weight of the objective in the program and in each unit (empty: not broken down to it).",
+    objective: "Objective",
+    weight: "Weight",
+    new_objective_hint: "new strategic objective",
+    targets_of: |y| format!("Targets of {y}"),
+    no_targets: "No targets this year.",
+    set_target: "Set target",
+    found_title: "Portfolios and projects found",
+    found_none: "No portfolio or project next to the program.",
+    found_portfolio: |c, u| format!("Portfolio {c} → {u}"),
+    training_mark: " · training (outside the indicators)",
+    unreadable: |p| format!("Could not read {p} (still syncing or no access)."),
+
+    scoreboard_intro: "Target and actual per unit. Only savings validated by the controller count in the official actual; the forecast appears apart.",
+    actual_official: "Official actual",
+    forecast_apart: "Forecast (apart)",
+    reached: "Reached",
+    program_total: "Program",
+    rule_scoreboard: "Rule: savings = sum of the monthly entries validated in the year (hard and soft separate); projects closed in the year; belts trained and certified in the year by level; coverage = green belts or above per 100 people of the unit. Training projects do not count.",
+
+    pipeline_intro: "The ideas of all portfolios through the same stages: idea, screening (unit champion), selection (committee) and opening (charter of the assigned belt).",
+    send_to_committee: "Send to the committee",
+    sent: |t| format!("{t} is on the committee agenda"),
+    committee: "Selection committee",
+    next_committee: |d| format!("Next committee by the cadence: {d}"),
+    committee_title_hint: "meeting title",
+    new_committee: "New committee meeting",
+    default_committee_title: |d| format!("Selection committee of {d}"),
+    agenda: "Generated agenda",
+    agenda_empty: "Nothing on the agenda.",
+    agenda_decide: |t, u, s| format!("Decide: {t} ({u}), score {s:.0}"),
+    agenda_capacity: |l, n| format!("Free capacity: {n} {l} with a project slot"),
+    agenda_target: |u, m, a, t| format!("Open target of {u}: {m}, {} of {}", num(a), num(t)),
+    agenda_rule: "Rule: opportunities in selection by the portfolio's weighted score; belts with a slot and free hours by level; targets of the year not yet reached.",
+    decide_on: |t| format!("Decision on {t}"),
+    belt_candidate: "Candidate belt",
+    record_decision: "Record the decision",
+    portfolio_unreachable: "The portfolio folder of this opportunity is not accessible; the decision was not recorded.",
+    portfolio_refused: |e| format!("The portfolio refused the change to the idea: {e}"),
+    decided: |t, c| format!("{t}: {c}"),
+
+    capacity_intro: "Hours per week, absences and project limit per level. The load adds up the assignments and the open tasks of the schedules of all portfolios.",
+    area: "Area",
+    hours_week: "h/week",
+    project_limit: "Limit",
+    needs_cert: "Needs a project",
+    trained_year: "Trained in",
+    certified_on: "Certified on",
+    person_name_hint: "name",
+    person_email_hint: "e-mail",
+    absences: "Absences",
+    add_absence: "Record absence",
+    loads: "Load across the whole program",
+    units_count: "Units",
+    hours_committed: "Committed hours",
+    capacity: "Capacity",
+    over_projects: |p, n, l| format!("{p}: {n} projects running (limit {l})"),
+    over_hours: |p, h, c| {
+        format!(
+            "{p}: {} h per week committed for {} h of capacity",
+            num(h),
+            num(c)
+        )
+    },
+    over_mentees: |p, n, l| format!("{p}: {n} green belts in coaching (limit {l})"),
+    over_champion: |p, n, l| format!("{p}: champion of {n} projects (limit {l})"),
+    rule_load: "Rule: load = hours per week of the active assignments + hours per week of the open tasks the person is responsible for, across all portfolios; capacity = hours per week × fraction of the next 4 weeks without absence.",
+    assignment: "Assignment",
+    assignment_intro: "For an opportunity in selection or approved, the belts in order with the reason for each position. The decision is the MBB's and is recorded.",
+    nothing_to_assign: "No opportunity in selection or approved.",
+    need: |l, h| format!("Requires {l}, {} h per week", num(h)),
+    reasons: "Reasons",
+    assign: "Assign",
+    rule_ranking: "Rule: first those who meet the level, project slot, free hours and are not absent for most of the period; then those who need a project for certification, same unit, same area, experience in the planned tools (applied or demonstrated) and free hours.",
+    assigned_reason: |p| format!("assigned at position {p} of the suggestion"),
+    assigned: |p, t| format!("{p} assigned to {t}"),
+    r_level: |h, n| format!("level {h} (requires {n})"),
+    r_slots: |u, l| format!("{u} of {l} projects"),
+    r_hours: |f, n| format!("{} free h (needs {})", num(f), num(n)),
+    r_away: |d| {
+        if d == 1 {
+            "1 day absent in the next 4 weeks".to_string()
+        } else {
+            format!("{d} days absent in the next 4 weeks")
+        }
+    },
+    r_cert: "needs a project for certification",
+    r_same_unit: "same unit",
+    r_other_unit: "other unit",
+    r_same_area: "same area",
+    r_experience: |t, n| format!("experience in {t} of {n} planned tools"),
+
+    coaching_intro: "Each belt's journal sits in its own folder (mentoria/<belt>.lss), shared on the Drive only with the MBB and the belt; the app shows it only to them.",
+    no_belts_visible: "No belt visible to your profile.",
+    no_consent: "No consent recorded: the journal does not keep sessions of this belt (Profiles and personal data).",
+    progress: |s, h, d, c| {
+        format!(
+            "{s} {}, {} h; commitments met: {d} of {c}",
+            if s == 1 { "session" } else { "sessions" },
+            num(h)
+        )
+    },
+    session_of: |d| format!("Session of {d}"),
+    tools_discussed: |t| format!("Tools discussed: {t}"),
+    session_project: |p| format!("Project: {p}"),
+    to_card: "Make a card",
+    is_card: "(card in the project)",
+    commitment_hint: "new commitment",
+    project_unreachable: "The project folder of this session is not accessible.",
+    card_made: "Commitment became a card on the project board.",
+    new_session: "New session",
+    topics_hint: "topics",
+    record_session: "Record the session",
+    competence_map: "Competence map",
+    competence_intro: "Belt × tool: S studied (module completed), P practised (correct exercise), A applied (approved deliverable of a real project), D demonstrated (confirmed by the MBB). Hover to see the evidence.",
+    ev_deliverable: |p| format!("approved deliverable in {p}"),
+    levels_legend: "S studied · P practised · A applied · D demonstrated",
+    evidence_hint: "evidence (review, session...)",
+    confirm_demonstrated: "Confirm demonstrated",
+    choose_belt_tool: "Choose the belt and the tool",
+    timeline_of: |n| format!("Timeline of {n}"),
+    t_session: |d, t| format!("{d} · coaching session: {t}"),
+    t_tollgate: |d, p| format!("{d} · tollgate approved: {p}"),
+    t_tool: |d, t| format!("{d} · new tool: {t}"),
+    t_certified: |d| format!("{d} · certification"),
+
+    reviews_intro: "All the program's tollgates awaiting an MBB opinion; overdue ones first. Group by day or unit to review in batches.",
+    queue: |n| format!("Review queue ({n})"),
+    group_by_unit: "Group by unit (otherwise by planned date)",
+    batch_day: |d| format!("Planned for {d}"),
+    batch_no_date: "No planned date",
+    batch_minutes: "Generate the batch minutes",
+    batch_title: |t| format!("Batch review: {t}"),
+    minutes_written: "Batch minutes recorded.",
+    planned: "Planned",
+    waiting: "Waiting",
+    late: "Late",
+    queue_empty: "No tollgate awaiting an opinion.",
+    review_of: |t, p, r| format!("Review of {t}, {p}, round {r}"),
+    target_time: |m| format!("Target time: {} min", num(m)),
+    verified_items: "Items checked by the app (already verified):",
+    standard_questions: "Standard questions of the phase:",
+    question_hint: "new company question for this phase",
+    add_question: "Add question",
+    opinion: "Structured technical opinion:",
+    comment_hint: "comment (required with reservation or redo)",
+    summary_hint: "conclusion",
+    record_review: "Record the opinion",
+    review_recorded: "Opinion recorded.",
+    review_quality: "Review quality",
+    no_reviews: "No opinion recorded yet.",
+    group: "Group",
+    reviews_count: "Opinions",
+    redo_rate: "Redo rate",
+    reservations: "With reservations",
+    median_lead: "Median request → opinion",
+    all: "All",
+    phase_is: |p| format!("Phase {p}"),
+    recurring: |b, c, n| format!("{b}: \"{c}\" without ok in {n} opinions"),
+    rule_quality: "Rule: the opinion is as good as its worst item; redo and reservations by phase and by belt; an item without ok repeated in two opinions of the same belt is a recurring reservation; time in days between submission and opinion.",
+
+    ind_funnel: "Funnel",
+    stage: "Stage",
+    mean_age: "Mean age",
+    conversion: "Conversion",
+    rule_funnel: "Rule: count per stage of the ideas of all portfolios and of the open projects without an idea; conversion = items that reached the next stage over those that reached this one; age = days since entering the current stage.",
+    ind_cycle: "Cycle time per phase",
+    samples: "Samples",
+    median: "Median",
+    p80: "80th percentile",
+    rule_cycle: "Rule: days between the approval of the previous tollgate (the project opening, in the first phase) and the approval of the phase's tollgate; default target from the flow model.",
+    ind_savings: "Savings by status",
+    official_total: |v| format!("Official total (validated): {v}"),
+    rule_savings: "Rule: estimated and forecast by the savings value; actual by the sum of the monthly entries; validated by the entries validated by the controller in the year. Only the validated amount enters the official total.",
+    ind_belts: "Belts by area",
+    active: "Active",
+    trained: "Trained",
+    certified: "Certified",
+    coverage: "Coverage",
+    expiring: "Certifications expiring",
+    rule_belts: "Rule: active = belts on running projects; coverage = green belts or above per 100 people; expiring = 3-year certification 90 days or less from its end.",
+    ind_tools: "Tool usage",
+    by_phase: "By phase",
+    belts_applied: "Belts that applied",
+    never_applied: |t| format!("Never applied on a real project: {t}"),
+    rule_tools: "Rule: projects with a deliverable of the tool, by phase; applied = deliverable completed in an approved phase; belts from the competence map.",
+    ind_overdue: "Overdue tollgates",
+    pending_reviews: |n| format!("MBB reviews pending: {n}"),
+    overdue_line: |t, p, d, u, b| format!("{t}, {p}: {d} days overdue ({u}; {b})"),
+    none_overdue: "No overdue tollgate.",
+    rule_overdue: "Rule: tollgate not approved with a past planned date, on a running project.",
+    ind_load: "Load",
+    overloaded: "Overloaded",
+    person_load: |p, h, c, n, l| format!("{p}: {} h of {} h, {n} of {l} projects", num(h), num(c)),
+    leadership_intro: "Up to six indicators with target and trend, without personal training or coaching data.",
+    target_is: |t| format!("Target: {t}"),
+    vs_last_year: "compared with the previous year",
+    validated: "Validated",
+
+    profiles_intro: "Eight profiles checked by the app against the program's role list, kept by the MBB. An operation by someone who does not hold the profile at that moment has no effect and is listed.",
+    role_list: "Program role list",
+    founder_is: |p| format!("Whoever created the program is MBB from the start: {p}"),
+    give_profile: "Give the profile",
+    matrix: "What each profile does",
+    action: "Action",
+    restricted_folders: "Restricted folders on the Drive",
+    restricted_lines: &[
+        "The permission in the app is the first layer; the real barrier is the sharing of the folders on the Drive, which the app does not check (it does not use the Drive API).",
+        "Share the program folder with everyone in the program; each mentoria/<belt>.lss folder only with the MBB and the belt.",
+        "Financial values before validation, if confidential, go in a financas/ folder shared only with the controller and the MBB.",
+        "Answer keys, question bank and grades (training, L7) go in separate folders of the MBB and the instructors.",
+        "Until the signed role list (P7), anyone who edits the files by hand can write an operation, but the app ignores it if the author does not hold the profile.",
+    ],
+    consent: "Consent",
+    consent_intro: "Record your consent and the purpose of the use of your data in the program (training, coaching, assignment).",
+    i_consent: "I consent to the use of my data in the program",
+    default_purpose: "training, coaching and assignment in the Lean Six Sigma program",
+    consent_on: |d| format!("Recorded on {d}"),
+    consent_yes: "consented",
+    consent_no: "no consent",
+    retention_title: "Retention and anonymisation",
+    retention_is: |m| {
+        format!(
+            "People with no profile, no running project and no change for more than {m} months appear below; so do those who withdrew consent."
+        )
+    },
+    none_due: "No one to anonymise.",
+    due_consent: "consent withdrawn",
+    due_retention: "retention period expired",
+    anonymise: "Anonymise",
+    anonymised: "Person anonymised: the personal fields and the coaching journal were rewritten, also in the history.",
+    unauthorized_intro: "Operations by authors without the required profile at that moment: they are in the folders, but have no effect.",
+    unauthorized_line: |p, k, f, a| format!("{p}: {k}.{f} (requires: {a})"),
+};
+
+pub static ES: L6Texts = L6Texts {
+    nav_program: "Programa de despliegue",
+    nav_structure: "Estructura y metas",
+    nav_scoreboard: "Marcador",
+    nav_pipeline: "Embudo y comité",
+    nav_capacity: "Capacidad y asignación",
+    nav_coaching: "Mentoría y competencias",
+    nav_reviews: "Revisiones de tollgate",
+    nav_mbb: "Panel del MBB",
+    nav_leadership: "Panel del liderazgo",
+    nav_profiles: "Perfiles y datos personales",
+    rescan: "Leer las carpetas de nuevo",
+    data_of: |t| format!("Datos de {t}"),
+    found: |c, p| {
+        format!(
+            "{c} {}, {p} {}",
+            if c == 1 { "cartera" } else { "carteras" },
+            if p == 1 { "proyecto" } else { "proyectos" }
+        )
+    },
+    no_profile: "No tiene perfil en este programa",
+    my_profiles: |p| format!("Su perfil: {p}"),
+    unauthorized_banner: |n| {
+        if n == 1 {
+            "1 operación no autorizada, sin efecto".to_string()
+        } else {
+            format!("{n} operaciones no autorizadas, sin efecto")
+        }
+    },
+    view_denied: |e| format!("Esta vista no es de su perfil: {e}."),
+    open_log_from_program: "Este es un diario de mentoría: abra la carpeta del programa y elija el belt en Mentoría.",
+    log_not_yours: "El diario de mentoría lo ven solo el MBB y el propio belt.",
+    create_program: "Nuevo programa de despliegue",
+    program_name_hint: "nombre del programa (por ejemplo, Programa LSS de la empresa)",
+    program_tip: "La carpeta del programa queda junto a las carteras y proyectos (o encima de las carpetas de las unidades), en la misma carpeta compartida.",
+    program_created: |p| format!("Programa creado en {p}"),
+    default_program_name: "Programa LSS",
+
+    year: "Año",
+    unit: "Unidad",
+    all_units: "todas las unidades",
+    no_unit: "sin unidad",
+    choose_unit: "Elija la unidad",
+    choose_level: "nivel",
+    choose_person: "Elija la persona",
+    person: "Persona",
+    people: "Personas del programa",
+    level: "Nivel",
+    no_level: "sin nivel",
+    metric: "Indicador",
+    target: "Meta",
+    value_hint: "valor",
+    reason_hint: "motivo",
+    minutes_hint: "minutos",
+    phase: "Fase",
+    phase_hint: "fase",
+    project: "Proyecto",
+    projects: "Proyectos",
+    no_project: "sin proyecto",
+    belt: "Belt",
+    tool: "Herramienta",
+    approach: "Enfoque",
+    category: "Categoría",
+    count: "Cantidad",
+    no_data: "Aún sin datos.",
+    minutes: "Acta",
+    planned_tools_hint: "herramientas, separadas por coma (fmea, msa...)",
+
+    structure_intro: "El programa queda por encima de las carteras: una cartera por unidad de negocio, cada una con sus proyectos. Objetivos con peso, desglosados por unidad, y metas anuales por unidad.",
+    program_name: "Nombre del programa",
+    cadence: "Días entre comités de selección",
+    limits: "Límite de proyectos simultáneos",
+    mentees: "mentorizados",
+    champion_limit: "champion",
+    limits_now: |y, g, b, m, c| {
+        format!(
+            "En uso: yellow {y}, green {g}, black {b} (hasta {m} green belts en mentoría), champion {c} proyectos."
+        )
+    },
+    review_target: "Tiempo objetivo de la revisión (min)",
+    retention: "Retención de datos personales (meses)",
+    units: "Unidades de negocio",
+    champion: "Champion",
+    sponsor: "Patrocinador",
+    headcount: "Personas",
+    portfolio: "Cartera",
+    no_portfolio: "sin cartera",
+    new_unit_hint: "nueva unidad de negocio",
+    objectives: "Objetivos estratégicos",
+    objectives_tip: "Peso del objetivo en el programa y peso en cada unidad (vacío: no desglosado en ella).",
+    objective: "Objetivo",
+    weight: "Peso",
+    new_objective_hint: "nuevo objetivo estratégico",
+    targets_of: |y| format!("Metas de {y}"),
+    no_targets: "Ninguna meta este año.",
+    set_target: "Definir meta",
+    found_title: "Carteras y proyectos encontrados",
+    found_none: "Ninguna cartera o proyecto junto al programa.",
+    found_portfolio: |c, u| format!("Cartera {c} → {u}"),
+    training_mark: " · entrenamiento (fuera de los indicadores)",
+    unreadable: |p| format!("No fue posible leer {p} (aún sincronizando o sin acceso)."),
+
+    scoreboard_intro: "Meta y realizado por unidad. Solo el ahorro validado por la contraloría cuenta en el realizado oficial; el previsto aparece aparte.",
+    actual_official: "Realizado oficial",
+    forecast_apart: "Previsto (aparte)",
+    reached: "Alcanzado",
+    program_total: "Programa",
+    rule_scoreboard: "Regla: ahorro = suma de los registros mensuales validados en el año (hard y soft separados); proyectos cerrados en el año; belts formados y certificados en el año por nivel; cobertura = belts green o superior por 100 personas de la unidad. Los proyectos de entrenamiento no cuentan.",
+
+    pipeline_intro: "Las ideas de todas las carteras por las mismas etapas: idea, filtrado (champion de la unidad), selección (comité) y apertura (acta del belt asignado).",
+    send_to_committee: "Enviar al comité",
+    sent: |t| format!("{t} está en la agenda del comité"),
+    committee: "Comité de selección",
+    next_committee: |d| format!("Próximo comité según la cadencia: {d}"),
+    committee_title_hint: "título de la reunión",
+    new_committee: "Nueva reunión del comité",
+    default_committee_title: |d| format!("Comité de selección de {d}"),
+    agenda: "Agenda generada",
+    agenda_empty: "Nada en la agenda.",
+    agenda_decide: |t, u, s| format!("Decidir: {t} ({u}), puntuación {s:.0}"),
+    agenda_capacity: |l, n| format!("Capacidad libre: {n} {l} con cupo de proyecto"),
+    agenda_target: |u, m, a, t| format!("Meta abierta de {u}: {m}, {} de {}", num(a), num(t)),
+    agenda_rule: "Regla: oportunidades en selección por la puntuación ponderada de la cartera; belts con cupo y horas libres por nivel; metas del año aún no alcanzadas.",
+    decide_on: |t| format!("Decisión sobre {t}"),
+    belt_candidate: "Belt candidato",
+    record_decision: "Registrar la decisión",
+    portfolio_unreachable: "La carpeta de la cartera de esta oportunidad no está accesible; la decisión no fue registrada.",
+    portfolio_refused: |e| format!("La cartera rechazó el cambio de la idea: {e}"),
+    decided: |t, c| format!("{t}: {c}"),
+
+    capacity_intro: "Horas por semana, ausencias y límite de proyectos por nivel. La carga suma las asignaciones y las tareas abiertas de los cronogramas de todas las carteras.",
+    area: "Área",
+    hours_week: "h/semana",
+    project_limit: "Límite",
+    needs_cert: "Necesita proyecto",
+    trained_year: "Formado en",
+    certified_on: "Certificado en",
+    person_name_hint: "nombre",
+    person_email_hint: "correo electrónico",
+    absences: "Ausencias",
+    add_absence: "Registrar ausencia",
+    loads: "Carga en todo el programa",
+    units_count: "Unidades",
+    hours_committed: "Horas comprometidas",
+    capacity: "Capacidad",
+    over_projects: |p, n, l| format!("{p}: {n} proyectos en ejecución (límite {l})"),
+    over_hours: |p, h, c| {
+        format!(
+            "{p}: {} h por semana comprometidas para {} h de capacidad",
+            num(h),
+            num(c)
+        )
+    },
+    over_mentees: |p, n, l| format!("{p}: {n} green belts en mentoría (límite {l})"),
+    over_champion: |p, n, l| format!("{p}: champion de {n} proyectos (límite {l})"),
+    rule_load: "Regla: carga = horas por semana de las asignaciones activas + horas por semana de las tareas abiertas de las que la persona es responsable, en todas las carteras; capacidad = horas por semana × fracción de las próximas 4 semanas sin ausencia.",
+    assignment: "Asignación",
+    assignment_intro: "Para una oportunidad en selección o aprobada, los belts en orden con la razón de cada posición. La decisión es del MBB y queda registrada.",
+    nothing_to_assign: "Ninguna oportunidad en selección o aprobada.",
+    need: |l, h| format!("Exige {l}, {} h por semana", num(h)),
+    reasons: "Razones",
+    assign: "Asignar",
+    rule_ranking: "Regla: primero quien cumple nivel, cupo de proyecto y horas libres y no está ausente la mayor parte del período; después quien necesita proyecto para la certificación, misma unidad, misma área, experiencia en las herramientas previstas (aplicó o demostró) y horas libres.",
+    assigned_reason: |p| format!("asignado en la posición {p} de la sugerencia"),
+    assigned: |p, t| format!("{p} asignado a {t}"),
+    r_level: |h, n| format!("nivel {h} (exige {n})"),
+    r_slots: |u, l| format!("{u} de {l} proyectos"),
+    r_hours: |f, n| format!("{} h libres (necesita {})", num(f), num(n)),
+    r_away: |d| {
+        if d == 1 {
+            "1 día ausente en las próximas 4 semanas".to_string()
+        } else {
+            format!("{d} días ausente en las próximas 4 semanas")
+        }
+    },
+    r_cert: "necesita proyecto para la certificación",
+    r_same_unit: "misma unidad",
+    r_other_unit: "otra unidad",
+    r_same_area: "misma área",
+    r_experience: |t, n| format!("experiencia en {t} de {n} herramientas previstas"),
+
+    coaching_intro: "El diario de cada belt queda en una carpeta propia (mentoria/<belt>.lss), compartida en el Drive solo con el MBB y el belt; la app solo se lo muestra a ellos.",
+    no_belts_visible: "Ningún belt visible para su perfil.",
+    no_consent: "Sin consentimiento registrado: el diario no guarda sesiones de este belt (Perfiles y datos personales).",
+    progress: |s, h, d, c| {
+        format!(
+            "{s} {}, {} h; compromisos cumplidos: {d} de {c}",
+            if s == 1 { "sesión" } else { "sesiones" },
+            num(h)
+        )
+    },
+    session_of: |d| format!("Sesión de {d}"),
+    tools_discussed: |t| format!("Herramientas tratadas: {t}"),
+    session_project: |p| format!("Proyecto: {p}"),
+    to_card: "Convertir en tarjeta",
+    is_card: "(tarjeta en el proyecto)",
+    commitment_hint: "nuevo compromiso",
+    project_unreachable: "La carpeta del proyecto de esta sesión no está accesible.",
+    card_made: "El compromiso se convirtió en tarjeta en el tablero del proyecto.",
+    new_session: "Nueva sesión",
+    topics_hint: "temas",
+    record_session: "Registrar la sesión",
+    competence_map: "Mapa de competencias",
+    competence_intro: "Belt × herramienta: E estudió (módulo concluido), P practicó (ejercicio correcto), A aplicó (entregable aprobado de un proyecto real), D demostró (confirmado por el MBB). Pase el ratón para ver las evidencias.",
+    ev_deliverable: |p| format!("entregable aprobado en {p}"),
+    levels_legend: "E estudió · P practicó · A aplicó · D demostró",
+    evidence_hint: "evidencia (revisión, sesión...)",
+    confirm_demonstrated: "Confirmar demostró",
+    choose_belt_tool: "Elija el belt y la herramienta",
+    timeline_of: |n| format!("Línea de tiempo de {n}"),
+    t_session: |d, t| format!("{d} · sesión de mentoría: {t}"),
+    t_tollgate: |d, p| format!("{d} · tollgate aprobado: {p}"),
+    t_tool: |d, t| format!("{d} · herramienta nueva: {t}"),
+    t_certified: |d| format!("{d} · certificación"),
+
+    reviews_intro: "Todos los tollgates del programa que piden dictamen del MBB; los vencidos primero. Agrupe por día o unidad para revisar en lote.",
+    queue: |n| format!("Cola de revisiones ({n})"),
+    group_by_unit: "Agrupar por unidad (si no, por fecha planificada)",
+    batch_day: |d| format!("Planificados para {d}"),
+    batch_no_date: "Sin fecha planificada",
+    batch_minutes: "Generar el acta del lote",
+    batch_title: |t| format!("Revisión en lote: {t}"),
+    minutes_written: "Acta del lote registrada.",
+    planned: "Planificado",
+    waiting: "Esperando",
+    late: "Retraso",
+    queue_empty: "Ningún tollgate esperando dictamen.",
+    review_of: |t, p, r| format!("Revisión de {t}, {p}, ronda {r}"),
+    target_time: |m| format!("Tiempo objetivo: {} min", num(m)),
+    verified_items: "Ítems verificados por la app (ya comprobados):",
+    standard_questions: "Preguntas estándar de la fase:",
+    question_hint: "nueva pregunta de la empresa para esta fase",
+    add_question: "Añadir pregunta",
+    opinion: "Dictamen técnico estructurado:",
+    comment_hint: "comentario (obligatorio con reserva o rehacer)",
+    summary_hint: "conclusión",
+    record_review: "Registrar el dictamen",
+    review_recorded: "Dictamen registrado.",
+    review_quality: "Calidad de las revisiones",
+    no_reviews: "Ningún dictamen registrado aún.",
+    group: "Grupo",
+    reviews_count: "Dictámenes",
+    redo_rate: "Tasa de rehacer",
+    reservations: "Con reservas",
+    median_lead: "Mediana solicitud → dictamen",
+    all: "Todos",
+    phase_is: |p| format!("Fase {p}"),
+    recurring: |b, c, n| format!("{b}: \"{c}\" sin ok en {n} dictámenes"),
+    rule_quality: "Regla: el dictamen vale lo que su peor ítem; rehacer y reservas por fase y por belt; un ítem sin ok repetido en dos dictámenes del mismo belt es una reserva recurrente; tiempo en días entre el envío y el dictamen.",
+
+    ind_funnel: "Embudo",
+    stage: "Etapa",
+    mean_age: "Edad media",
+    conversion: "Conversión",
+    rule_funnel: "Regla: conteo por etapa de las ideas de todas las carteras y de los proyectos abiertos sin idea; conversión = ítems que llegaron a la etapa siguiente sobre los que llegaron a esta; edad = días desde la entrada en la etapa actual.",
+    ind_cycle: "Tiempo de ciclo por fase",
+    samples: "Muestras",
+    median: "Mediana",
+    p80: "Percentil 80",
+    rule_cycle: "Regla: días entre la aprobación del tollgate anterior (la apertura del proyecto, en la primera fase) y la aprobación del tollgate de la fase; meta estándar del modelo de flujo.",
+    ind_savings: "Ahorros por estado",
+    official_total: |v| format!("Total oficial (validado): {v}"),
+    rule_savings: "Regla: estimado y previsto por el valor del ahorro; realizado por la suma de los registros mensuales; validado por los registros validados por la contraloría en el año. Solo el validado entra en el total oficial.",
+    ind_belts: "Belts por área",
+    active: "Activos",
+    trained: "Formados",
+    certified: "Certificados",
+    coverage: "Cobertura",
+    expiring: "Certificaciones por vencer",
+    rule_belts: "Regla: activos = belts en proyecto en ejecución; cobertura = belts green o superior por 100 personas; por vencer = certificación de 3 años a 90 días o menos de su fin.",
+    ind_tools: "Uso de las herramientas",
+    by_phase: "Por fase",
+    belts_applied: "Belts que aplicaron",
+    never_applied: |t| format!("Nunca aplicadas en un proyecto real: {t}"),
+    rule_tools: "Regla: proyectos con un entregable de la herramienta, por fase; aplicada = entregable concluido en una fase aprobada; belts según el mapa de competencias.",
+    ind_overdue: "Tollgates vencidos",
+    pending_reviews: |n| format!("Revisiones del MBB pendientes: {n}"),
+    overdue_line: |t, p, d, u, b| format!("{t}, {p}: {d} días de retraso ({u}; {b})"),
+    none_overdue: "Ningún tollgate vencido.",
+    rule_overdue: "Regla: tollgate no aprobado con fecha planificada pasada, en proyecto en ejecución.",
+    ind_load: "Carga",
+    overloaded: "Sobrecargados",
+    person_load: |p, h, c, n, l| format!("{p}: {} h de {} h, {n} de {l} proyectos", num(h), num(c)),
+    leadership_intro: "Hasta seis indicadores con meta y tendencia, sin datos personales de formación o mentoría.",
+    target_is: |t| format!("Meta: {t}"),
+    vs_last_year: "respecto al año anterior",
+    validated: "Validado",
+
+    profiles_intro: "Ocho perfiles comprobados por la app sobre la lista de roles del programa, mantenida por el MBB. Una operación de quien no tiene el perfil en ese instante queda sin efecto y aparece listada.",
+    role_list: "Lista de roles del programa",
+    founder_is: |p| format!("Quien creó el programa es MBB desde el inicio: {p}"),
+    give_profile: "Dar el perfil",
+    matrix: "Qué hace cada perfil",
+    action: "Acción",
+    restricted_folders: "Carpetas restringidas en el Drive",
+    restricted_lines: &[
+        "El permiso en la app es la primera capa; la barrera real es el uso compartido de las carpetas en el Drive, que la app no comprueba (no usa la API del Drive).",
+        "Comparta la carpeta del programa con todos los del programa; cada carpeta mentoria/<belt>.lss solo con el MBB y el belt.",
+        "Los valores financieros antes de la validación, si son confidenciales, quedan en una carpeta financas/ compartida solo con la contraloría y el MBB.",
+        "Las claves de respuestas, el banco de preguntas y las notas (formación, L7) quedan en carpetas propias del MBB y de los instructores.",
+        "Hasta la lista de roles firmada (P7), quien edita los archivos a mano puede escribir una operación, pero la app la ignora si el autor no tiene el perfil.",
+    ],
+    consent: "Consentimiento",
+    consent_intro: "Registre su consentimiento y la finalidad del uso de sus datos en el programa (formación, mentoría, asignación).",
+    i_consent: "Consiento el uso de mis datos en el programa",
+    default_purpose: "formación, mentoría y asignación en el programa Lean Seis Sigma",
+    consent_on: |d| format!("Registrado el {d}"),
+    consent_yes: "consintió",
+    consent_no: "sin consentimiento",
+    retention_title: "Retención y anonimización",
+    retention_is: |m| {
+        format!(
+            "Las personas sin perfil, sin proyecto en ejecución y sin cambios desde hace más de {m} meses aparecen abajo; también quien retiró el consentimiento."
+        )
+    },
+    none_due: "Nadie por anonimizar.",
+    due_consent: "consentimiento retirado",
+    due_retention: "plazo de retención vencido",
+    anonymise: "Anonimizar",
+    anonymised: "Persona anonimizada: los campos personales y el diario de mentoría fueron reescritos, también en el historial.",
+    unauthorized_intro: "Operaciones de autores sin el perfil exigido en ese instante: están en las carpetas, pero no tienen efecto.",
+    unauthorized_line: |p, k, f, a| format!("{p}: {k}.{f} (exige: {a})"),
+};
+
 pub fn l6() -> &'static L6Texts {
-    &PT_BR
+    match language() {
+        Language::PtBr => &PT_BR,
+        Language::En => &EN,
+        Language::Es => &ES,
+    }
+}
+
+/// Picks the text of the current language.
+fn pick(pt: &'static str, en: &'static str, es: &'static str) -> &'static str {
+    match language() {
+        Language::PtBr => pt,
+        Language::En => en,
+        Language::Es => es,
+    }
 }
 
 pub fn profile_name(p: Profile) -> &'static str {
     match p {
         Profile::Mbb => "MBB",
         Profile::Champion => "Champion",
-        Profile::Sponsor => "Patrocinador",
+        Profile::Sponsor => pick("Patrocinador", "Sponsor", "Patrocinador"),
         Profile::Belt => "Belt",
-        Profile::Controller => "Controladoria",
-        Profile::Instructor => "Instrutor",
-        Profile::Leadership => "Liderança",
-        Profile::Student => "Aluno",
+        Profile::Controller => pick("Controladoria", "Controller", "Contraloría"),
+        Profile::Instructor => pick("Instrutor", "Instructor", "Instructor"),
+        Profile::Leadership => pick("Liderança", "Leadership", "Liderazgo"),
+        Profile::Student => pick("Aluno", "Trainee", "Alumno"),
     }
 }
 
@@ -638,104 +1300,190 @@ pub fn level_name(l: BeltLevel) -> &'static str {
 
 pub fn metric_name(m: Metric) -> &'static str {
     match m {
-        Metric::HardValidated => "Ganho hard validado",
-        Metric::SoftValidated => "Ganho soft validado",
-        Metric::ProjectsClosed => "Projetos encerrados",
-        Metric::BeltsTrained => "Belts formados",
-        Metric::BeltsCertified => "Belts certificados",
-        Metric::Coverage => "Cobertura (belts por 100 pessoas)",
+        Metric::HardValidated => pick(
+            "Ganho hard validado",
+            "Validated hard savings",
+            "Ahorro hard validado",
+        ),
+        Metric::SoftValidated => pick(
+            "Ganho soft validado",
+            "Validated soft savings",
+            "Ahorro soft validado",
+        ),
+        Metric::ProjectsClosed => pick(
+            "Projetos encerrados",
+            "Projects closed",
+            "Proyectos cerrados",
+        ),
+        Metric::BeltsTrained => pick("Belts formados", "Belts trained", "Belts formados"),
+        Metric::BeltsCertified => pick(
+            "Belts certificados",
+            "Belts certified",
+            "Belts certificados",
+        ),
+        Metric::Coverage => pick(
+            "Cobertura (belts por 100 pessoas)",
+            "Coverage (belts per 100 people)",
+            "Cobertura (belts por 100 personas)",
+        ),
     }
 }
 
 pub fn stage_name(s: Stage) -> &'static str {
     match s {
-        Stage::Idea => "Ideia",
-        Stage::Screening => "Triagem",
-        Stage::Selection => "Seleção",
-        Stage::Opening => "Abertura",
-        Stage::Running => "Em execução",
-        Stage::Closed => "Encerrado",
+        Stage::Idea => pick("Ideia", "Idea", "Idea"),
+        Stage::Screening => pick("Triagem", "Screening", "Filtrado"),
+        Stage::Selection => pick("Seleção", "Selection", "Selección"),
+        Stage::Opening => pick("Abertura", "Opening", "Apertura"),
+        Stage::Running => pick("Em execução", "Running", "En ejecución"),
+        Stage::Closed => pick("Encerrado", "Closed", "Cerrado"),
     }
 }
 
 pub fn choice_name(c: Choice) -> &'static str {
     match c {
-        Choice::Select => "Selecionar",
-        Choice::Postpone => "Adiar",
-        Choice::BackToScreening => "Devolver à triagem",
-        Choice::Refuse => "Recusar",
+        Choice::Select => pick("Selecionar", "Select", "Seleccionar"),
+        Choice::Postpone => pick("Adiar", "Postpone", "Aplazar"),
+        Choice::BackToScreening => pick(
+            "Devolver à triagem",
+            "Send back to screening",
+            "Devolver al filtrado",
+        ),
+        Choice::Refuse => pick("Recusar", "Refuse", "Rechazar"),
     }
 }
 
 pub fn kpi_name(k: Kpi) -> &'static str {
     match k {
-        Kpi::ValidatedSavings => "Ganho validado no ano",
-        Kpi::ProjectsClosed => "Projetos encerrados",
-        Kpi::BeltsCertified => "Belts certificados",
-        Kpi::Coverage => "Cobertura",
-        Kpi::OpenPipeline => "Oportunidades no funil",
-        Kpi::OverdueTollgates => "Tollgates vencidos",
+        Kpi::ValidatedSavings => pick(
+            "Ganho validado no ano",
+            "Validated savings in the year",
+            "Ahorro validado en el año",
+        ),
+        Kpi::ProjectsClosed => pick(
+            "Projetos encerrados",
+            "Projects closed",
+            "Proyectos cerrados",
+        ),
+        Kpi::BeltsCertified => pick(
+            "Belts certificados",
+            "Belts certified",
+            "Belts certificados",
+        ),
+        Kpi::Coverage => pick("Cobertura", "Coverage", "Cobertura"),
+        Kpi::OpenPipeline => pick(
+            "Oportunidades no funil",
+            "Opportunities in the funnel",
+            "Oportunidades en el embudo",
+        ),
+        Kpi::OverdueTollgates => pick(
+            "Tollgates vencidos",
+            "Overdue tollgates",
+            "Tollgates vencidos",
+        ),
     }
 }
 
 pub fn kpi_rule(k: Kpi) -> &'static str {
     match k {
-        Kpi::ValidatedSavings => {
-            "Soma dos lançamentos validados pela controladoria no ano (hard + soft)."
-        }
-        Kpi::ProjectsClosed => "Projetos com encerramento no ano.",
-        Kpi::BeltsCertified => "Pessoas com certificação no ano, todos os níveis.",
-        Kpi::Coverage => "Belts green ou acima por 100 pessoas das unidades.",
-        Kpi::OpenPipeline => "Ideias em ideia, triagem, seleção ou abertura.",
-        Kpi::OverdueTollgates => "Tollgates não aprovados com data planejada passada.",
+        Kpi::ValidatedSavings => pick(
+            "Soma dos lançamentos validados pela controladoria no ano (hard + soft).",
+            "Sum of the entries validated by the controller in the year (hard + soft).",
+            "Suma de los registros validados por la contraloría en el año (hard + soft).",
+        ),
+        Kpi::ProjectsClosed => pick(
+            "Projetos com encerramento no ano.",
+            "Projects closed in the year.",
+            "Proyectos con cierre en el año.",
+        ),
+        Kpi::BeltsCertified => pick(
+            "Pessoas com certificação no ano, todos os níveis.",
+            "People certified in the year, all levels.",
+            "Personas con certificación en el año, todos los niveles.",
+        ),
+        Kpi::Coverage => pick(
+            "Belts green ou acima por 100 pessoas das unidades.",
+            "Green belts or above per 100 people of the units.",
+            "Belts green o superior por 100 personas de las unidades.",
+        ),
+        Kpi::OpenPipeline => pick(
+            "Ideias em ideia, triagem, seleção ou abertura.",
+            "Ideas in idea, screening, selection or opening.",
+            "Ideas en idea, filtrado, selección o apertura.",
+        ),
+        Kpi::OverdueTollgates => pick(
+            "Tollgates não aprovados com data planejada passada.",
+            "Tollgates not approved with a past planned date.",
+            "Tollgates no aprobados con fecha planificada pasada.",
+        ),
     }
 }
 
 pub fn criterion_name(c: Criterion) -> &'static str {
     match c {
-        Criterion::Data => "Dado suficiente",
-        Criterion::Tool => "Ferramenta adequada",
-        Criterion::Statistics => "Estatística correta",
-        Criterion::Conclusions => "Conclusões suportadas",
-        Criterion::Risks => "Riscos",
+        Criterion::Data => pick("Dado suficiente", "Sufficient data", "Dato suficiente"),
+        Criterion::Tool => pick(
+            "Ferramenta adequada",
+            "Suitable tool",
+            "Herramienta adecuada",
+        ),
+        Criterion::Statistics => pick(
+            "Estatística correta",
+            "Correct statistics",
+            "Estadística correcta",
+        ),
+        Criterion::Conclusions => pick(
+            "Conclusões suportadas",
+            "Supported conclusions",
+            "Conclusiones respaldadas",
+        ),
+        Criterion::Risks => pick("Riscos", "Risks", "Riesgos"),
     }
 }
 
 pub fn mark_name(m: Mark) -> &'static str {
     match m {
         Mark::Ok => "ok",
-        Mark::Reservation => "ressalva",
-        Mark::Redo => "refazer",
+        Mark::Reservation => pick("ressalva", "reservation", "reserva"),
+        Mark::Redo => pick("refazer", "redo", "rehacer"),
     }
 }
 
 pub fn form_name(f: Form) -> &'static str {
     match f {
-        Form::Individual => "Individual",
-        Form::Group => "Grupo",
-        Form::Gemba => "Revisão no gemba",
+        Form::Individual => pick("Individual", "Individual", "Individual"),
+        Form::Group => pick("Grupo", "Group", "Grupo"),
+        Form::Gemba => pick(
+            "Revisão no gemba",
+            "Review at the gemba",
+            "Revisión en el gemba",
+        ),
     }
 }
 
 pub fn target_name(t: Target) -> &'static str {
     match t {
-        Target::Project => "cartão no projeto",
-        Target::Personal => "lista pessoal",
+        Target::Project => pick(
+            "cartão no projeto",
+            "card in the project",
+            "tarjeta en el proyecto",
+        ),
+        Target::Personal => pick("lista pessoal", "personal list", "lista personal"),
     }
 }
 
 pub fn mentoring_level_name(l: Level) -> &'static str {
     match l {
-        Level::Studied => "estudou",
-        Level::Practiced => "praticou",
-        Level::Applied => "aplicou",
-        Level::Demonstrated => "demonstrou",
+        Level::Studied => pick("estudou", "studied", "estudió"),
+        Level::Practiced => pick("praticou", "practised", "practicó"),
+        Level::Applied => pick("aplicou", "applied", "aplicó"),
+        Level::Demonstrated => pick("demonstrou", "demonstrated", "demostró"),
     }
 }
 
 pub fn level_short(l: Level) -> &'static str {
     match l {
-        Level::Studied => "E",
+        Level::Studied => pick("E", "S", "E"),
         Level::Practiced => "P",
         Level::Applied => "A",
         Level::Demonstrated => "D",
@@ -751,17 +1499,29 @@ pub fn tool_label(key: &str) -> String {
         return crate::text::tool_name(*t).to_string();
     }
     match key {
-        "termo" => "Termo de abertura",
-        "cronograma" => "Cronograma",
+        "termo" => pick(
+            "Termo de abertura",
+            "Project charter",
+            "Acta de constitución",
+        ),
+        "cronograma" => pick("Cronograma", "Schedule", "Cronograma"),
         "msa" => "MSA",
-        "capacidade" => "Capacidade",
-        "cep" => "Cartas de controle",
-        "testes_hipotese" => "Testes de hipótese",
-        "regressao" => "Regressão",
+        "capacidade" => pick("Capacidade", "Capability", "Capacidad"),
+        "cep" => pick(
+            "Cartas de controle",
+            "Control charts",
+            "Gráficos de control",
+        ),
+        "testes_hipotese" => pick(
+            "Testes de hipótese",
+            "Hypothesis tests",
+            "Pruebas de hipótesis",
+        ),
+        "regressao" => pick("Regressão", "Regression", "Regresión"),
         "doe" => "DOE",
         "vsm" => "VSM",
         "kaizen" => "Kaizen",
-        "acoes" => "Quadro de ações",
+        "acoes" => pick("Quadro de ações", "Action board", "Tablero de acciones"),
         "cinco_s" => "5S",
         other => return other.to_string(),
     }
@@ -770,29 +1530,87 @@ pub fn tool_label(key: &str) -> String {
 
 pub fn action_name(a: Action) -> &'static str {
     match a {
-        Action::ManageProgram => "Definir o programa, unidades e objetivos",
-        Action::ManageRoles => "Definir papéis",
-        Action::SetTargets => "Definir metas",
-        Action::ManagePeople => "Cadastro e capacidade das pessoas",
-        Action::SendToCommittee => "Triagem: enviar ao comitê",
-        Action::CommitteeAgenda => "Pauta do comitê",
-        Action::CommitteeDecide => "Decisão do comitê",
-        Action::Assign => "Designar belts",
-        Action::ReviewTollgate => "Revisar tollgates",
-        Action::ConfirmCompetence => "Confirmar competência (demonstrou)",
-        Action::RecordLearning => "Registrar estudo e prática",
-        Action::RecordCoaching => "Registrar mentoria",
-        Action::Anonymise => "Anonimizar",
-        Action::ValidateSavings => "Validar ganhos",
-        Action::ApproveTollgate => "Aprovar tollgates",
-        Action::ViewMbbDashboard => "Ver o painel do MBB",
-        Action::ViewLeadership => "Ver o painel da liderança",
-        Action::ViewScoreboard => "Ver o placar",
-        Action::ViewReviewQueue => "Ver a fila de revisões",
-        Action::Comment => "Comentar",
-        Action::ManageTraining => "Ondas, turmas, currículo e requisitos",
-        Action::SelectTrainees => "Selecionar alunos",
-        Action::Teach => "Presença, provas e correção",
-        Action::Certify => "Certificar",
+        Action::ManageProgram => pick(
+            "Definir o programa, unidades e objetivos",
+            "Define the program, units and objectives",
+            "Definir el programa, unidades y objetivos",
+        ),
+        Action::ManageRoles => pick("Definir papéis", "Define roles", "Definir roles"),
+        Action::SetTargets => pick("Definir metas", "Set targets", "Definir metas"),
+        Action::ManagePeople => pick(
+            "Cadastro e capacidade das pessoas",
+            "People records and capacity",
+            "Registro y capacidad de las personas",
+        ),
+        Action::SendToCommittee => pick(
+            "Triagem: enviar ao comitê",
+            "Screening: send to the committee",
+            "Filtrado: enviar al comité",
+        ),
+        Action::CommitteeAgenda => pick("Pauta do comitê", "Committee agenda", "Agenda del comité"),
+        Action::CommitteeDecide => pick(
+            "Decisão do comitê",
+            "Committee decision",
+            "Decisión del comité",
+        ),
+        Action::Assign => pick("Designar belts", "Assign belts", "Asignar belts"),
+        Action::ReviewTollgate => {
+            pick("Revisar tollgates", "Review tollgates", "Revisar tollgates")
+        }
+        Action::ConfirmCompetence => pick(
+            "Confirmar competência (demonstrou)",
+            "Confirm competence (demonstrated)",
+            "Confirmar competencia (demostró)",
+        ),
+        Action::RecordLearning => pick(
+            "Registrar estudo e prática",
+            "Record study and practice",
+            "Registrar estudio y práctica",
+        ),
+        Action::RecordCoaching => pick(
+            "Registrar mentoria",
+            "Record coaching",
+            "Registrar mentoría",
+        ),
+        Action::Anonymise => pick("Anonimizar", "Anonymise", "Anonimizar"),
+        Action::ValidateSavings => pick("Validar ganhos", "Validate savings", "Validar ahorros"),
+        Action::ApproveTollgate => pick(
+            "Aprovar tollgates",
+            "Approve tollgates",
+            "Aprobar tollgates",
+        ),
+        Action::ViewMbbDashboard => pick(
+            "Ver o painel do MBB",
+            "View the MBB dashboard",
+            "Ver el panel del MBB",
+        ),
+        Action::ViewLeadership => pick(
+            "Ver o painel da liderança",
+            "View the leadership dashboard",
+            "Ver el panel del liderazgo",
+        ),
+        Action::ViewScoreboard => pick("Ver o placar", "View the scoreboard", "Ver el marcador"),
+        Action::ViewReviewQueue => pick(
+            "Ver a fila de revisões",
+            "View the review queue",
+            "Ver la cola de revisiones",
+        ),
+        Action::Comment => pick("Comentar", "Comment", "Comentar"),
+        Action::ManageTraining => pick(
+            "Ondas, turmas, currículo e requisitos",
+            "Waves, classes, curriculum and requirements",
+            "Oleadas, grupos, currículo y requisitos",
+        ),
+        Action::SelectTrainees => pick(
+            "Selecionar alunos",
+            "Select trainees",
+            "Seleccionar alumnos",
+        ),
+        Action::Teach => pick(
+            "Presença, provas e correção",
+            "Attendance, exams and grading",
+            "Asistencia, exámenes y corrección",
+        ),
+        Action::Certify => pick("Certificar", "Certify", "Certificar"),
     }
 }

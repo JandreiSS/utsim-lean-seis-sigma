@@ -1,6 +1,7 @@
 //! Texts of the stage L3 and P1 screen (statistical analyses and measurement system
 //! analysis), in a catalogue of their own.
 
+use crate::text::{Language, language};
 use utsim_lss_core::dados::DataOrigin;
 
 type S = &'static str;
@@ -97,43 +98,218 @@ pub static PT_BR: L3Texts = L3Texts {
     different_numbers: "Os números mudaram ao refazer: o arquivo ou a versão do app mudou",
 };
 
+pub static EN: L3Texts = L3Texts {
+    nav_analyses: "Data and analyses",
+    intro: "Import the data (CSV, with comma or point decimals) with its origin, then choose the analysis and the columns. Each analysis keeps the recipe, the dataset with its hash and origin, and the result: the tollgate report cites it, and anyone can redo it with the same numbers.",
+    no_data: "No dataset yet: import a CSV or save a simulated dataset on the UTSim Model screen.",
+    csv_hint: "path of the CSV file",
+    import: "Import",
+    imported: "Dataset imported into dados/",
+    dataset: "Dataset:",
+    choose: "choose",
+    not_real: |o| {
+        format!("Origin {o}: not a real collection; it does not serve as a real baseline.")
+    },
+    analysis: "Analysis:",
+    column: "Column",
+    column_a: "Column A",
+    column_b: "Column B",
+    group: "Group",
+    sizes: "Sizes",
+    lsl: "LSL",
+    usl: "USL",
+    subgroup: "Subgroup",
+    mu0: "μ0",
+    pooled: "pooled variance",
+    nelson: "Nelson rules",
+    part: "Part",
+    operator: "Operator",
+    value: "Measurement",
+    tolerance: "Tolerance",
+    anova_method: "ANOVA method",
+    reference: "Reference",
+    fill: |w| format!("fill in {w}"),
+    run: "Calculate",
+    name_hint: "analysis name",
+    save: "Save the analysis",
+    saved: "Analysis saved",
+    saved_title: "Project analyses",
+    values: "values",
+    center: "CL",
+    lcl: "LCL",
+    ucl: "UCL",
+    signals: "signals",
+    justify_hint: "justification for an MSA above 30 %",
+    justify: "Justify",
+    rerun: "Redo",
+    same_numbers: "The same numbers when redoing the recipe",
+    different_numbers: "The numbers changed when redoing: the file or the app version changed",
+};
+
+pub static ES: L3Texts = L3Texts {
+    nav_analyses: "Datos y análisis",
+    intro: "Importe los datos (CSV, con coma o punto decimal) con su origen, elija el análisis y las columnas. Cada análisis guarda la receta, el conjunto de datos con su hash y su origen, y el resultado: el informe del tollgate lo cita y cualquier persona puede rehacerlo con los mismos números.",
+    no_data: "Aún no hay ningún conjunto de datos: importe un CSV o guarde un conjunto simulado en la pantalla Modelo UTSim.",
+    csv_hint: "ruta del archivo CSV",
+    import: "Importar",
+    imported: "Conjunto importado a dados/",
+    dataset: "Conjunto:",
+    choose: "elija",
+    not_real: |o| format!("Origen {o}: no es una recolección real; no sirve como línea base real."),
+    analysis: "Análisis:",
+    column: "Columna",
+    column_a: "Columna A",
+    column_b: "Columna B",
+    group: "Grupo",
+    sizes: "Tamaños",
+    lsl: "LIE",
+    usl: "LSE",
+    subgroup: "Subgrupo",
+    mu0: "μ0",
+    pooled: "varianza combinada",
+    nelson: "reglas de Nelson",
+    part: "Pieza",
+    operator: "Operador",
+    value: "Medida",
+    tolerance: "Tolerancia",
+    anova_method: "método del ANOVA",
+    reference: "Referencia",
+    fill: |w| format!("complete {w}"),
+    run: "Calcular",
+    name_hint: "nombre del análisis",
+    save: "Guardar el análisis",
+    saved: "Análisis guardado",
+    saved_title: "Análisis del proyecto",
+    values: "valores",
+    center: "LC",
+    lcl: "LIC",
+    ucl: "LSC",
+    signals: "señales",
+    justify_hint: "justificación del MSA por encima del 30 %",
+    justify: "Justificar",
+    rerun: "Rehacer",
+    same_numbers: "Los mismos números al rehacer la receta",
+    different_numbers: "Los números cambiaron al rehacer: cambió el archivo o la versión de la app",
+};
+
 pub fn l3() -> &'static L3Texts {
-    &PT_BR
+    match language() {
+        Language::PtBr => &PT_BR,
+        Language::En => &EN,
+        Language::Es => &ES,
+    }
+}
+
+/// Picks the text of the current language.
+fn pick(pt: &'static str, en: &'static str, es: &'static str) -> &'static str {
+    match language() {
+        Language::PtBr => pt,
+        Language::En => en,
+        Language::Es => es,
+    }
 }
 
 pub fn origin_name(o: DataOrigin) -> &'static str {
-    o.label()
+    match o {
+        DataOrigin::Real => pick(o.label(), "Real", "Real"),
+        DataOrigin::Twin => pick(o.label(), "Twin", "Gemelo"),
+        DataOrigin::Simulated => pick(o.label(), "Simulated", "Simulado"),
+    }
 }
 
 /// Name of an analysis kind on the screen.
 pub fn kind_name(k: &str) -> &'static str {
     match k {
-        "descritiva" => "Estatística descritiva",
-        "normalidade" => "Normalidade (Anderson-Darling)",
-        "capacidade" => "Capacidade do processo",
-        "carta" => "Carta de controle",
-        "t_uma_amostra" => "Teste t de uma amostra",
-        "t_duas_amostras" => "Teste t de duas amostras",
-        "t_pareado" => "Teste t pareado",
-        "anova" => "ANOVA de um fator com Tukey",
-        "qui_quadrado" => "Qui-quadrado de independência",
-        "proporcao" => "Teste de uma proporção",
-        "duas_proporcoes" => "Teste de duas proporções",
-        "mann_whitney" => "Mann-Whitney",
-        "wilcoxon" => "Wilcoxon pareado",
-        "gage_rr" => "MSA: Gage R&R",
-        "msa_tipo1" => "MSA: estudo do tipo 1",
-        "msa_vies" => "MSA: viés",
-        "msa_linearidade" => "MSA: linearidade",
-        "msa_atributos" => "MSA: concordância de atributos",
-        "experimento_fatorial" => "Experimento fatorial 2^k",
-        "variancias" => "Igualdade de variâncias (Levene e Bartlett)",
-        "kruskal_wallis" => "Kruskal-Wallis",
-        "mediana_mood" => "Teste da mediana de Mood",
-        "friedman" => "Friedman",
-        "anova_dois_fatores" => "ANOVA de dois fatores",
-        "regressao" => "Regressão linear",
-        "tamanho_amostra" => "Tamanho de amostra e poder",
+        "descritiva" => pick(
+            "Estatística descritiva",
+            "Descriptive statistics",
+            "Estadística descriptiva",
+        ),
+        "normalidade" => pick(
+            "Normalidade (Anderson-Darling)",
+            "Normality (Anderson-Darling)",
+            "Normalidad (Anderson-Darling)",
+        ),
+        "capacidade" => pick(
+            "Capacidade do processo",
+            "Process capability",
+            "Capacidad del proceso",
+        ),
+        "carta" => pick("Carta de controle", "Control chart", "Gráfico de control"),
+        "t_uma_amostra" => pick(
+            "Teste t de uma amostra",
+            "One-sample t test",
+            "Prueba t de una muestra",
+        ),
+        "t_duas_amostras" => pick(
+            "Teste t de duas amostras",
+            "Two-sample t test",
+            "Prueba t de dos muestras",
+        ),
+        "t_pareado" => pick("Teste t pareado", "Paired t test", "Prueba t pareada"),
+        "anova" => pick(
+            "ANOVA de um fator com Tukey",
+            "One-way ANOVA with Tukey",
+            "ANOVA de un factor con Tukey",
+        ),
+        "qui_quadrado" => pick(
+            "Qui-quadrado de independência",
+            "Chi-square test of independence",
+            "Chi-cuadrado de independencia",
+        ),
+        "proporcao" => pick(
+            "Teste de uma proporção",
+            "One-proportion test",
+            "Prueba de una proporción",
+        ),
+        "duas_proporcoes" => pick(
+            "Teste de duas proporções",
+            "Two-proportion test",
+            "Prueba de dos proporciones",
+        ),
+        "mann_whitney" => pick("Mann-Whitney", "Mann-Whitney", "Mann-Whitney"),
+        "wilcoxon" => pick("Wilcoxon pareado", "Paired Wilcoxon", "Wilcoxon pareado"),
+        "gage_rr" => pick("MSA: Gage R&R", "MSA: Gage R&R", "MSA: Gage R&R"),
+        "msa_tipo1" => pick(
+            "MSA: estudo do tipo 1",
+            "MSA: type 1 study",
+            "MSA: estudio tipo 1",
+        ),
+        "msa_vies" => pick("MSA: viés", "MSA: bias", "MSA: sesgo"),
+        "msa_linearidade" => pick("MSA: linearidade", "MSA: linearity", "MSA: linealidad"),
+        "msa_atributos" => pick(
+            "MSA: concordância de atributos",
+            "MSA: attribute agreement",
+            "MSA: concordancia de atributos",
+        ),
+        "experimento_fatorial" => pick(
+            "Experimento fatorial 2^k",
+            "2^k factorial experiment",
+            "Experimento factorial 2^k",
+        ),
+        "variancias" => pick(
+            "Igualdade de variâncias (Levene e Bartlett)",
+            "Equality of variances (Levene and Bartlett)",
+            "Igualdad de varianzas (Levene y Bartlett)",
+        ),
+        "kruskal_wallis" => pick("Kruskal-Wallis", "Kruskal-Wallis", "Kruskal-Wallis"),
+        "mediana_mood" => pick(
+            "Teste da mediana de Mood",
+            "Mood's median test",
+            "Prueba de la mediana de Mood",
+        ),
+        "friedman" => pick("Friedman", "Friedman", "Friedman"),
+        "anova_dois_fatores" => pick(
+            "ANOVA de dois fatores",
+            "Two-way ANOVA",
+            "ANOVA de dos factores",
+        ),
+        "regressao" => pick("Regressão linear", "Linear regression", "Regresión lineal"),
+        "tamanho_amostra" => pick(
+            "Tamanho de amostra e poder",
+            "Sample size and power",
+            "Tamaño de muestra y potencia",
+        ),
         _ => "?",
     }
 }

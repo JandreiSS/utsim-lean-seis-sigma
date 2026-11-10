@@ -13,6 +13,11 @@ use crate::theme;
 
 impl App {
     pub(in crate::app) fn team(&mut self, ui: &mut egui::Ui, s: &mut Session) {
+        self.team_body(ui, s);
+        self.integrity_section(ui, s);
+    }
+
+    fn team_body(&mut self, ui: &mut egui::Ui, s: &mut Session) {
         let tl = l1();
         ui.heading(tl.nav_team);
         ui.weak(tl.team_intro);
@@ -163,6 +168,5 @@ impl App {
             let names: Vec<String> = bad.iter().map(row_name).collect();
             ui.colored_label(theme::WARN, (tl.raci_single_a)(&names.join(", ")));
         }
-        self.integrity_section(ui, s);
     }
 }
