@@ -205,7 +205,14 @@ pub struct App {
 
 impl App {
     pub fn new(dirs: AppDirs) -> Self {
-        Self::with_clock(dirs, Box::new(|| Box::new(SystemClock)))
+        // The first run (no configuration yet) follows the language of the system.
+        let first_run = !dirs.config_file.exists();
+        let mut app = Self::with_clock(dirs, Box::new(|| Box::new(SystemClock)));
+        if first_run {
+            app.config.language = crate::text::language_of(utsim_idiomas::Idioma::inicial());
+            crate::text::set_language(app.config.language);
+        }
+        app
     }
 
     pub fn with_clock(dirs: AppDirs, clock: ClockFactory) -> Self {
@@ -612,15 +619,10 @@ impl App {
     /// The language of the interface (stage P8); each language is named in itself.
     fn language_picker(&mut self, ui: &mut egui::Ui) {
         let t = texts();
-        let before = self.config.language;
-        egui::ComboBox::from_id_salt("idioma")
-            .selected_text(format!("{}: {}", t.language, before.native_name()))
-            .show_ui(ui, |ui| {
-                for l in user::Language::ALL {
-                    ui.selectable_value(&mut self.config.language, l, l.native_name());
-                }
-            });
-        if self.config.language != before {
+        ui.label(t.language);
+        let mut i = crate::text::idioma(self.config.language);
+        if utsim_idiomas::seletor(ui, "idioma", &mut i) {
+            self.config.language = crate::text::language_of(i);
             crate::text::set_language(self.config.language);
             self.save_config();
         }

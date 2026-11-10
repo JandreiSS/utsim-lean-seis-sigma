@@ -17,6 +17,8 @@ path = "src/lib.rs"
 [dependencies]
 utsim-lss-core = { path = "../utsim-lss-core" }
 utsim-lss-store = { path = "../utsim-lss-store" }
+# The texts of the screens in the five languages (`idiomas/<código>/seis-sigma.ftl`).
+utsim-idiomas.workspace = true
 # The UTSim model of a project (stage L4): read, run and draw it; open it in UTSim through
 # the launcher.
 utsim-model.workspace = true

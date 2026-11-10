@@ -1,4 +1,4 @@
-//! The interface in the three languages (P8): every project screen draws in Portuguese,
+//! The interface in the five languages (P8): every project screen draws in Portuguese,
 //! English and Spanish without an error, the catalogues really change, and the preference is
 //! kept in the configuration. With `UTSIM_CAPTURAS=<pasta>` the overview and the team screen
 //! are saved in each language for review.
@@ -72,7 +72,7 @@ fn every_screen_draws_in_every_language() {
         }
     }
     names.dedup();
-    assert_eq!(names.len(), 3, "each language has its own texts: {names:?}");
+    assert_eq!(names.len(), Language::ALL.len(), "each language has its own texts: {names:?}");
     // The preference is saved and read back.
     let mut c = UserConfig::load(&cfg.join("config.json"));
     c.language = Language::Es;
@@ -112,6 +112,8 @@ fn start_screen_draws_in_every_language() {
         }
     }
     subtitles.dedup();
-    assert_eq!(subtitles.len(), 3, "{subtitles:?}");
+    assert_eq!(subtitles.len(), Language::ALL.len(), "{subtitles:?}");
+    // Every key a screen asked for exists in the files.
+    assert!(text::TEXTOS.faltas().is_empty(), "{:?}", text::TEXTOS.faltas());
     text::set_language(Language::PtBr);
 }
