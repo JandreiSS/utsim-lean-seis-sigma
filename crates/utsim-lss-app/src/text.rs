@@ -66,6 +66,7 @@ pub struct Texts {
     pub theme_system: &'static str,
     pub theme_light: &'static str,
     pub theme_dark: &'static str,
+    pub language: &'static str,
 
     // Overview.
     pub current_phase: &'static str,
@@ -207,6 +208,7 @@ pub static PT_BR: Texts = Texts {
     theme_system: "Sistema",
     theme_light: "Claro",
     theme_dark: "Escuro",
+    language: "Idioma",
 
     current_phase: "Fase atual",
     phases: "Fases",
@@ -866,6 +868,22 @@ pub fn collection_issue(i: CollectionIssue) -> &'static str {
         CollectionIssue::NoUnit => "unidade",
         CollectionIssue::NoSampling => "amostra e frequência",
     }
+}
+
+pub use utsim_lss_store::user::Language;
+
+thread_local! {
+    static LANGUAGE: std::cell::Cell<Language> = const { std::cell::Cell::new(Language::PtBr) };
+}
+
+/// Sets the language of the interface (of this thread: the window's, or one test's).
+pub fn set_language(l: Language) {
+    LANGUAGE.with(|c| c.set(l));
+}
+
+/// The language of the interface.
+pub fn language() -> Language {
+    LANGUAGE.with(|c| c.get())
 }
 
 /// The active catalogue.
