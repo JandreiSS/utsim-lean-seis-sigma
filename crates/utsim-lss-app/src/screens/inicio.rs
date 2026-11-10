@@ -8,10 +8,11 @@ use std::path::PathBuf;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::domain::Approach;
 use utsim_lss_store::{lssz, project};
-use utsim_ui_tema::abertura::{Abertura, Acao, Escolha, Onde, Recente, Rotulos, Simbolo};
+use utsim_ui_tema::abertura::{Abertura, Acao, Escolha, Onde, Recente, Simbolo};
 use utsim_ui_tema::arquivos::{self, Filtro, Tipo};
 
 use super::super::{App, modelos_linha};
+use crate::text::l14::l14;
 use crate::text::{self, texts};
 
 /// A cor do app (a mesma do lançador).
@@ -19,15 +20,13 @@ pub const COR: egui::Color32 = egui::Color32::from_rgb(0x4F, 0xD0, 0x6A);
 /// O ícone do app (o mesmo do lançador).
 pub const ICONE: &[u8] = include_bytes!("../../../../assets/icone/familia/lean-seis-sigma_256.png");
 
-const LSSZ: Filtro = Filtro {
-    nome: "Projeto exportado (.lssz)",
-    extensoes: &[lssz::EXTENSION],
-};
-
-const EXPLICACAO: &str = "Cada projeto é uma pasta (terminada em .lss) com tudo dentro: \
-    termo de abertura, equipe, dados, análises e relatórios. Para trabalhar em equipe, crie \
-    a pasta numa pasta sincronizada do Google Drive: cada alteração vira um arquivo novo e \
-    nada é sobrescrito.";
+/// O filtro do seletor para os projetos exportados, no idioma da interface.
+fn lssz_filtro() -> Filtro {
+    Filtro {
+        nome: l14().lssz_filter,
+        extensoes: &[lssz::EXTENSION],
+    }
+}
 
 /// A janela aberta por cima da abertura.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,47 +40,37 @@ impl App {
     /// O corpo da abertura (o topo e a barra de estado ficam em `start_screen`).
     pub(in crate::app) fn start_body(&mut self, ui: &mut egui::Ui) {
         let t = texts();
+        let l = l14();
         let acoes = [
-            Acao::nova(
-                "abrir",
-                Simbolo::Abrir,
-                "Abrir projeto",
-                "Escolha a pasta .lss de um projeto que já existe, sua ou da equipe.",
-            )
-            .principal(),
-            Acao::nova(
-                "novo",
-                Simbolo::Novo,
-                t.new_project,
-                "Comece um projeto DMAIC, Kaizen ou A3, do zero ou de um modelo pronto.",
-            ),
+            Acao::nova("abrir", Simbolo::Abrir, l.open_project, l.open_help).principal(),
+            Acao::nova("novo", Simbolo::Novo, t.new_project, l.new_help),
             Acao::nova(
                 "programa",
                 Simbolo::Pessoas,
                 text::l6::l6().create_program,
-                "Junte vários projetos de uma implantação num programa só.",
+                l.program_help,
             ),
             Acao::nova(
                 "importar",
                 Simbolo::Importar,
-                "Importar projeto (.lssz)",
-                "Traga um projeto que alguém exportou e mandou por e-mail ou pendrive.",
+                l.import_project,
+                l.import_help,
             ),
         ];
         let recentes: Vec<Recente> = self.config.recent.iter().map(Recente::de).collect();
         let abertura = Abertura {
             nome: t.app_name,
-            subtitulo: "Projetos Lean Seis Sigma",
+            subtitulo: l.subtitle,
             cor: COR,
             icone: Some(ICONE),
             acoes: &acoes,
-            titulo_recentes: "Projetos recentes",
+            titulo_recentes: l.recent_title,
             recentes: &recentes,
             onde: Onde {
                 caminho: None,
-                explicacao: EXPLICACAO,
+                explicacao: l.where_explanation,
             },
-            rotulos: Rotulos::PT,
+            rotulos: l.start,
         };
         let escolha = abertura.mostrar(ui, |_| {}, |_| {});
         match escolha {
@@ -93,23 +82,17 @@ impl App {
                     .and_then(|p| p.parent())
                     .map(|p| p.display().to_string())
                     .unwrap_or_default();
-                if let Some(p) = arquivos::procurar(
+                if let Some(p) = arquivos::procurar_com(
                     Tipo::Pasta,
-                    "Escolha a pasta do projeto (.lss)",
+                    l.pick_project_folder,
                     &[],
                     &inicio,
+                    &l.picker,
                 ) {
                     if project::is_project(&p) {
                         self.open_project(&p);
                     } else {
-                        self.set_status(
-                            format!(
-                                "A pasta {} não é um projeto. Escolha a pasta terminada em .lss, \
-                                 ou crie um projeto novo.",
-                                p.display()
-                            ),
-                            true,
-                        );
+                        self.set_status((l.not_a_project)(&p.display().to_string()), true);
                     }
                 }
             }
@@ -122,9 +105,13 @@ impl App {
                 self.l1.start_dialog = Some(Dialogo::NovoPrograma);
             }
             Some(Escolha::Acao("importar")) => {
-                if let Some(p) =
-                    arquivos::procurar(Tipo::Abrir, "Escolha o projeto exportado", &[LSSZ], "")
-                {
+                if let Some(p) = arquivos::procurar_com(
+                    Tipo::Abrir,
+                    l.pick_exported,
+                    &[lssz_filtro()],
+                    "",
+                    &l.picker,
+                ) {
                     self.import_file = p.display().to_string();
                     if self.import_dest.trim().is_empty() {
                         self.import_dest = p
@@ -148,7 +135,7 @@ impl App {
             }
             Some(Escolha::MostrarPasta(p)) => {
                 if let Err(e) = arquivos::mostrar_no_explorador(&p) {
-                    self.set_status(format!("não consegui abrir o explorador: {e}"), true);
+                    self.set_status((l.explorer_error)(&e.to_string()), true);
                 }
             }
             Some(Escolha::Acao(_)) | None => {}
@@ -177,6 +164,7 @@ impl App {
             return;
         };
         let t = texts();
+        let l = l14();
         let mut fechar = false;
         egui::Modal::new(egui::Id::new("abertura_lss")).show(ctx, |ui| {
             ui.set_width(600.0);
@@ -184,7 +172,7 @@ impl App {
                 Dialogo::NovoProjeto => {
                     ui.heading(t.new_project);
                     ui.add_space(8.0);
-                    ui.label("Título do projeto:");
+                    ui.label(l.project_title);
                     ui.add(
                         egui::TextEdit::singleline(&mut self.new_title)
                             .hint_text(t.title_hint)
@@ -262,7 +250,7 @@ impl App {
                                 fechar = true;
                             }
                         }
-                        if ui.button("Cancelar").clicked() {
+                        if ui.button(l.cancel).clicked() {
                             fechar = true;
                         }
                     });
@@ -271,7 +259,7 @@ impl App {
                     let t6 = text::l6::l6();
                     ui.heading(t6.create_program);
                     ui.add_space(8.0);
-                    ui.label("Nome do programa:");
+                    ui.label(l.program_name);
                     ui.add(
                         egui::TextEdit::singleline(&mut self.new_program)
                             .hint_text(t6.program_name_hint)
@@ -297,32 +285,34 @@ impl App {
                                 fechar = true;
                             }
                         }
-                        if ui.button("Cancelar").clicked() {
+                        if ui.button(l.cancel).clicked() {
                             fechar = true;
                         }
                     });
                 }
                 Dialogo::Importar => {
-                    ui.heading("Importar projeto (.lssz)");
+                    ui.heading(l.import_project);
                     ui.add_space(8.0);
-                    ui.label("Arquivo exportado:");
-                    arquivos::campo(
+                    ui.label(l.exported_file);
+                    arquivos::campo_com(
                         ui,
                         &mut self.import_file,
                         Tipo::Abrir,
-                        "Escolha o projeto exportado",
-                        &[LSSZ],
+                        l.pick_exported,
+                        &[lssz_filtro()],
                         440.0,
+                        &l.picker,
                     );
                     ui.add_space(6.0);
-                    ui.label("Onde colocar a pasta do projeto:");
-                    arquivos::campo(
+                    ui.label(l.import_where);
+                    arquivos::campo_com(
                         ui,
                         &mut self.import_dest,
                         Tipo::Pasta,
-                        "Onde colocar o projeto",
+                        l.import_where_title,
                         &[],
                         440.0,
+                        &l.picker,
                     );
                     ui.add_space(10.0);
                     let pronto =
@@ -343,7 +333,7 @@ impl App {
                                 fechar = true;
                             }
                         }
-                        if ui.button("Cancelar").clicked() {
+                        if ui.button(l.cancel).clicked() {
                             fechar = true;
                         }
                     });
@@ -362,15 +352,24 @@ impl App {
 /// "Onde criar": a pasta (com "Procurar…") e a pasta que vai ser criada.
 fn onde_criar(ui: &mut egui::Ui, pasta: &mut String, nome: &str, ext: &str) {
     ui.add_space(8.0);
-    ui.label("Onde criar (para a equipe, escolha uma pasta do Google Drive):");
-    arquivos::campo(ui, pasta, Tipo::Pasta, "Onde criar o projeto", &[], 440.0);
+    let l = l14();
+    ui.label(l.create_where);
+    arquivos::campo_com(
+        ui,
+        pasta,
+        Tipo::Pasta,
+        l.create_where_title,
+        &[],
+        440.0,
+        &l.picker,
+    );
     if !nome.trim().is_empty() && !pasta.trim().is_empty() {
         let p = PathBuf::from(pasta.trim()).join(format!(
             "{}{ext}",
             super::super::sanitize_folder_name(nome).trim_end_matches(ext)
         ));
         ui.label(
-            RichText::new(format!("Será criada a pasta: {}", p.display()))
+            RichText::new((l.will_create)(&p.display().to_string()))
                 .color(ui.visuals().weak_text_color()),
         );
     }

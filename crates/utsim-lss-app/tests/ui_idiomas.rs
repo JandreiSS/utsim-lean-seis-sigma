@@ -83,3 +83,35 @@ fn every_screen_draws_in_every_language() {
     );
     text::set_language(Language::PtBr);
 }
+
+#[test]
+fn start_screen_draws_in_every_language() {
+    let dir = tempfile::tempdir().unwrap();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 72))),
+    );
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com"));
+    let shots = std::env::var_os("UTSIM_CAPTURAS");
+    let mut subtitles = Vec::new();
+    for l in Language::ALL {
+        text::set_language(l);
+        subtitles.push(text::l14::l14().subtitle);
+        let ctx = egui::Context::default();
+        for _ in 0..2 {
+            let mut out = ctx.run_ui(egui::RawInput::default(), |ui| app.draw(ui));
+            out.textures_delta.clear();
+        }
+        if let Some(d) = &shots {
+            let mut cap = Captura::new(egui::Context::default(), egui::vec2(1400.0, 900.0));
+            let img = cap.imagem(3, |ui| app.draw(ui));
+            std::fs::create_dir_all(d).unwrap();
+            img.salvar_png(&std::path::Path::new(d).join(format!("idioma_{l:?}_inicio.png")))
+                .unwrap();
+        }
+    }
+    subtitles.dedup();
+    assert_eq!(subtitles.len(), 3, "{subtitles:?}");
+    text::set_language(Language::PtBr);
+}
