@@ -344,15 +344,16 @@ impl App {
         });
     }
 
-    fn decision_history(&mut self, ui: &mut egui::Ui, s: &Session, tg: &Tollgate) {
+    fn decision_history(&mut self, ui: &mut egui::Ui, s: &mut Session, tg: &Tollgate) {
         let tl = l1();
         let ds = tollgate::decisions(s.state(), tg.id);
         if ds.is_empty() {
             return;
         }
         ui.strong(tl.decisions);
+        let project = s.project();
         egui::Grid::new("decisoes")
-            .num_columns(5)
+            .num_columns(6)
             .striped(true)
             .spacing([10.0, 4.0])
             .show(ui, |ui| {
@@ -370,6 +371,10 @@ impl App {
                         txt = format!("{txt} [{}]", d.reservations.join("; "));
                     }
                     ui.label(txt).on_hover_text((tl.frozen_hash)(&d.hash));
+                    ui.horizontal(|ui| {
+                        let a = utsim_lss_store::assinatura::tollgate_approval(project, d);
+                        self.approval_seal(ui, s, a);
+                    });
                     ui.end_row();
                 }
             });

@@ -163,5 +163,6 @@ impl App {
             let names: Vec<String> = bad.iter().map(row_name).collect();
             ui.colored_label(theme::WARN, (tl.raci_single_a)(&names.join(", ")));
         }
+        self.integrity_section(ui, s);
     }
 }

@@ -11,7 +11,7 @@ use utsim_lss_core::presence::{self, HEARTBEAT_MS, Presence};
 use utsim_lss_core::tools::{self, Deliverable, Tool, ap::CsvError, fmea, plans};
 use utsim_lss_core::{Conflict, Date, Edit, EntityRef, Id, State, kanban, perfis};
 use utsim_lss_store::project::ProjectFolder;
-use utsim_lss_store::{Clock, Identity, Refresh, lssz};
+use utsim_lss_store::{Clock, Identity, Refresh, assinatura, lssz};
 
 /// How often the folder is looked at for other people's changes, milliseconds.
 pub const REFRESH_MS: i64 = 2_000;
@@ -29,6 +29,8 @@ pub struct Session {
     guard: Guard,
     /// The state built only from authorized operations (program and coaching logs).
     authorized: Option<perfis::Authorized>,
+    /// The check of the signed journal and the approval seals (stage P7), read on demand.
+    signatures: Option<(assinatura::Integrity, assinatura::Seals)>,
 }
 
 /// The permission rules of a folder (`docs/plano_lean_seis_sigma.md`, 8.8).
@@ -245,6 +247,7 @@ impl Session {
             last_incoming_ms: None,
             guard: Guard::Free,
             authorized: None,
+            signatures: None,
         }
     }
 
@@ -532,7 +535,35 @@ impl Session {
         if r.new_ops > 0 && self.authorized.is_some() {
             self.reauthorize();
         }
+        if r.new_ops > 0 {
+            self.signatures = None;
+        }
         Ok(r)
+    }
+
+    /// The check of the signed journal and the approval seals of this folder (read on the
+    /// first call and again after other people's changes arrive or [`Self::recheck`]).
+    pub fn signatures(&mut self) -> &(assinatura::Integrity, assinatura::Seals) {
+        let root = self.folder.root().to_path_buf();
+        self.signatures
+            .get_or_insert_with(|| (assinatura::check(&root), assinatura::Seals::read(&root)))
+    }
+
+    /// Forgets the last check, so the next [`Self::signatures`] reads the folder again.
+    pub fn recheck(&mut self) {
+        self.signatures = None;
+    }
+
+    /// Seals `approval` with this person's key (stage P7).
+    pub fn sign(&mut self, approval: &assinatura::Approval) -> utsim_lss_store::Result<()> {
+        let Some(signer) = self.folder.signer().cloned() else {
+            return Err(utsim_lss_store::Error::Invalid(
+                crate::text::l13::l13().no_key.to_string(),
+            ));
+        };
+        assinatura::sign_approval(self.folder.root(), &signer, approval, self.clock.now_ms())?;
+        self.signatures = None;
+        Ok(())
     }
 
     /// The clock (to open other folders with the same one).

@@ -200,10 +200,14 @@ impl App {
             ));
         }
         if let (Some(by), Some(on)) = (plan.validated_by, plan.validated_on) {
-            ui.weak((tl.validated_by)(
-                &utsim_lss_core::domain::person_name(s.state(), by),
-                &on.format_br(),
-            ));
+            ui.horizontal(|ui| {
+                ui.weak((tl.validated_by)(
+                    &utsim_lss_core::domain::person_name(s.state(), by),
+                    &on.format_br(),
+                ));
+                let a = utsim_lss_store::assinatura::saving_approval(s.state(), s.project(), id);
+                self.approval_seal(ui, s, a);
+            });
         }
         ui.add_space(6.0);
         ui.strong(tl.monthly_entries);

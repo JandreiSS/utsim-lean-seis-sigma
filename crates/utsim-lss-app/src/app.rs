@@ -198,6 +198,8 @@ pub struct App {
     exp: screens::experiments::ExpUi,
     /// The control plan in operation, read on the twin (P5).
     ctl: controle::CtlUi,
+    /// The signing key of this computer (stage P7), once the identity is known.
+    signer: Option<utsim_lss_store::assinatura::Signer>,
 }
 
 impl App {
@@ -212,7 +214,7 @@ impl App {
         } else {
             Screen::Identity
         };
-        Self {
+        let mut app = Self {
             dirs,
             config,
             clock,
@@ -251,6 +253,27 @@ impl App {
             roadmap: screens::roadmap::RoadmapUi::default(),
             exp: screens::experiments::ExpUi::default(),
             ctl: controle::CtlUi::default(),
+            signer: None,
+        };
+        app.load_signer();
+        app
+    }
+
+    /// Reads (or creates) the signing key of this computer and makes it the key of the
+    /// person in this process, so every folder opened afterwards signs its commits.
+    fn load_signer(&mut self) {
+        let Some(me) = self.config.identity.clone() else {
+            return;
+        };
+        match utsim_lss_store::assinatura::Signer::load_or_create(&self.dirs.config_file) {
+            Ok(k) => {
+                utsim_lss_store::assinatura::register(me.person, k.clone());
+                self.signer = Some(k);
+            }
+            Err(e) => {
+                self.signer = None;
+                self.set_status((crate::text::l13::l13().key_error)(&e.to_string()), true);
+            }
         }
     }
 
@@ -337,6 +360,7 @@ impl App {
         });
         self.identity_error = None;
         self.save_config();
+        self.load_signer();
         self.screen = Screen::Start;
         true
     }
@@ -356,8 +380,13 @@ impl App {
             self.pnav = screens::program::ProgramNav::Structure;
             self.l6.close();
         }
+        let mut session = session;
+        let severe = session.signatures().0.severe();
         self.session = Some(session);
         self.screen = Screen::Project;
+        if severe > 0 {
+            self.set_status((crate::text::l13::l13().severe_status)(severe), true);
+        }
         self.nav = if portfolio {
             Nav::Portfolio
         } else {
@@ -512,7 +541,23 @@ impl App {
 
     /// More of the identity screen, below name and e-mail (the signing key of the team's
     /// signatures goes here).
-    fn identity_extra(&mut self, _ui: &mut egui::Ui) {}
+    fn identity_extra(&mut self, ui: &mut egui::Ui) {
+        let t = crate::text::l13::l13();
+        ui.add_space(10.0);
+        ui.separator();
+        ui.strong(t.key_title);
+        match &self.signer {
+            Some(k) => {
+                ui.monospace(utsim_lss_store::assinatura::grouped(&k.public()));
+                ui.small(t.key_intro);
+                let path = utsim_lss_store::assinatura::key_path(&self.dirs.config_file);
+                ui.small((t.key_file)(&path.display().to_string()));
+            }
+            None => {
+                ui.small(t.key_later);
+            }
+        }
+    }
 
     fn start_screen(&mut self, ui: &mut egui::Ui) {
         let t = texts();
