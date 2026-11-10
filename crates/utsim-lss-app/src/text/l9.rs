@@ -1,6 +1,6 @@
 //! Texts of the DMAIC roadmap screen, in a catalogue of their own.
 
-use crate::text::{tx};
+use crate::text::tx;
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -16,12 +16,6 @@ pub struct L9Texts {
     pub yes: S,
     pub no: S,
 }
-
-
-
-
-
-
 
 pub fn l9() -> &'static L9Texts {
     static CACHE: PorIdioma<L9Texts> = PorIdioma::new();

@@ -1,7 +1,7 @@
 //! Texts of the stage L5 screen and documents (reports, spreadsheets and the company's
 //! template), in a catalogue of their own.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -128,12 +128,6 @@ pub struct L5Texts {
     pub file: S,
     pub certificate_pdf: S,
 }
-
-
-
-
-
-
 
 pub fn l5() -> &'static L5Texts {
     static CACHE: PorIdioma<L5Texts> = PorIdioma::new();

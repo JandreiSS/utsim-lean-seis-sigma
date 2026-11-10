@@ -1,7 +1,7 @@
 //! Texts of the stage L3 and P1 screen (statistical analyses and measurement system
 //! analysis), in a catalogue of their own.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 use utsim_lss_core::dados::DataOrigin;
 
@@ -52,12 +52,6 @@ pub struct L3Texts {
     pub same_numbers: S,
     pub different_numbers: S,
 }
-
-
-
-
-
-
 
 pub fn l3() -> &'static L3Texts {
     static CACHE: PorIdioma<L3Texts> = PorIdioma::new();

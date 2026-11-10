@@ -2,7 +2,7 @@
 //! pipeline and committee, capacity and assignment, coaching and competence map, tollgate
 //! reviews, dashboards, profiles and personal data), in a catalogue of their own.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 use utsim_lss_core::mentoria::{Form, Level, Target};
 use utsim_lss_core::painel::Kpi;
@@ -303,12 +303,6 @@ pub struct L6Texts {
     pub unauthorized_line: fn(&str, &str, &str, &str) -> String,
 }
 
-
-
-
-
-
-
 pub fn l6() -> &'static L6Texts {
     static CACHE: PorIdioma<L6Texts> = PorIdioma::new();
     CACHE.obter(construir_l6_texts)
@@ -375,7 +369,18 @@ fn construir_l6_texts() -> L6Texts {
         limits: tx("l6-limits"),
         mentees: tx("l6-mentees"),
         champion_limit: tx("l6-champion_limit"),
-        limits_now: |y, g, b, m, c| fx("l6-limits_now", &[("y", y.into()), ("g", g.into()), ("b", b.into()), ("m", m.into()), ("c", c.into())]),
+        limits_now: |y, g, b, m, c| {
+            fx(
+                "l6-limits_now",
+                &[
+                    ("y", y.into()),
+                    ("g", g.into()),
+                    ("b", b.into()),
+                    ("m", m.into()),
+                    ("c", c.into()),
+                ],
+            )
+        },
         review_target: tx("l6-review_target"),
         retention: tx("l6-retention"),
         units: tx("l6-units"),
@@ -414,9 +419,28 @@ fn construir_l6_texts() -> L6Texts {
         default_committee_title: |d| fx("l6-default_committee_title", &[("d", d.into())]),
         agenda: tx("l6-agenda"),
         agenda_empty: tx("l6-agenda_empty"),
-        agenda_decide: |t, u, s| fx("l6-agenda_decide", &[("t", t.into()), ("u", u.into()), ("s", s.round_ties_even().into())]),
+        agenda_decide: |t, u, s| {
+            fx(
+                "l6-agenda_decide",
+                &[
+                    ("t", t.into()),
+                    ("u", u.into()),
+                    ("s", s.round_ties_even().into()),
+                ],
+            )
+        },
         agenda_capacity: |l, n| fx("l6-agenda_capacity", &[("l", l.into()), ("n", n.into())]),
-        agenda_target: |u, m, a, t| fx("l6-agenda_target", &[("u", u.into()), ("m", m.into()), ("a", ((a * 10.0).round() / 10.0).into()), ("t", ((t * 10.0).round() / 10.0).into())]),
+        agenda_target: |u, m, a, t| {
+            fx(
+                "l6-agenda_target",
+                &[
+                    ("u", u.into()),
+                    ("m", m.into()),
+                    ("a", ((a * 10.0).round() / 10.0).into()),
+                    ("t", ((t * 10.0).round() / 10.0).into()),
+                ],
+            )
+        },
         agenda_rule: tx("l6-agenda_rule"),
         decide_on: |t| fx("l6-decide_on", &[("t", t.into())]),
         belt_candidate: tx("l6-belt_candidate"),
@@ -439,15 +463,44 @@ fn construir_l6_texts() -> L6Texts {
         units_count: tx("l6-units_count"),
         hours_committed: tx("l6-hours_committed"),
         capacity: tx("l6-capacity"),
-        over_projects: |p, n, l| fx("l6-over_projects", &[("p", p.into()), ("n", n.into()), ("l", l.into())]),
-        over_hours: |p, h, c| fx("l6-over_hours", &[("p", p.into()), ("h", ((h * 10.0).round() / 10.0).into()), ("c", ((c * 10.0).round() / 10.0).into())]),
-        over_mentees: |p, n, l| fx("l6-over_mentees", &[("p", p.into()), ("n", n.into()), ("l", l.into())]),
-        over_champion: |p, n, l| fx("l6-over_champion", &[("p", p.into()), ("n", n.into()), ("l", l.into())]),
+        over_projects: |p, n, l| {
+            fx(
+                "l6-over_projects",
+                &[("p", p.into()), ("n", n.into()), ("l", l.into())],
+            )
+        },
+        over_hours: |p, h, c| {
+            fx(
+                "l6-over_hours",
+                &[
+                    ("p", p.into()),
+                    ("h", ((h * 10.0).round() / 10.0).into()),
+                    ("c", ((c * 10.0).round() / 10.0).into()),
+                ],
+            )
+        },
+        over_mentees: |p, n, l| {
+            fx(
+                "l6-over_mentees",
+                &[("p", p.into()), ("n", n.into()), ("l", l.into())],
+            )
+        },
+        over_champion: |p, n, l| {
+            fx(
+                "l6-over_champion",
+                &[("p", p.into()), ("n", n.into()), ("l", l.into())],
+            )
+        },
         rule_load: tx("l6-rule_load"),
         assignment: tx("l6-assignment"),
         assignment_intro: tx("l6-assignment_intro"),
         nothing_to_assign: tx("l6-nothing_to_assign"),
-        need: |l, h| fx("l6-need", &[("l", l.into()), ("h", ((h * 10.0).round() / 10.0).into())]),
+        need: |l, h| {
+            fx(
+                "l6-need",
+                &[("l", l.into()), ("h", ((h * 10.0).round() / 10.0).into())],
+            )
+        },
         reasons: tx("l6-reasons"),
         assign: tx("l6-assign"),
         rule_ranking: tx("l6-rule_ranking"),
@@ -455,7 +508,15 @@ fn construir_l6_texts() -> L6Texts {
         assigned: |p, t| fx("l6-assigned", &[("p", p.into()), ("t", t.into())]),
         r_level: |h, n| fx("l6-r_level", &[("h", h.into()), ("n", n.into())]),
         r_slots: |u, l| fx("l6-r_slots", &[("u", u.into()), ("l", l.into())]),
-        r_hours: |f, n| fx("l6-r_hours", &[("f", ((f * 10.0).round() / 10.0).into()), ("n", ((n * 10.0).round() / 10.0).into())]),
+        r_hours: |f, n| {
+            fx(
+                "l6-r_hours",
+                &[
+                    ("f", ((f * 10.0).round() / 10.0).into()),
+                    ("n", ((n * 10.0).round() / 10.0).into()),
+                ],
+            )
+        },
         r_away: |d| fx("l6-r_away", &[("d", d.into())]),
         r_cert: tx("l6-r_cert"),
         r_same_unit: tx("l6-r_same_unit"),
@@ -465,7 +526,17 @@ fn construir_l6_texts() -> L6Texts {
         coaching_intro: tx("l6-coaching_intro"),
         no_belts_visible: tx("l6-no_belts_visible"),
         no_consent: tx("l6-no_consent"),
-        progress: |s, h, d, c| fx("l6-progress", &[("s", s.into()), ("h", ((h * 10.0).round() / 10.0).into()), ("d", d.into()), ("c", c.into())]),
+        progress: |s, h, d, c| {
+            fx(
+                "l6-progress",
+                &[
+                    ("s", s.into()),
+                    ("h", ((h * 10.0).round() / 10.0).into()),
+                    ("d", d.into()),
+                    ("c", c.into()),
+                ],
+            )
+        },
         session_of: |d| fx("l6-session_of", &[("d", d.into())]),
         tools_discussed: |t| fx("l6-tools_discussed", &[("t", t.into())]),
         session_project: |p| fx("l6-session_project", &[("p", p.into())]),
@@ -501,8 +572,18 @@ fn construir_l6_texts() -> L6Texts {
         waiting: tx("l6-waiting"),
         late: tx("l6-late"),
         queue_empty: tx("l6-queue_empty"),
-        review_of: |t, p, r| fx("l6-review_of", &[("t", t.into()), ("p", p.into()), ("r", r.into())]),
-        target_time: |m| fx("l6-target_time", &[("m", ((m * 10.0).round() / 10.0).into())]),
+        review_of: |t, p, r| {
+            fx(
+                "l6-review_of",
+                &[("t", t.into()), ("p", p.into()), ("r", r.into())],
+            )
+        },
+        target_time: |m| {
+            fx(
+                "l6-target_time",
+                &[("m", ((m * 10.0).round() / 10.0).into())],
+            )
+        },
         verified_items: tx("l6-verified_items"),
         standard_questions: tx("l6-standard_questions"),
         question_hint: tx("l6-question_hint"),
@@ -521,7 +602,12 @@ fn construir_l6_texts() -> L6Texts {
         median_lead: tx("l6-median_lead"),
         all: tx("l6-all"),
         phase_is: |p| fx("l6-phase_is", &[("p", p.into())]),
-        recurring: |b, c, n| fx("l6-recurring", &[("b", b.into()), ("c", c.into()), ("n", n.into())]),
+        recurring: |b, c, n| {
+            fx(
+                "l6-recurring",
+                &[("b", b.into()), ("c", c.into()), ("n", n.into())],
+            )
+        },
         rule_quality: tx("l6-rule_quality"),
         ind_funnel: tx("l6-ind_funnel"),
         stage: tx("l6-stage"),
@@ -550,12 +636,34 @@ fn construir_l6_texts() -> L6Texts {
         rule_tools: tx("l6-rule_tools"),
         ind_overdue: tx("l6-ind_overdue"),
         pending_reviews: |n| fx("l6-pending_reviews", &[("n", n.into())]),
-        overdue_line: |t, p, d, u, b| fx("l6-overdue_line", &[("t", t.into()), ("p", p.into()), ("d", d.into()), ("u", u.into()), ("b", b.into())]),
+        overdue_line: |t, p, d, u, b| {
+            fx(
+                "l6-overdue_line",
+                &[
+                    ("t", t.into()),
+                    ("p", p.into()),
+                    ("d", d.into()),
+                    ("u", u.into()),
+                    ("b", b.into()),
+                ],
+            )
+        },
         none_overdue: tx("l6-none_overdue"),
         rule_overdue: tx("l6-rule_overdue"),
         ind_load: tx("l6-ind_load"),
         overloaded: tx("l6-overloaded"),
-        person_load: |p, h, c, n, l| fx("l6-person_load", &[("p", p.into()), ("h", ((h * 10.0).round() / 10.0).into()), ("c", ((c * 10.0).round() / 10.0).into()), ("n", n.into()), ("l", l.into())]),
+        person_load: |p, h, c, n, l| {
+            fx(
+                "l6-person_load",
+                &[
+                    ("p", p.into()),
+                    ("h", ((h * 10.0).round() / 10.0).into()),
+                    ("c", ((c * 10.0).round() / 10.0).into()),
+                    ("n", n.into()),
+                    ("l", l.into()),
+                ],
+            )
+        },
         leadership_intro: tx("l6-leadership_intro"),
         target_is: |t| fx("l6-target_is", &[("t", t.into())]),
         vs_last_year: tx("l6-vs_last_year"),
@@ -567,7 +675,13 @@ fn construir_l6_texts() -> L6Texts {
         matrix: tx("l6-matrix"),
         action: tx("l6-action"),
         restricted_folders: tx("l6-restricted_folders"),
-        restricted_lines: Box::leak(Box::new([tx("l6-restricted_lines-0"), tx("l6-restricted_lines-1"), tx("l6-restricted_lines-2"), tx("l6-restricted_lines-3"), tx("l6-restricted_lines-4")])),
+        restricted_lines: Box::leak(Box::new([
+            tx("l6-restricted_lines-0"),
+            tx("l6-restricted_lines-1"),
+            tx("l6-restricted_lines-2"),
+            tx("l6-restricted_lines-3"),
+            tx("l6-restricted_lines-4"),
+        ])),
         consent: tx("l6-consent"),
         consent_intro: tx("l6-consent_intro"),
         i_consent: tx("l6-i_consent"),
@@ -583,7 +697,17 @@ fn construir_l6_texts() -> L6Texts {
         anonymise: tx("l6-anonymise"),
         anonymised: tx("l6-anonymised"),
         unauthorized_intro: tx("l6-unauthorized_intro"),
-        unauthorized_line: |p, k, f, a| fx("l6-unauthorized_line", &[("p", p.into()), ("k", k.into()), ("f", f.into()), ("a", a.into())]),
+        unauthorized_line: |p, k, f, a| {
+            fx(
+                "l6-unauthorized_line",
+                &[
+                    ("p", p.into()),
+                    ("k", k.into()),
+                    ("f", f.into()),
+                    ("a", a.into()),
+                ],
+            )
+        },
     }
 }
 
@@ -749,9 +873,7 @@ pub fn action_name(a: Action) -> &'static str {
         Action::CommitteeAgenda => tx("l6-action_name-committee_agenda"),
         Action::CommitteeDecide => tx("l6-action_name-committee_decide"),
         Action::Assign => tx("l6-action_name-assign"),
-        Action::ReviewTollgate => {
-            tx("l6-action_name-review_tollgate")
-        }
+        Action::ReviewTollgate => tx("l6-action_name-review_tollgate"),
         Action::ConfirmCompetence => tx("l6-action_name-confirm_competence"),
         Action::RecordLearning => tx("l6-action_name-record_learning"),
         Action::RecordCoaching => tx("l6-action_name-record_coaching"),

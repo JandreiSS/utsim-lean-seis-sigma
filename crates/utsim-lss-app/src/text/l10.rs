@@ -1,7 +1,7 @@
 //! Texts of the version 2 of the app (estimated gain from a study, the other MSA studies, design
 //! of experiments, value stream and spaghetti maps), in a catalogue of their own.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -154,12 +154,6 @@ pub struct L10Texts {
     pub annual_detail: S,
 }
 
-
-
-
-
-
-
 pub fn l10() -> &'static L10Texts {
     static CACHE: PorIdioma<L10Texts> = PorIdioma::new();
     CACHE.obter(construir_l10_texts)
@@ -204,7 +198,12 @@ fn construir_l10_texts() -> L10Texts {
         exp_add_factor: tx("l10-exp_add_factor"),
         exp_fraction: tx("l10-exp_fraction"),
         exp_full: |n| fx("l10-exp_full", &[("n", n.into())]),
-        exp_frac: |p, n| fx("l10-exp_frac", &[("den", (1usize << p).into()), ("n", n.into())]),
+        exp_frac: |p, n| {
+            fx(
+                "l10-exp_frac",
+                &[("den", (1usize << p).into()), ("n", n.into())],
+            )
+        },
         exp_replicates: tx("l10-exp_replicates"),
         exp_centers: tx("l10-exp_centers"),
         exp_seed: tx("l10-exp_seed"),
@@ -260,8 +259,22 @@ fn construir_l10_texts() -> L10Texts {
         report_analyses: tx("l10-report_analyses"),
         dash_pdf: tx("l10-dash_pdf"),
         dash_xlsx: tx("l10-dash_xlsx"),
-        idea_from: |app, r| fx("l10-idea_from", &[("app", app.into()), ("r", r.into()), ("tem", (if r.is_empty() { "nao" } else { "sim" }).into())]),
-        idea_sent_by: |who, on| fx("l10-idea_sent_by", &[("who", who.into()), ("on", on.into())]),
+        idea_from: |app, r| {
+            fx(
+                "l10-idea_from",
+                &[
+                    ("app", app.into()),
+                    ("r", r.into()),
+                    ("tem", (if r.is_empty() { "nao" } else { "sim" }).into()),
+                ],
+            )
+        },
+        idea_sent_by: |who, on| {
+            fx(
+                "l10-idea_sent_by",
+                &[("who", who.into()), ("on", on.into())],
+            )
+        },
         idea_attachments: tx("l10-idea_attachments"),
         open_file: tx("l10-open_file"),
         app_8d: tx("l10-app_8d"),
@@ -305,7 +318,17 @@ fn construir_l10_texts() -> L10Texts {
         people_import: tx("l10-people_import"),
         people_import_hint: tx("l10-people_import_hint"),
         people_import_button: tx("l10-people_import_button"),
-        people_report: |c, u, s, e| fx("l10-people_report", &[("c", c.into()), ("u", u.into()), ("s", s.into()), ("e", e.into())]),
+        people_report: |c, u, s, e| {
+            fx(
+                "l10-people_report",
+                &[
+                    ("c", c.into()),
+                    ("u", u.into()),
+                    ("s", s.into()),
+                    ("e", e.into()),
+                ],
+            )
+        },
         people_line: |n, why| fx("l10-people_line", &[("n", n.into()), ("why", why.into())]),
         dash_annual: tx("l10-dash_annual"),
         annual_title: |y| fx("l10-annual_title", &[("y", y.into())]),

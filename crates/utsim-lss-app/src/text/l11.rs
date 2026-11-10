@@ -1,7 +1,7 @@
 //! Texts of the control with the twin and the panel (P5): the monitoring section of the
 //! control plan.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -46,12 +46,6 @@ pub struct L11Texts {
     pub no_lines: S,
 }
 
-
-
-
-
-
-
 pub fn l11() -> &'static L11Texts {
     static CACHE: PorIdioma<L11Texts> = PorIdioma::new();
     CACHE.obter(construir_l11_texts)
@@ -81,11 +75,35 @@ fn construir_l11_texts() -> L11Texts {
         from_manual: tx("l11-from_manual"),
         from_data: tx("l11-from_data"),
         from_model: tx("l11-from_model"),
-        read_from: |origin, model| fx("l11-read_from", &[("origin", origin.into()), ("model", model.into()), ("tem", (if model.is_empty() { "nao" } else { "sim" }).into())]),
+        read_from: |origin, model| {
+            fx(
+                "l11-read_from",
+                &[
+                    ("origin", origin.into()),
+                    ("model", model.into()),
+                    ("tem", (if model.is_empty() { "nao" } else { "sim" }).into()),
+                ],
+            )
+        },
         sources_seen: |n| fx("l11-sources_seen", &[("n", n.into())]),
-        summary: |n, mean, signals, new| fx("l11-summary", &[("n", n.into()), ("mean", mean.into()), ("signals", signals.into()), ("new", new.into())]),
+        summary: |n, mean, signals, new| {
+            fx(
+                "l11-summary",
+                &[
+                    ("n", n.into()),
+                    ("mean", mean.into()),
+                    ("signals", signals.into()),
+                    ("new", new.into()),
+                ],
+            )
+        },
         no_limits_yet: tx("l11-no_limits_yet"),
-        read_done: |lines, cards| fx("l11-read_done", &[("lines", lines.into()), ("cards", cards.into())]),
+        read_done: |lines, cards| {
+            fx(
+                "l11-read_done",
+                &[("lines", lines.into()), ("cards", cards.into())],
+            )
+        },
         keep_dataset: tx("l11-keep_dataset"),
         dataset_kept: tx("l11-dataset_kept"),
         book_month: tx("l11-book_month"),

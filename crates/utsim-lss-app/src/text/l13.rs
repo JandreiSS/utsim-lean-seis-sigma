@@ -1,7 +1,7 @@
 //! Texts of the team's signatures (P7): the signing key, the check of the signed journal and
 //! the sealed approvals.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -77,12 +77,6 @@ pub struct L13Texts {
     pub open: S,
 }
 
-
-
-
-
-
-
 pub fn l13() -> &'static L13Texts {
     static CACHE: PorIdioma<L13Texts> = PorIdioma::new();
     CACHE.obter(construir_l13_texts)
@@ -99,8 +93,23 @@ fn construir_l13_texts() -> L13Texts {
         integrity_title: tx("l13-integrity_title"),
         integrity_intro: tx("l13-integrity_intro"),
         recheck: tx("l13-recheck"),
-        integrity_ok: |signed, total| fx("l13-integrity_ok", &[("signed", signed.into()), ("total", total.into())]),
-        integrity_summary: |signed, total, severe, other| fx("l13-integrity_summary", &[("signed", signed.into()), ("total", total.into()), ("severe", severe.into()), ("other", other.into())]),
+        integrity_ok: |signed, total| {
+            fx(
+                "l13-integrity_ok",
+                &[("signed", signed.into()), ("total", total.into())],
+            )
+        },
+        integrity_summary: |signed, total, severe, other| {
+            fx(
+                "l13-integrity_summary",
+                &[
+                    ("signed", signed.into()),
+                    ("total", total.into()),
+                    ("severe", severe.into()),
+                    ("other", other.into()),
+                ],
+            )
+        },
         nobody_signs: tx("l13-nobody_signs"),
         col_person: tx("l13-col_person"),
         col_key: tx("l13-col_key"),
@@ -118,13 +127,28 @@ fn construir_l13_texts() -> L13Texts {
         chain_body: |n| fx("l13-chain_body", &[("n", n.into())]),
         altered: |n, when| fx("l13-altered", &[("n", n.into()), ("when", when.into())]),
         redacted: |n, when| fx("l13-redacted", &[("n", n.into()), ("when", when.into())]),
-        other_signer: |n, signer| fx("l13-other_signer", &[("n", n.into()), ("signer", signer.into())]),
+        other_signer: |n, signer| {
+            fx(
+                "l13-other_signer",
+                &[("n", n.into()), ("signer", signer.into())],
+            )
+        },
         missing: |n, when| fx("l13-missing", &[("n", n.into()), ("when", when.into())]),
         unsigned: |n, when| fx("l13-unsigned", &[("n", n.into()), ("when", when.into())]),
         foreign_key: |n, by| fx("l13-foreign_key", &[("n", n.into()), ("by", by.into())]),
-        key_not_proven: |n, key| fx("l13-key_not_proven", &[("n", n.into()), ("key", key.into())]),
+        key_not_proven: |n, key| {
+            fx(
+                "l13-key_not_proven",
+                &[("n", n.into()), ("key", key.into())],
+            )
+        },
         chain_without_key: |f| fx("l13-chain_without_key", &[("f", f.into())]),
-        new_key: |n, key, when| fx("l13-new_key", &[("n", n.into()), ("key", key.into()), ("when", when.into())]),
+        new_key: |n, key, when| {
+            fx(
+                "l13-new_key",
+                &[("n", n.into()), ("key", key.into()), ("when", when.into())],
+            )
+        },
         severe_status: |n| fx("l13-severe_status", &[("n", n.into())]),
         sign: tx("l13-sign"),
         sign_help: tx("l13-sign_help"),
@@ -133,13 +157,43 @@ fn construir_l13_texts() -> L13Texts {
         invalid: tx("l13-invalid"),
         not_signed: tx("l13-not_signed"),
         signed_ok: tx("l13-signed_ok"),
-        pdf_signed: |issuer, when, key, seal| fx("l13-pdf_signed", &[("issuer", issuer.into()), ("when", when.into()), ("key", key.into()), ("seal", seal.into())]),
+        pdf_signed: |issuer, when, key, seal| {
+            fx(
+                "l13-pdf_signed",
+                &[
+                    ("issuer", issuer.into()),
+                    ("when", when.into()),
+                    ("key", key.into()),
+                    ("seal", seal.into()),
+                ],
+            )
+        },
         roles_title: tx("l13-roles_title"),
         roles_intro: tx("l13-roles_intro"),
         roles_never: tx("l13-roles_never"),
-        roles_current: |who, when| fx("l13-roles_current", &[("who", who.into()), ("when", when.into())]),
-        roles_changed: |who, when, added, removed| fx("l13-roles_changed", &[("who", who.into()), ("when", when.into()), ("added", added.into()), ("removed", removed.into())]),
-        roles_out: |who, profile| fx("l13-roles_out", &[("who", who.into()), ("profile", profile.into())]),
+        roles_current: |who, when| {
+            fx(
+                "l13-roles_current",
+                &[("who", who.into()), ("when", when.into())],
+            )
+        },
+        roles_changed: |who, when, added, removed| {
+            fx(
+                "l13-roles_changed",
+                &[
+                    ("who", who.into()),
+                    ("when", when.into()),
+                    ("added", added.into()),
+                    ("removed", removed.into()),
+                ],
+            )
+        },
+        roles_out: |who, profile| {
+            fx(
+                "l13-roles_out",
+                &[("who", who.into()), ("profile", profile.into())],
+            )
+        },
         roles_removed: |item| fx("l13-roles_removed", &[("item", item.into())]),
         roles_not_entitled: |who| fx("l13-roles_not_entitled", &[("who", who.into())]),
         roles_sign: tx("l13-roles_sign"),

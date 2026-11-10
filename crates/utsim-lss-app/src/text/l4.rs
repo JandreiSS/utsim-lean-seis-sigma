@@ -1,7 +1,7 @@
 //! Texts of the stage L4 screen (the UTSim model of the project), in a catalogue of their
 //! own.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -92,12 +92,6 @@ pub struct L4Texts {
     pub save_observed: S,
 }
 
-
-
-
-
-
-
 pub fn l4() -> &'static L4Texts {
     static CACHE: PorIdioma<L4Texts> = PorIdioma::new();
     CACHE.obter(construir_l4_texts)
@@ -109,7 +103,12 @@ fn construir_l4_texts() -> L4Texts {
         intro: tx("l4-intro"),
         running: |j| fx("l4-running", &[("j", j.into())]),
         no_link: tx("l4-no_link"),
-        linked: |n, p, h| fx("l4-linked", &[("n", n.into()), ("p", p.into()), ("h", h.into())]),
+        linked: |n, p, h| {
+            fx(
+                "l4-linked",
+                &[("n", n.into()), ("p", p.into()), ("h", h.into())],
+            )
+        },
         changed: tx("l4-changed"),
         update_link: tx("l4-update_link"),
         path_hint: tx("l4-path_hint"),
@@ -135,7 +134,12 @@ fn construir_l4_texts() -> L4Texts {
         open_in_utsim: tx("l4-open_in_utsim"),
         opening: tx("l4-opening"),
         runs: tx("l4-runs"),
-        run_facts: |r, s, t| fx("l4-run_facts", &[("r", r.into()), ("s", s.into()), ("t", t.into())]),
+        run_facts: |r, s, t| {
+            fx(
+                "l4-run_facts",
+                &[("r", r.into()), ("s", s.into()), ("t", t.into())],
+            )
+        },
         run: tx("l4-run"),
         shifting: tx("l4-shifting"),
         simulated_label: tx("l4-simulated_label"),
@@ -152,7 +156,16 @@ fn construir_l4_texts() -> L4Texts {
         resource: tx("l4-resource"),
         utilization: tx("l4-utilization"),
         in_shift: tx("l4-in_shift"),
-        share_line: |n, a, b| fx("l4-share_line", &[("n", n.into()), ("a", a.round_ties_even().into()), ("b", b.round_ties_even().into())]),
+        share_line: |n, a, b| {
+            fx(
+                "l4-share_line",
+                &[
+                    ("n", n.into()),
+                    ("a", a.round_ties_even().into()),
+                    ("b", b.round_ties_even().into()),
+                ],
+            )
+        },
         save_shifting: tx("l4-save_shifting"),
         study: tx("l4-study"),
         study_intro: tx("l4-study_intro"),
@@ -181,7 +194,16 @@ fn construir_l4_texts() -> L4Texts {
         from: tx("l4-from"),
         to: tx("l4-to"),
         run_observed: tx("l4-run_observed"),
-        observed_total: |n, t, h| fx("l4-observed_total", &[("n", n.into()), ("t", crate::text::decimal_mark(&format!("{t:.2}")).into()), ("h", crate::text::decimal_mark(&format!("{h:.2}")).into())]),
+        observed_total: |n, t, h| {
+            fx(
+                "l4-observed_total",
+                &[
+                    ("n", n.into()),
+                    ("t", crate::text::decimal_mark(&format!("{t:.2}")).into()),
+                    ("h", crate::text::decimal_mark(&format!("{h:.2}")).into()),
+                ],
+            )
+        },
         activity: tx("l4-activity"),
         criticality: tx("l4-criticality"),
         wait: tx("l4-wait"),

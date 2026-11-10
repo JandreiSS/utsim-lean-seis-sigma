@@ -1,7 +1,7 @@
 //! Texts of the stage L7 screens (training and certification), in a catalogue of their
 //! own.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 use utsim_lss_core::certificacao::{Status, Validity};
 use utsim_lss_core::formacao::exams::{Mode, Problem};
@@ -229,12 +229,6 @@ pub struct L7Texts {
     pub handed_in_ok: S,
 }
 
-
-
-
-
-
-
 pub fn l7() -> &'static L7Texts {
     static CACHE: PorIdioma<L7Texts> = PorIdioma::new();
     CACHE.obter(construir_l7_texts)
@@ -325,7 +319,21 @@ fn construir_l7_texts() -> L7Texts {
         to_select: tx("l7-to_select"),
         to_wait: tx("l7-to_wait"),
         out: tx("l7-out"),
-        capacity_line: |need, free| fx("l7-capacity_line", &[("need", crate::text::decimal_mark(&format!("{need:.1}")).into()), ("free", crate::text::decimal_mark(&format!("{free:.1}")).into())]),
+        capacity_line: |need, free| {
+            fx(
+                "l7-capacity_line",
+                &[
+                    (
+                        "need",
+                        crate::text::decimal_mark(&format!("{need:.1}")).into(),
+                    ),
+                    (
+                        "free",
+                        crate::text::decimal_mark(&format!("{free:.1}")).into(),
+                    ),
+                ],
+            )
+        },
         failed_criterion: |c| fx("l7-failed_criterion", &[("c", c.into())]),
         no_manager_ok: tx("l7-no_manager_ok"),
         confirm_selection: tx("l7-confirm_selection"),
@@ -345,14 +353,44 @@ fn construir_l7_texts() -> L7Texts {
         not_confirmed: tx("l7-not_confirmed"),
         confirmed_by: |p, d| fx("l7-confirmed_by", &[("p", p.into()), ("d", d.into())]),
         confirm_groups: tx("l7-confirm_groups"),
-        v_area: |g, a, n, m| fx("l7-v_area", &[("g", g.into()), ("a", a.into()), ("n", n.into()), ("m", m.into())]),
-        v_conflict: |g, a, b| fx("l7-v_conflict", &[("g", g.into()), ("a", a.into()), ("b", b.into())]),
-        v_size: |g, n, a, b| fx("l7-v_size", &[("g", g.into()), ("n", n.into()), ("a", a.into()), ("b", b.into())]),
+        v_area: |g, a, n, m| {
+            fx(
+                "l7-v_area",
+                &[
+                    ("g", g.into()),
+                    ("a", a.into()),
+                    ("n", n.into()),
+                    ("m", m.into()),
+                ],
+            )
+        },
+        v_conflict: |g, a, b| {
+            fx(
+                "l7-v_conflict",
+                &[("g", g.into()), ("a", a.into()), ("b", b.into())],
+            )
+        },
+        v_size: |g, n, a, b| {
+            fx(
+                "l7-v_size",
+                &[
+                    ("g", g.into()),
+                    ("n", n.into()),
+                    ("a", a.into()),
+                    ("b", b.into()),
+                ],
+            )
+        },
         v_no_project: |p| fx("l7-v_no_project", &[("p", p.into())]),
         v_no_champion: |p| fx("l7-v_no_champion", &[("p", p.into())]),
         curriculum: tx("l7-curriculum"),
         curriculum_intro: tx("l7-curriculum_intro"),
-        curriculum_of: |l, h| fx("l7-curriculum_of", &[("l", l.into()), ("h", h.round_ties_even().into())]),
+        curriculum_of: |l, h| {
+            fx(
+                "l7-curriculum_of",
+                &[("l", l.into()), ("h", h.round_ties_even().into())],
+            )
+        },
         install_curriculum: tx("l7-install_curriculum"),
         requires: |m| fx("l7-requires", &[("m", m.into())]),
         new_module_hint: tx("l7-new_module_hint"),
@@ -396,7 +434,16 @@ fn construir_l7_texts() -> L7Texts {
         draw_exam: tx("l7-draw_exam"),
         default_exam_name: tx("l7-default_exam_name"),
         exam_consult_note: tx("l7-exam_consult_note"),
-        exam_facts: |n, s, m| fx("l7-exam_facts", &[("n", n.into()), ("s", s.to_string().into()), ("m", m.round_ties_even().into())]),
+        exam_facts: |n, s, m| {
+            fx(
+                "l7-exam_facts",
+                &[
+                    ("n", n.into()),
+                    ("s", s.to_string().into()),
+                    ("m", m.round_ties_even().into()),
+                ],
+            )
+        },
         retake: tx("l7-retake"),
         counts_for_cert: tx("l7-counts_for_cert"),
         publish: tx("l7-publish"),
@@ -423,7 +470,16 @@ fn construir_l7_texts() -> L7Texts {
         requirement: tx("l7-requirement"),
         tool_list: tx("l7-tool_list"),
         edit_requirements: tx("l7-edit_requirements"),
-        renewal_rules: |p, c, h| fx("l7-renewal_rules", &[("p", p.into()), ("c", c.into()), ("h", h.round_ties_even().into())]),
+        renewal_rules: |p, c, h| {
+            fx(
+                "l7-renewal_rules",
+                &[
+                    ("p", p.into()),
+                    ("c", c.into()),
+                    ("h", h.round_ties_even().into()),
+                ],
+            )
+        },
         candidate_check: tx("l7-candidate_check"),
         mbb_manual: tx("l7-mbb_manual"),
         opinion_hint: tx("l7-opinion_hint"),
@@ -442,15 +498,48 @@ fn construir_l7_texts() -> L7Texts {
         to_renew: |n| fx("l7-to_renew", &[("n", n.into())]),
         cert_funnel: tx("l7-cert_funnel"),
         all_waves: tx("l7-all_waves"),
-        agenda_cert_project: |p, l, o| fx("l7-agenda_cert_project", &[("p", p.into()), ("l", l.into()), ("o", o.into()), ("tem", (if o.is_empty() { "nao" } else { "sim" }).into())]),
+        agenda_cert_project: |p, l, o| {
+            fx(
+                "l7-agenda_cert_project",
+                &[
+                    ("p", p.into()),
+                    ("l", l.into()),
+                    ("o", o.into()),
+                    ("tem", (if o.is_empty() { "nao" } else { "sim" }).into()),
+                ],
+            )
+        },
         no_nomination: tx("l7-no_nomination"),
-        my_nomination: |l, w, s| fx("l7-my_nomination", &[("l", l.into()), ("w", w.into()), ("s", s.into())]),
-        my_attendance: |k, r, m| fx("l7-my_attendance", &[("k", k.into()), ("r", r.round_ties_even().into()), ("m", m.round_ties_even().into())]),
+        my_nomination: |l, w, s| {
+            fx(
+                "l7-my_nomination",
+                &[("l", l.into()), ("w", w.into()), ("s", s.into())],
+            )
+        },
+        my_attendance: |k, r, m| {
+            fx(
+                "l7-my_attendance",
+                &[
+                    ("k", k.into()),
+                    ("r", r.round_ties_even().into()),
+                    ("m", m.round_ties_even().into()),
+                ],
+            )
+        },
         class_folder_missing: tx("l7-class_folder_missing"),
         paper_line: |n, q| fx("l7-paper_line", &[("n", n.into()), ("q", q.into())]),
         handed: tx("l7-handed"),
         start_exam: tx("l7-start_exam"),
-        my_grade: |n, s, r| fx("l7-my_grade", &[("n", n.into()), ("s", s.round_ties_even().into()), ("r", r.into())]),
+        my_grade: |n, s, r| {
+            fx(
+                "l7-my_grade",
+                &[
+                    ("n", n.into()),
+                    ("s", s.round_ties_even().into()),
+                    ("r", r.into()),
+                ],
+            )
+        },
         my_certifications: tx("l7-my_certifications"),
         exam_mode_title: |n| fx("l7-exam_mode_title", &[("n", n.into())]),
         exam_mode_note: tx("l7-exam_mode_note"),
@@ -501,9 +590,7 @@ pub fn mode_name(m: Mode) -> &'static str {
 pub fn recipe_name(p: &Problem) -> &'static str {
     match p {
         Problem::Mean { .. } => tx("l7-recipe_name-str"),
-        Problem::StdDev { .. } => {
-            tx("l7-recipe_name-std_dev")
-        }
+        Problem::StdDev { .. } => tx("l7-recipe_name-std_dev"),
         Problem::Cpk { .. } => "Cpk",
         Problem::Ppk { .. } => "Ppk",
         Problem::Dpmo { .. } => "DPMO",

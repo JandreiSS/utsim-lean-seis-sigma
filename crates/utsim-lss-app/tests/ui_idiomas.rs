@@ -72,7 +72,11 @@ fn every_screen_draws_in_every_language() {
         }
     }
     names.dedup();
-    assert_eq!(names.len(), Language::ALL.len(), "each language has its own texts: {names:?}");
+    assert_eq!(
+        names.len(),
+        Language::ALL.len(),
+        "each language has its own texts: {names:?}"
+    );
     // The preference is saved and read back.
     let mut c = UserConfig::load(&cfg.join("config.json"));
     c.language = Language::Es;
@@ -114,6 +118,10 @@ fn start_screen_draws_in_every_language() {
     subtitles.dedup();
     assert_eq!(subtitles.len(), Language::ALL.len(), "{subtitles:?}");
     // Every key a screen asked for exists in the files.
-    assert!(text::TEXTOS.faltas().is_empty(), "{:?}", text::TEXTOS.faltas());
+    assert!(
+        text::TEXTOS.faltas().is_empty(),
+        "{:?}",
+        text::TEXTOS.faltas()
+    );
     text::set_language(Language::PtBr);
 }

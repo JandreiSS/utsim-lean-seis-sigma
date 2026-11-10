@@ -100,30 +100,11 @@ impl L1Ui {
     }
 }
 
-/// A number as typed: in Portuguese and Spanish `1.234,5` (or `1234.5`, with a point), in
-/// English `1,234.5` (or `1,5`, a comma not followed by groups of three digits).
+/// A number as typed: `1.234,5` (or `1234.5`, with a point) where the decimal mark is a
+/// comma, `1,234.5` (or `1,5`, a comma not followed by groups of three digits) in English;
+/// spaces (the French mark between thousands) are ignored.
 pub fn parse_number(s: &str) -> Option<f64> {
-    let t = s.trim().replace(' ', "");
-    if t.is_empty() {
-        return None;
-    }
-    let english = crate::text::language() == crate::text::Language::En;
-    let t = if english {
-        let thousands = t.contains('.')
-            || t.split(',')
-                .skip(1)
-                .all(|g| g.len() == 3 && g.bytes().all(|b| b.is_ascii_digit()));
-        if thousands {
-            t.replace(',', "")
-        } else {
-            t.replace(',', ".")
-        }
-    } else if t.contains(',') {
-        t.replace('.', "").replace(',', ".")
-    } else {
-        t
-    };
-    t.parse::<f64>().ok().filter(|x| x.is_finite())
+    utsim_idiomas::ler_numero(s)
 }
 
 /// A number for the screen, with the language's decimal mark and no trailing zeros.

@@ -1,7 +1,7 @@
 //! Texts of the DMADV and Lean tools (P6): selection of solutions, 5S, SMED, standardised
 //! work, the kaizen event and the PDCA cycles.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -126,12 +126,6 @@ pub struct L12Texts {
     pub step_closed: S,
 }
 
-
-
-
-
-
-
 pub fn l12() -> &'static L12Texts {
     static CACHE: PorIdioma<L12Texts> = PorIdioma::new();
     CACHE.obter(construir_l12_texts)
@@ -203,7 +197,12 @@ fn construir_l12_texts() -> L12Texts {
         walk: tx("l12-walk"),
         wip: tx("l12-wip"),
         content: |c| fx("l12-content", &[("c", c.into())]),
-        min_operators: |n, have| fx("l12-min_operators", &[("n", n.into()), ("have", have.into())]),
+        min_operators: |n, have| {
+            fx(
+                "l12-min_operators",
+                &[("n", n.into()), ("have", have.into())],
+            )
+        },
         efficiency: |e| fx("l12-efficiency", &[("e", e.into())]),
         total_wip: |w| fx("l12-total_wip", &[("w", w.into())]),
         over_takt: |n| fx("l12-over_takt", &[("n", n.into())]),
@@ -233,7 +232,17 @@ fn construir_l12_texts() -> L12Texts {
         review_due: tx("l12-review_due"),
         reviewed: tx("l12-reviewed"),
         not_yet: tx("l12-not_yet"),
-        pdca_summary: |n, ok, no, open| fx("l12-pdca_summary", &[("n", n.into()), ("ok", ok.into()), ("no", no.into()), ("open", open.into())]),
+        pdca_summary: |n, ok, no, open| {
+            fx(
+                "l12-pdca_summary",
+                &[
+                    ("n", n.into()),
+                    ("ok", ok.into()),
+                    ("no", no.into()),
+                    ("open", open.into()),
+                ],
+            )
+        },
         cycle: |n| fx("l12-cycle", &[("n", n.into())]),
         starts_from: |p| fx("l12-starts_from", &[("p", p.into())]),
         hypothesis: tx("l12-hypothesis"),

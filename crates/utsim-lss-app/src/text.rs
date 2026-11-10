@@ -158,12 +158,6 @@ pub struct Texts {
     pub soon_data: &'static str,
 }
 
-
-
-
-
-
-
 /// Texts of the "Ferramentas" screen (etapa L2).
 pub struct ToolTexts {
     pub intro: &'static str,
@@ -336,12 +330,6 @@ pub struct ToolTexts {
     pub a3_signals: fn(usize) -> String,
 }
 
-
-
-
-
-
-
 /// Data types of the data collection plan: key and name (Portuguese; see `data_types`).
 pub const DATA_TYPES: [(&str, &str); 3] = [
     ("continuo", "Contínuo"),
@@ -486,9 +474,22 @@ fn construir_tool_texts() -> ToolTexts {
         card_made: tx("tool-card_made"),
         ap_table: tx("tool-ap_table"),
         ap_builtin: tx("tool-ap_builtin"),
-        ap_company: |n| fx("tool-ap_company", &[("n", n.into()), ("tem", (if n.is_empty() { "nao" } else { "sim" }).into())]),
+        ap_company: |n| {
+            fx(
+                "tool-ap_company",
+                &[
+                    ("n", n.into()),
+                    ("tem", (if n.is_empty() { "nao" } else { "sim" }).into()),
+                ],
+            )
+        },
         ap_use_builtin: tx("tool-ap_use_builtin"),
-        ap_counts: |h, m, l| fx("tool-ap_counts", &[("h", h.into()), ("m", m.into()), ("l", l.into())]),
+        ap_counts: |h, m, l| {
+            fx(
+                "tool-ap_counts",
+                &[("h", h.into()), ("m", m.into()), ("l", l.into())],
+            )
+        },
         ap_non_monotone: |n| fx("tool-ap_non_monotone", &[("n", n.into())]),
         ap_csv_hint: tx("tool-ap_csv_hint"),
         ap_name_hint: tx("tool-ap_name_hint"),
@@ -507,8 +508,38 @@ fn construir_tool_texts() -> ToolTexts {
         scale_d: tx("tool-scale_d"),
         critical_from: tx("tool-critical_from"),
         critical_default: |s| fx("tool-critical_default", &[("s", s.into())]),
-        fmea_headers: Box::leak(Box::new([tx("tool-fmea_headers-0"), tx("tool-fmea_headers-1"), tx("tool-fmea_headers-2"), tx("tool-fmea_headers-3"), tx("tool-fmea_headers-4"), tx("tool-fmea_headers-5"), tx("tool-fmea_headers-6"), tx("tool-fmea_headers-7"), tx("tool-fmea_headers-8"), tx("tool-fmea_headers-9"), tx("tool-fmea_headers-10"), tx("tool-fmea_headers-11"), tx("tool-fmea_headers-12"), tx("tool-fmea_headers-13"), tx("tool-fmea_headers-14"), tx("tool-fmea_headers-15"), tx("tool-fmea_headers-16"), tx("tool-fmea_headers-17"), tx("tool-fmea_headers-18"), tx("tool-fmea_headers-19"), tx("tool-fmea_headers-20")])),
-        a3_titles: [tx("tool-a3_titles-0"), tx("tool-a3_titles-1"), tx("tool-a3_titles-2"), tx("tool-a3_titles-3"), tx("tool-a3_titles-4"), tx("tool-a3_titles-5"), tx("tool-a3_titles-6")],
+        fmea_headers: Box::leak(Box::new([
+            tx("tool-fmea_headers-0"),
+            tx("tool-fmea_headers-1"),
+            tx("tool-fmea_headers-2"),
+            tx("tool-fmea_headers-3"),
+            tx("tool-fmea_headers-4"),
+            tx("tool-fmea_headers-5"),
+            tx("tool-fmea_headers-6"),
+            tx("tool-fmea_headers-7"),
+            tx("tool-fmea_headers-8"),
+            tx("tool-fmea_headers-9"),
+            tx("tool-fmea_headers-10"),
+            tx("tool-fmea_headers-11"),
+            tx("tool-fmea_headers-12"),
+            tx("tool-fmea_headers-13"),
+            tx("tool-fmea_headers-14"),
+            tx("tool-fmea_headers-15"),
+            tx("tool-fmea_headers-16"),
+            tx("tool-fmea_headers-17"),
+            tx("tool-fmea_headers-18"),
+            tx("tool-fmea_headers-19"),
+            tx("tool-fmea_headers-20"),
+        ])),
+        a3_titles: [
+            tx("tool-a3_titles-0"),
+            tx("tool-a3_titles-1"),
+            tx("tool-a3_titles-2"),
+            tx("tool-a3_titles-3"),
+            tx("tool-a3_titles-4"),
+            tx("tool-a3_titles-5"),
+            tx("tool-a3_titles-6"),
+        ],
         a3_empty: tx("tool-a3_empty"),
         a3_note: tx("tool-a3_note"),
         a3_pareto: tx("tool-a3_pareto"),
@@ -739,7 +770,12 @@ fn construir_texts() -> Texts {
         import_dest_hint: tx("t-import_dest_hint"),
         import: tx("t-import"),
         shared_folder_tip: tx("t-shared_folder_tip"),
-        who_am_i: |name, email| fx("t-who_am_i", &[("name", name.into()), ("email", email.into())]),
+        who_am_i: |name, email| {
+            fx(
+                "t-who_am_i",
+                &[("name", name.into()), ("email", email.into())],
+            )
+        },
         change_identity: tx("t-change_identity"),
         nav_portfolio: tx("t-nav_portfolio"),
         nav_project: tx("t-nav_project"),
@@ -764,7 +800,12 @@ fn construir_texts() -> Texts {
         current_phase: tx("t-current_phase"),
         phases: tx("t-phases"),
         actions: tx("t-actions"),
-        actions_done: |done, total| fx("t-actions_done", &[("done", done.into()), ("total", total.into())]),
+        actions_done: |done, total| {
+            fx(
+                "t-actions_done",
+                &[("done", done.into()), ("total", total.into())],
+            )
+        },
         overdue: tx("t-overdue"),
         none_overdue: tx("t-none_overdue"),
         risks_open: tx("t-risks_open"),
@@ -772,7 +813,25 @@ fn construir_texts() -> Texts {
         savings: tx("t-savings"),
         meetings: tx("t-meetings"),
         deadline: tx("t-deadline"),
-        days_left: |d| fx("t-days_left", &[("caso", (match d { 0 => "hoje", 1 => "um", -1 => "menos_um", d if d > 1 => "futuro", _ => "atraso" }).into()), ("abs", d.unsigned_abs().into())]),
+        days_left: |d| {
+            fx(
+                "t-days_left",
+                &[
+                    (
+                        "caso",
+                        (match d {
+                            0 => "hoje",
+                            1 => "um",
+                            -1 => "menos_um",
+                            d if d > 1 => "futuro",
+                            _ => "atraso",
+                        })
+                        .into(),
+                    ),
+                    ("abs", d.unsigned_abs().into()),
+                ],
+            )
+        },
         no_deadline: tx("t-no_deadline"),
         conflicts: tx("t-conflicts"),
         folder: tx("t-folder"),
@@ -810,7 +869,12 @@ fn construir_texts() -> Texts {
         move_down: tx("t-move_down"),
         untitled: tx("t-untitled"),
         here_now: tx("t-here_now"),
-        is_on: |name, screen| fx("t-is_on", &[("name", name.into()), ("screen", screen.into())]),
+        is_on: |name, screen| {
+            fx(
+                "t-is_on",
+                &[("name", name.into()), ("screen", screen.into())],
+            )
+        },
         is_editing_this: |name| fx("t-is_editing_this", &[("name", name.into())]),
         conflicts_banner: |n| fx("t-conflicts_banner", &[("n", n.into())]),
         review: tx("t-review"),

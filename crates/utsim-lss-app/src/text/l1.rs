@@ -2,7 +2,7 @@
 //! risks, meetings, schedule, savings, closing and lessons, folder picker), in a catalogue of
 //! their own next to the main one, so the stages grow without touching the same lines.
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 use utsim_lss_core::closure::Requirement;
 use utsim_lss_core::domain::{
@@ -323,12 +323,6 @@ pub struct L1Texts {
     pub validated_savings: S,
 }
 
-
-
-
-
-
-
 pub fn l1() -> &'static L1Texts {
     static CACHE: PorIdioma<L1Texts> = PorIdioma::new();
     CACHE.obter(construir_l1_texts)
@@ -359,7 +353,12 @@ fn construir_l1_texts() -> L1Texts {
         record_version: tx("l1-record_version"),
         version_recorded: tx("l1-version_recorded"),
         no_versions: tx("l1-no_versions"),
-        approved_by: |who, when| fx("l1-approved_by", &[("who", who.into()), ("when", when.into())]),
+        approved_by: |who, when| {
+            fx(
+                "l1-approved_by",
+                &[("who", who.into()), ("when", when.into())],
+            )
+        },
         version_recorded_state: tx("l1-version_recorded_state"),
         compare: tx("l1-compare"),
         approve_version: tx("l1-approve_version"),
@@ -394,7 +393,12 @@ fn construir_l1_texts() -> L1Texts {
         tollgate_of: |p| fx("l1-tollgate_of", &[("p", p.into())]),
         no_tollgate: tx("l1-no_tollgate"),
         prepare_tollgate: tx("l1-prepare_tollgate"),
-        tollgate_state: |st, round| fx("l1-tollgate_state", &[("st", st.into()), ("round", round.into())]),
+        tollgate_state: |st, round| {
+            fx(
+                "l1-tollgate_state",
+                &[("st", st.into()), ("round", round.into())],
+            )
+        },
         changed_after_approval: tx("l1-changed_after_approval"),
         frozen_hash: |h| fx("l1-frozen_hash", &[("h", h.into())]),
         resume: tx("l1-resume"),
@@ -426,7 +430,12 @@ fn construir_l1_texts() -> L1Texts {
         wip_intro: tx("l1-wip_intro"),
         card_origin: |o| fx("l1-card_origin", &[("o", o.into())]),
         tollgate_decision: tx("l1-tollgate_decision"),
-        card_link: |kind, name| fx("l1-card_link", &[("kind", kind.into()), ("name", name.into())]),
+        card_link: |kind, name| {
+            fx(
+                "l1-card_link",
+                &[("kind", kind.into()), ("name", name.into())],
+            )
+        },
         effectiveness: tx("l1-effectiveness"),
         effectiveness_criterion: tx("l1-effectiveness_criterion"),
         effectiveness_date: tx("l1-effectiveness_date"),
@@ -499,14 +508,29 @@ fn construir_l1_texts() -> L1Texts {
         add_national_holidays: tx("l1-add_national_holidays"),
         schedule_finish: |d, n| fx("l1-schedule_finish", &[("d", d.into()), ("n", n.into())]),
         schedule_sd: |sd| fx("l1-schedule_sd", &[("sd", sd.into())]),
-        deadline_probability: |d, p| fx("l1-deadline_probability", &[("d", d.into()), ("p", p.into())]),
+        deadline_probability: |d, p| {
+            fx(
+                "l1-deadline_probability",
+                &[("d", d.into()), ("p", p.into())],
+            )
+        },
         run_monte_carlo: tx("l1-run_monte_carlo"),
-        monte_carlo_result: |n, ps| fx("l1-monte_carlo_result", &[("n", n.into()), ("ps", ps.into())]),
+        monte_carlo_result: |n, ps| {
+            fx(
+                "l1-monte_carlo_result",
+                &[("n", n.into()), ("ps", ps.into())],
+            )
+        },
         monte_carlo_deadline: |p| fx("l1-monte_carlo_deadline", &[("p", p.into())]),
         w_negative_lag: |t| fx("l1-w_negative_lag", &[("t", t.into())]),
         w_unknown_pred: |t| fx("l1-w_unknown_pred", &[("t", t.into())]),
         w_bad_three_point: |t| fx("l1-w_bad_three_point", &[("t", t.into())]),
-        milestone_probability: |m, d, p| fx("l1-milestone_probability", &[("m", m.into()), ("d", d.into()), ("p", p.into())]),
+        milestone_probability: |m, d, p| {
+            fx(
+                "l1-milestone_probability",
+                &[("m", m.into()), ("d", d.into()), ("p", p.into())],
+            )
+        },
         no_tasks: tx("l1-no_tasks"),
         legend_critical: tx("l1-legend_critical"),
         legend_baseline: tx("l1-legend_baseline"),
@@ -574,7 +598,12 @@ fn construir_l1_texts() -> L1Texts {
         default_portfolio_name: tx("l1-default_portfolio_name"),
         default_unit_name: tx("l1-default_unit_name"),
         default_program_name: tx("l1-default_program_name"),
-        portfolio_header: |c, u, p| fx("l1-portfolio_header", &[("c", c.into()), ("u", u.into()), ("p", p.into())]),
+        portfolio_header: |c, u, p| {
+            fx(
+                "l1-portfolio_header",
+                &[("c", c.into()), ("u", u.into()), ("p", p.into())],
+            )
+        },
         new_idea_hint: tx("l1-new_idea_hint"),
         closed_ideas: |n| fx("l1-closed_ideas", &[("n", n.into())]),
         belt_overload: |who, n| fx("l1-belt_overload", &[("who", who.into()), ("n", n.into())]),
@@ -586,13 +615,26 @@ fn construir_l1_texts() -> L1Texts {
         i_impact_effort: tx("l1-i_impact_effort"),
         i_belt: tx("l1-i_belt"),
         screening: tx("l1-screening"),
-        suggested_approach: |a, why| fx("l1-suggested_approach", &[("a", a.into()), ("why", why.into())]),
+        suggested_approach: |a, why| {
+            fx(
+                "l1-suggested_approach",
+                &[("a", a.into()), ("why", why.into())],
+            )
+        },
         default_reason: tx("l1-default_reason"),
         chosen_approach: tx("l1-chosen_approach"),
         to_choose: tx("l1-to_choose"),
         scores: tx("l1-scores"),
         alignment_with: |o| fx("l1-alignment_with", &[("o", o.into())]),
-        idea_score: |s, c| fx("l1-idea_score", &[("s", s.round_ties_even().into()), ("c", c.round_ties_even().into())]),
+        idea_score: |s, c| {
+            fx(
+                "l1-idea_score",
+                &[
+                    ("s", s.round_ties_even().into()),
+                    ("c", c.round_ties_even().into()),
+                ],
+            )
+        },
         idea_state: |s| fx("l1-idea_state", &[("s", s.into())]),
         move_idea_to: |s| fx("l1-move_idea_to", &[("s", s.into())]),
         open_project_from_idea: tx("l1-open_project_from_idea"),
@@ -638,9 +680,7 @@ pub fn field_label(f: &str) -> String {
         p::BUSINESS_CASE => tx("l1-field_label-business_case"),
         charter::fields::ASSUMPTIONS => tx("l1-field_label-assumptions"),
         charter::fields::CONSTRAINTS => tx("l1-field_label-constraints"),
-        charter::fields::INITIAL_RISKS => {
-            tx("l1-field_label-initial_risks")
-        }
+        charter::fields::INITIAL_RISKS => tx("l1-field_label-initial_risks"),
         schedule::fields::START => tx("l1-field_label-start"),
         closure::fields::RESULT => tx("l1-field_label-result"),
         other => return other.to_string(),
@@ -664,35 +704,24 @@ pub fn role_name(k: RoleKind) -> &'static str {
 
 pub fn check_name(c: &Check) -> String {
     match c {
-        Check::CharterComplete => tx("l1-check_name-charter_complete")
-        .into(),
-        Check::CharterApproved => tx("l1-check_name-charter_approved")
-        .into(),
-        Check::TeamDefined => tx("l1-check_name-team_defined")
-        .into(),
-        Check::ScheduleDefined => tx("l1-check_name-schedule_defined")
-        .into(),
-        Check::RisksAssessed => tx("l1-check_name-risks_assessed")
-        .into(),
-        Check::HighRisksTreated => tx("l1-check_name-high_risks_treated")
-        .into(),
-        Check::SavingEstimated => tx("l1-check_name-saving_estimated")
-        .into(),
-        Check::SavingsForecast => tx("l1-check_name-savings_forecast")
-        .into(),
-        Check::SavingsValidated => tx("l1-check_name-savings_validated")
-        .into(),
-        Check::PhaseActionsDone => tx("l1-check_name-phase_actions_done")
-        .into(),
-        Check::LessonsRecorded => tx("l1-check_name-lessons_recorded")
-        .into(),
-        Check::OwnerAccepted => tx("l1-check_name-owner_accepted")
-        .into(),
-        Check::DeliverableExists(t) => fx("l1-check_name-deliverable_exists", &[("t", t.as_str().into())]),
-        Check::MsaApproved => tx("l1-check_name-msa_approved")
-        .into(),
-        Check::BaselineReal => tx("l1-check_name-baseline_real")
-        .into(),
+        Check::CharterComplete => tx("l1-check_name-charter_complete").into(),
+        Check::CharterApproved => tx("l1-check_name-charter_approved").into(),
+        Check::TeamDefined => tx("l1-check_name-team_defined").into(),
+        Check::ScheduleDefined => tx("l1-check_name-schedule_defined").into(),
+        Check::RisksAssessed => tx("l1-check_name-risks_assessed").into(),
+        Check::HighRisksTreated => tx("l1-check_name-high_risks_treated").into(),
+        Check::SavingEstimated => tx("l1-check_name-saving_estimated").into(),
+        Check::SavingsForecast => tx("l1-check_name-savings_forecast").into(),
+        Check::SavingsValidated => tx("l1-check_name-savings_validated").into(),
+        Check::PhaseActionsDone => tx("l1-check_name-phase_actions_done").into(),
+        Check::LessonsRecorded => tx("l1-check_name-lessons_recorded").into(),
+        Check::OwnerAccepted => tx("l1-check_name-owner_accepted").into(),
+        Check::DeliverableExists(t) => fx(
+            "l1-check_name-deliverable_exists",
+            &[("t", t.as_str().into())],
+        ),
+        Check::MsaApproved => tx("l1-check_name-msa_approved").into(),
+        Check::BaselineReal => tx("l1-check_name-baseline_real").into(),
     }
 }
 

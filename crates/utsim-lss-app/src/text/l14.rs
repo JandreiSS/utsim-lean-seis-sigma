@@ -4,7 +4,7 @@
 use utsim_ui_tema::abertura::Rotulos;
 use utsim_ui_tema::arquivos::Textos;
 
-use crate::text::{tx, fx};
+use crate::text::{fx, tx};
 use utsim_idiomas::PorIdioma;
 
 type S = &'static str;
@@ -38,12 +38,6 @@ pub struct L14Texts {
     pub picker: Textos<'static>,
 }
 
-
-
-
-
-
-
 pub fn l14() -> &'static L14Texts {
     static CACHE: PorIdioma<L14Texts> = PorIdioma::new();
     CACHE.obter(construir_l14_texts)
@@ -74,7 +68,23 @@ fn construir_l14_texts() -> L14Texts {
         create_where: tx("l14-create_where"),
         create_where_title: tx("l14-create_where_title"),
         will_create: |p| fx("l14-will_create", &[("p", p.into())]),
-        start: Rotulos { o_que_fazer: tx("l14-start-o_que_fazer"), onde_salvo: tx("l14-start-onde_salvo"), nada_aberto: tx("l14-start-nada_aberto"), nada_aberto_texto: tx("l14-start-nada_aberto_texto"), aberto_agora: tx("l14-start-aberto_agora"), mostrar_no_explorador: tx("l14-start-mostrar_no_explorador"), abrir: tx("l14-start-abrir"), nao_encontrada: tx("l14-start-nao_encontrada"), tirar_da_lista: tx("l14-start-tirar_da_lista") },
-        picker: Textos { procurar: tx("l14-picker-procurar"), ajuda: tx("l14-picker-ajuda"), dica_pasta: tx("l14-picker-dica_pasta"), dica_arquivo: tx("l14-picker-dica_arquivo"), todos_os_arquivos: tx("l14-picker-todos_os_arquivos") },
+        start: Rotulos {
+            o_que_fazer: tx("l14-start-o_que_fazer"),
+            onde_salvo: tx("l14-start-onde_salvo"),
+            nada_aberto: tx("l14-start-nada_aberto"),
+            nada_aberto_texto: tx("l14-start-nada_aberto_texto"),
+            aberto_agora: tx("l14-start-aberto_agora"),
+            mostrar_no_explorador: tx("l14-start-mostrar_no_explorador"),
+            abrir: tx("l14-start-abrir"),
+            nao_encontrada: tx("l14-start-nao_encontrada"),
+            tirar_da_lista: tx("l14-start-tirar_da_lista"),
+        },
+        picker: Textos {
+            procurar: tx("l14-picker-procurar"),
+            ajuda: tx("l14-picker-ajuda"),
+            dica_pasta: tx("l14-picker-dica_pasta"),
+            dica_arquivo: tx("l14-picker-dica_arquivo"),
+            todos_os_arquivos: tx("l14-picker-todos_os_arquivos"),
+        },
     }
 }
