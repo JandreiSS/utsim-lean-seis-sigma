@@ -1053,7 +1053,7 @@ impl App {
             Col::Choice(tt.c_role, f::ROLE, &[("y", "Y"), ("x", "X")], 40.0),
             Col::Text(tt.c_name, f::NAME, 120.0),
             Col::Text(tt.definition, f::DEFINITION, 180.0),
-            Col::Choice(tt.c_data_type, f::DATA_TYPE, &text::DATA_TYPES, 90.0),
+            Col::Choice(tt.c_data_type, f::DATA_TYPE, text::data_types(), 90.0),
             Col::Text(tt.unit, f::UNIT, 50.0),
             Col::Text(tt.c_stratify, f::STRATIFY, 110.0),
             Col::Text(tt.c_sample, f::SAMPLE_SIZE, 60.0),

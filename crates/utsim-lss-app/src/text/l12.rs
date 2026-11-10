@@ -1,6 +1,8 @@
 //! Texts of the DMADV and Lean tools (P6): selection of solutions, 5S, SMED, standardised
 //! work, the kaizen event and the PDCA cycles.
 
+use crate::text::{Language, language};
+
 type S = &'static str;
 
 pub struct L12Texts {
@@ -247,6 +249,282 @@ static PT_BR: L12Texts = L12Texts {
     step_closed: "encerrado",
 };
 
+static EN: L12Texts = L12Texts {
+    method: "Method:",
+    weighted: "Weighted matrix",
+    pugh: "Pugh matrix",
+    weighted_help: "Each option gets from 1 (weak) to 5 (strong) on each criterion; the total adds weight × score.",
+    pugh_help: "Choose the reference (the current concept or the best known) and compare each option with it: better (+), same (S) or worse (−). The total adds weight × sign.",
+    criteria: "Criteria",
+    criterion: "Criterion",
+    criterion_hint: "New criterion (cost, deadline, safety...)",
+    weight: "Weight",
+    options: "Options",
+    option: "Option",
+    option_hint: "New option or concept",
+    reference: "Ref.",
+    total: "Total",
+    plus_same_minus: "+ / S / −",
+    of_max: "% of maximum",
+    rank: "Rank",
+    impact: "Impact",
+    effort: "Effort",
+    need_reference: "Mark one option, and only one, as the reference.",
+    best: |n| format!("Best option: {n}"),
+    incomplete: "Score every cell to see the best option.",
+    grid: "Effort × impact",
+    q_quick: "Do now (high impact, low effort)",
+    q_plan: "Plan (high impact, high effort)",
+    q_filler: "If time allows (low impact, low effort)",
+    q_drop: "Drop (low impact, high effort)",
+    checklist: "Checklist",
+    starter: "Starter list",
+    starter_help: "Adds two questions per S, for the team to adapt to the area.",
+    sense: "S",
+    question: "Question",
+    audits: "Audits (0 to 4 per question)",
+    new_audit: "New audit",
+    no_audits: "No audits yet.",
+    sense_pct: "% of the S",
+    weakest: |s| format!("In the last audit, the weakest S is {s}: start with it."),
+    history: "Trend (% of the total)",
+    activity: "Activity",
+    time_min: "Time (min)",
+    class_before: "Today",
+    class_after: "After",
+    time_after: "Time after",
+    how: "How",
+    internal_setup: "Internal (setup)",
+    external: "External",
+    removed: "Eliminated",
+    before: "Before",
+    after: "After",
+    reduction: |p, n| {
+        if n == 1 {
+            format!("Setup reduced by {p}, with 1 internal activity converted or eliminated")
+        } else {
+            format!("Setup reduced by {p}, with {n} internal activities converted or eliminated")
+        }
+    },
+    smed_incomplete: "Some activities have no time or no class; they are left out of the sums.",
+    available: "Available time (s)",
+    demand: "Demand (parts)",
+    takt_typed: "or takt (s)",
+    takt: "takt",
+    takt_is: |t| format!("Takt: {t}"),
+    no_takt: "Enter the available time and the demand for the same period, or the takt.",
+    operator: "Operator",
+    element: "Element",
+    manual: "Manual (s)",
+    auto: "Automatic (s)",
+    walk: "Walking (s)",
+    wip: "Standard WIP",
+    content: |c| format!("Work content: {c}"),
+    min_operators: |n, have| format!("minimum operators: {n} (today {have})"),
+    efficiency: |e| format!("line balancing efficiency: {e}"),
+    total_wip: |w| format!("standard work-in-process: {w} parts"),
+    over_takt: |n| format!("Above takt: {n}. Redistribute elements or eliminate waste."),
+    balance: "Line balancing against takt",
+    content_s: "Content (s)",
+    combination: "Combination table",
+    combination_help: "Full bar: manual work; light bar: machine working on its own (orange when it does not finish before the operator returns); grey line: walking.",
+    start: "Start",
+    days: "Days",
+    ends: |d| format!("ends on {d}"),
+    fill_template: "Fill in preparation and agenda",
+    prep: "Preparation",
+    prep_hint: "Another preparation item",
+    agenda: "Agenda",
+    day: |d| format!("Day {d}:"),
+    slots_beyond: "There are agenda items after the last day; adjust their day or lengthen the event.",
+    open_items: "Open items",
+    open_item: "Open item",
+    who: "Owner",
+    due_and_board: "Due date and board",
+    done: "done",
+    on_board: "on the board",
+    to_board: "Send to the board",
+    follow_ups: "Follow-up",
+    after_days: |d| {
+        if d == 1 {
+            "1 day".to_string()
+        } else {
+            format!("{d} days")
+        }
+    },
+    late: |n| {
+        if n == 1 {
+            "1 overdue open item".to_string()
+        } else {
+            format!("{n} overdue open items")
+        }
+    },
+    review_due: "review pending",
+    reviewed: "reviewed",
+    not_yet: "not yet",
+    pdca_summary: |n, ok, no, open| {
+        format!("Cycles: {n}; hypotheses confirmed: {ok}, refuted: {no}; in progress: {open}")
+    },
+    cycle: |n| format!("Cycle {n}"),
+    starts_from: |p| format!("Starts from what the previous cycle standardised: {p}"),
+    hypothesis: "Hypothesis",
+    plan: "Plan",
+    do_: "Do",
+    check: "Check",
+    verdict: "Result",
+    act: "Act",
+    confirmed: "confirmed",
+    refuted: "refuted",
+    new_cycle: "New cycle",
+    step_plan: "in Plan",
+    step_do: "in Do",
+    step_check: "in Check",
+    step_act: "in Act",
+    step_closed: "closed",
+};
+
+static ES: L12Texts = L12Texts {
+    method: "Método:",
+    weighted: "Matriz ponderada",
+    pugh: "Matriz de Pugh",
+    weighted_help: "Cada opción recibe de 1 (débil) a 5 (fuerte) en cada criterio; el total suma peso × nota.",
+    pugh_help: "Elija la referencia (el concepto actual o el más conocido) y compare cada opción con ella: mejor (+), igual (S) o peor (−). El total suma peso × signo.",
+    criteria: "Criterios",
+    criterion: "Criterio",
+    criterion_hint: "Nuevo criterio (costo, plazo, seguridad...)",
+    weight: "Peso",
+    options: "Opciones",
+    option: "Opción",
+    option_hint: "Nueva opción o concepto",
+    reference: "Ref.",
+    total: "Total",
+    plus_same_minus: "+ / S / −",
+    of_max: "% del máximo",
+    rank: "Lugar",
+    impact: "Impacto",
+    effort: "Esfuerzo",
+    need_reference: "Marque una opción, y solo una, como referencia.",
+    best: |n| format!("Mejor opción: {n}"),
+    incomplete: "Dé nota a todas las celdas para ver la mejor opción.",
+    grid: "Esfuerzo × impacto",
+    q_quick: "Hacer ya (impacto alto, esfuerzo bajo)",
+    q_plan: "Planificar (impacto alto, esfuerzo alto)",
+    q_filler: "Si sobra tiempo (impacto bajo, esfuerzo bajo)",
+    q_drop: "Descartar (impacto bajo, esfuerzo alto)",
+    checklist: "Lista de verificación",
+    starter: "Lista inicial",
+    starter_help: "Agrega dos preguntas por S, para que el equipo las adapte al área.",
+    sense: "S",
+    question: "Pregunta",
+    audits: "Auditorías (0 a 4 por pregunta)",
+    new_audit: "Nueva auditoría",
+    no_audits: "Aún no hay auditorías.",
+    sense_pct: "% de la S",
+    weakest: |s| format!("En la última auditoría, la S más débil es {s}: empiece por ella."),
+    history: "Evolución (% del total)",
+    activity: "Actividad",
+    time_min: "Tiempo (min)",
+    class_before: "Hoy",
+    class_after: "Después",
+    time_after: "Tiempo después",
+    how: "Cómo",
+    internal_setup: "Interna (preparación)",
+    external: "Externa",
+    removed: "Eliminada",
+    before: "Antes",
+    after: "Después",
+    reduction: |p, n| {
+        if n == 1 {
+            format!("Preparación reducida en {p}, con 1 actividad interna convertida o eliminada")
+        } else {
+            format!(
+                "Preparación reducida en {p}, con {n} actividades internas convertidas o eliminadas"
+            )
+        }
+    },
+    smed_incomplete: "Hay actividades sin tiempo o sin clase; no entran en las sumas.",
+    available: "Tiempo disponible (s)",
+    demand: "Demanda (piezas)",
+    takt_typed: "o takt (s)",
+    takt: "takt",
+    takt_is: |t| format!("Takt: {t}"),
+    no_takt: "Indique el tiempo disponible y la demanda del mismo período, o el takt.",
+    operator: "Operador",
+    element: "Elemento",
+    manual: "Manual (s)",
+    auto: "Automático (s)",
+    walk: "Desplazamiento (s)",
+    wip: "Inventario estándar",
+    content: |c| format!("Contenido de trabajo: {c}"),
+    min_operators: |n, have| format!("mínimo de operadores: {n} (hoy {have})"),
+    efficiency: |e| format!("eficiencia del balanceo de línea: {e}"),
+    total_wip: |w| format!("inventario estándar en proceso: {w} piezas"),
+    over_takt: |n| {
+        format!("Por encima del takt: {n}. Redistribuya elementos o elimine desperdicio.")
+    },
+    balance: "Balanceo de línea contra el takt",
+    content_s: "Contenido (s)",
+    combination: "Tabla de combinación",
+    combination_help: "Barra llena: trabajo manual; barra clara: máquina trabajando sola (naranja cuando no termina antes de que vuelva el operador); línea gris: desplazamiento.",
+    start: "Inicio",
+    days: "Días",
+    ends: |d| format!("termina el {d}"),
+    fill_template: "Completar preparación y agenda",
+    prep: "Preparación",
+    prep_hint: "Otro ítem de la preparación",
+    agenda: "Agenda",
+    day: |d| format!("Día {d}:"),
+    slots_beyond: "Hay ítems de la agenda después del último día; ajuste su día o alargue el evento.",
+    open_items: "Pendientes",
+    open_item: "Pendiente",
+    who: "Responsable",
+    due_and_board: "Plazo y tablero",
+    done: "hecho",
+    on_board: "en el tablero",
+    to_board: "Enviar al tablero",
+    follow_ups: "Seguimiento",
+    after_days: |d| {
+        if d == 1 {
+            "1 día".to_string()
+        } else {
+            format!("{d} días")
+        }
+    },
+    late: |n| {
+        if n == 1 {
+            "1 pendiente atrasado".to_string()
+        } else {
+            format!("{n} pendientes atrasados")
+        }
+    },
+    review_due: "revisión pendiente",
+    reviewed: "revisado",
+    not_yet: "todavía no",
+    pdca_summary: |n, ok, no, open| {
+        format!("Ciclos: {n}; hipótesis confirmadas: {ok}, refutadas: {no}; en curso: {open}")
+    },
+    cycle: |n| format!("Ciclo {n}"),
+    starts_from: |p| format!("Parte de lo que el ciclo anterior estandarizó: {p}"),
+    hypothesis: "Hipótesis",
+    plan: "Planificar",
+    do_: "Hacer",
+    check: "Verificar",
+    verdict: "Resultado",
+    act: "Actuar",
+    confirmed: "confirmada",
+    refuted: "refutada",
+    new_cycle: "Nuevo ciclo",
+    step_plan: "en Planificar",
+    step_do: "en Hacer",
+    step_check: "en Verificar",
+    step_act: "en Actuar",
+    step_closed: "cerrado",
+};
+
 pub fn l12() -> &'static L12Texts {
-    &PT_BR
+    match language() {
+        Language::PtBr => &PT_BR,
+        Language::En => &EN,
+        Language::Es => &ES,
+    }
 }

@@ -75,7 +75,7 @@ impl App {
         if r.findings.is_empty() {
             ui.colored_label(
                 theme::OK,
-                format!("✓ {}", (t.integrity_ok)(r.signed, r.ops)),
+                format!("✔ {}", (t.integrity_ok)(r.signed, r.ops)),
             );
         } else {
             let color = if severe > 0 {

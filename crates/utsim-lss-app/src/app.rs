@@ -209,6 +209,7 @@ impl App {
 
     pub fn with_clock(dirs: AppDirs, clock: ClockFactory) -> Self {
         let config = UserConfig::load(&dirs.config_file);
+        crate::text::set_language(config.language);
         let screen = if config.identity.is_some() {
             Screen::Start
         } else {
@@ -602,6 +603,24 @@ impl App {
                 }
             });
         if self.config.theme != before {
+            self.save_config();
+        }
+        self.language_picker(ui);
+    }
+
+    /// The language of the interface (stage P8); each language is named in itself.
+    fn language_picker(&mut self, ui: &mut egui::Ui) {
+        let t = texts();
+        let before = self.config.language;
+        egui::ComboBox::from_id_salt("idioma")
+            .selected_text(format!("{}: {}", t.language, before.native_name()))
+            .show_ui(ui, |ui| {
+                for l in user::Language::ALL {
+                    ui.selectable_value(&mut self.config.language, l, l.native_name());
+                }
+            });
+        if self.config.language != before {
+            crate::text::set_language(self.config.language);
             self.save_config();
         }
     }
