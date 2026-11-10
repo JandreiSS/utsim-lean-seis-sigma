@@ -945,7 +945,7 @@ impl App {
                         t.not_significant
                     };
                     if d.relevant {
-                        ui.colored_label(theme::OK, v);
+                        ui.colored_label(theme::OK, format!("✔ {v}"));
                     } else {
                         ui.label(v);
                     }

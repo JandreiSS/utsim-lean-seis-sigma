@@ -201,7 +201,7 @@ impl App {
                     ui.label(c.kind.label());
                     let st = requirement_status_name(c.status);
                     match c.status {
-                        Status::Met => ui.colored_label(theme::OK, st),
+                        Status::Met => ui.colored_label(theme::OK, format!("✔ {st}")),
                         Status::Ambiguous => ui.colored_label(theme::WARN, st),
                         Status::NotMet => ui.label(st),
                     };

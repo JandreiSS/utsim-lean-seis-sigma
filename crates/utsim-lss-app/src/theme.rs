@@ -9,8 +9,9 @@ pub const ACCENT_DARK: Color32 = Color32::from_rgb(52, 150, 82);
 pub const ACCENT_LIGHT: Color32 = Color32::from_rgb(30, 120, 62);
 /// Warnings (conflicts, overdue).
 pub const WARN: Color32 = Color32::from_rgb(224, 150, 40);
-/// Met, valid, passed.
-pub const OK: Color32 = Color32::from_rgb(70, 160, 90);
+/// Met, valid, passed: blue-green, apart from the green accent; text in this colour
+/// always carries a ✔ so it never depends on colour alone.
+pub const OK: Color32 = Color32::from_rgb(38, 160, 150);
 
 pub fn apply(ctx: &egui::Context, pref: user::Theme) {
     ctx.set_theme(match pref {

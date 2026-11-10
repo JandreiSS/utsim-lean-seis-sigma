@@ -75,7 +75,7 @@ impl App {
         ui.horizontal(|ui| {
             ui.label(t.zoom);
             ui.add(egui::Slider::new(&mut self.roadmap.zoom, 0.5..=2.0));
-            ui.colored_label(theme::OK, t.legend_done);
+            ui.colored_label(theme::OK, format!("✔ {}", t.legend_done));
             ui.label(t.legend_todo);
             ui.weak(t.legend_soon);
         });
