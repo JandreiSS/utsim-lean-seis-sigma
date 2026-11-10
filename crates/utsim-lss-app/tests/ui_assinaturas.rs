@@ -103,6 +103,7 @@ fn a_signed_project_is_checked_and_approvals_are_sealed() {
             person: s.me(),
             decision: "aprovar".into(),
             content: "abc".into(),
+            items: Vec::new(),
         };
         let (r, seals) = s.signatures().clone();
         assert_eq!(seals.status(&r, &a), SealStatus::None);
@@ -131,4 +132,39 @@ fn a_signed_project_is_checked_and_approvals_are_sealed() {
     // The seal is over its own body, so it still holds.
     assert!(matches!(seals.status(&r, &a), SealStatus::Valid { .. }));
     draw(&mut app);
+}
+
+#[test]
+fn the_founder_signs_the_role_list_of_a_program() {
+    use utsim_lss_app::app::screens::program::ProgramNav;
+    let dir = tempfile::tempdir().unwrap();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 62))),
+    );
+    assert!(app.submit_identity("Mara Souza", "mara@empresa.com"));
+    let work = dir.path().join("Drive");
+    std::fs::create_dir_all(&work).unwrap();
+    assert!(app.create_program(&work, "Programa 2027"));
+    {
+        let s = app.session_mut().unwrap();
+        let program = s.project();
+        let founder = s.folder().manifest().created_by;
+        let grants = utsim_lss_core::perfis::grants(s.state());
+        let a = assinatura::roles_approval(program, &grants, s.me());
+        s.sign(&a).unwrap();
+        let (r, seals) = s.signatures().clone();
+        let c = assinatura::roles_check(&seals, &r, program, founder, &grants);
+        assert!(c.current(), "{c:?}");
+    }
+    for nav in [ProgramNav::Profiles, ProgramNav::Certification] {
+        app.pnav = nav;
+        draw(&mut app);
+        assert!(
+            app.status().is_none_or(|(_, err)| !*err),
+            "{:?}",
+            app.status()
+        );
+    }
 }

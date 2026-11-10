@@ -52,6 +52,17 @@ pub struct L13Texts {
     pub invalid: S,
     pub not_signed: S,
     pub signed_ok: S,
+    // Certificates and the role list (P9).
+    pub pdf_signed: fn(&str, &str, &str, &str) -> String,
+    pub roles_title: S,
+    pub roles_intro: S,
+    pub roles_never: S,
+    pub roles_current: F2,
+    pub roles_changed: fn(&str, &str, usize, usize) -> String,
+    pub roles_out: F2,
+    pub roles_removed: F1,
+    pub roles_not_entitled: F1,
+    pub roles_sign: S,
     // My actions.
     pub my_actions: fn(usize) -> String,
     pub my_actions_none: S,
@@ -159,6 +170,40 @@ pub const PT_BR: L13Texts = L13Texts {
     invalid: "⚠ assinatura que não confere",
     not_signed: "sem assinatura",
     signed_ok: "Assinatura gravada.",
+    pdf_signed: |issuer, when, key, seal| {
+        format!(
+            "Assinado eletronicamente por {issuer} em {when}, com a chave {key} (selo {seal}).              A assinatura pode ser conferida no UTSim Seis Sigma, na tela Certificação do              programa. Ela não tem a validade jurídica de uma assinatura digital certificada."
+        )
+    },
+    roles_title: "Assinatura da lista de papéis",
+    roles_intro: "O master black belt assina a lista de papéis com a sua chave. Um papel         incluído depois da última assinatura, por quem quer que seja, aparece abaixo até a         lista ser assinada de novo. A primeira assinatura vale quando é do criador do         programa; as seguintes, quando são de um master black belt da lista assinada antes.",
+    roles_never: "A lista de papéis ainda não foi assinada.",
+    roles_current: |who, when| {
+        format!("✓ Lista assinada por {who} em {when}, sem mudanças desde então.")
+    },
+    roles_changed: |who, when, added, removed| {
+        format!(
+            "⚠ A última assinatura é de {who} em {when}. Desde então: {added} {} e {removed} {}.",
+            if added == 1 {
+                "papel incluído"
+            } else {
+                "papéis incluídos"
+            },
+            if removed == 1 {
+                "retirado"
+            } else {
+                "retirados"
+            }
+        )
+    },
+    roles_out: |who, profile| format!("{who}: {profile}, fora da lista assinada"),
+    roles_removed: |item| format!("retirado depois da assinatura: {item}"),
+    roles_not_entitled: |who| {
+        format!(
+            "{who} assinou a lista sem ser o criador nem master black belt da lista anterior; a assinatura não vale."
+        )
+    },
+    roles_sign: "Assinar a lista",
     my_actions: |n| match n {
         0 => "Minhas ações em todos os projetos: nenhuma em aberto".into(),
         1 => "Minhas ações em todos os projetos: 1 em aberto".into(),

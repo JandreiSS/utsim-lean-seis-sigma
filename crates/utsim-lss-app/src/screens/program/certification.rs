@@ -357,6 +357,10 @@ impl App {
                             }
                         }
                     }
+                    let approval = utsim_lss_store::assinatura::certificate_approval(d.program, c);
+                    if c.issued() {
+                        self.approval_seal(ui, s, approval.clone());
+                    }
                     if c.issued()
                         && ui
                             .small_button(crate::text::l5::l5().certificate_pdf)
@@ -364,11 +368,33 @@ impl App {
                     {
                         let person = c.person.map(|p| d.person(p)).unwrap_or_default();
                         let issuer = c.issuer.map(|p| d.person(p)).unwrap_or_default();
+                        let seal = approval.and_then(|a| {
+                            let (r, seals) = s.signatures().clone();
+                            seals.valid_seal(&r, &a).map(|sel| {
+                                (crate::text::l13::l13().pdf_signed)(
+                                    &issuer,
+                                    &utsim_lss_core::Date::from_unix_ms(
+                                        sel.quando,
+                                        s.clock().utc_offset_minutes(),
+                                    )
+                                    .format_br(),
+                                    &utsim_lss_store::assinatura::grouped(
+                                        &utsim_lss_store::assinatura::short(&sel.publica),
+                                    ),
+                                    &utsim_lss_store::assinatura::short(
+                                        &utsim_lss_store::assinatura::op_hash(
+                                            sel.assinatura.as_bytes(),
+                                        ),
+                                    ),
+                                )
+                            })
+                        });
                         let doc = crate::reports::certificate_doc(
                             c,
                             &person,
                             &s.folder().title(),
                             &issuer,
+                            seal.as_deref(),
                         );
                         let tp = self.report_template(s);
                         let footer = (crate::text::l5::l5().printed_by)(

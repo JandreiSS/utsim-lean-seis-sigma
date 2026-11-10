@@ -193,3 +193,76 @@ impl App {
         }
     }
 }
+
+impl App {
+    /// The signature of the program's role list by the MBB (P9, decision MB2).
+    pub(in crate::app) fn roles_signature(
+        &mut self,
+        ui: &mut egui::Ui,
+        s: &mut Session,
+        d: &super::program::Data,
+        grants: &[utsim_lss_core::perfis::Grant],
+    ) {
+        let t = l13();
+        ui.add_space(8.0);
+        ui.strong(t.roles_title);
+        ui.weak(t.roles_intro);
+        let (r, seals) = s.signatures().clone();
+        let c = assinatura::roles_check(&seals, &r, d.program, d.founder, grants);
+        match c.signed {
+            None => {
+                ui.colored_label(theme::WARN, t.roles_never);
+            }
+            Some((who, at)) if c.current() => {
+                ui.colored_label(theme::OK, (t.roles_current)(&d.person(who), &when(s, at)));
+            }
+            Some((who, at)) => {
+                ui.colored_label(
+                    theme::WARN,
+                    (t.roles_changed)(
+                        &d.person(who),
+                        &when(s, at),
+                        c.unsigned.len(),
+                        c.removed.len(),
+                    ),
+                );
+                for g in &c.unsigned {
+                    ui.label(format!(
+                        "• {}",
+                        (t.roles_out)(
+                            &g.person.map(|p| d.person(p)).unwrap_or_default(),
+                            super::program::profile_name(g.profile),
+                        )
+                    ));
+                }
+                for item in &c.removed {
+                    let who = item
+                        .split(':')
+                        .next()
+                        .and_then(|p| p.parse::<Id>().ok())
+                        .map(|p| d.person(p))
+                        .unwrap_or_default();
+                    let profile = item.split(':').nth(1).unwrap_or_default();
+                    ui.weak(format!(
+                        "• {}",
+                        (t.roles_removed)(&format!("{who} ({profile})"))
+                    ));
+                }
+            }
+        }
+        for p in &c.not_entitled {
+            ui.colored_label(
+                ui.visuals().error_fg_color,
+                format!("⚠ {}", (t.roles_not_entitled)(&d.person(*p))),
+            );
+        }
+        let may = (d.me == d.founder || d.is_mbb()) && s.folder().signer().is_some();
+        if may && !c.current() && ui.button(t.roles_sign).on_hover_text(t.sign_help).clicked() {
+            let a = assinatura::roles_approval(d.program, grants, d.me);
+            match s.sign(&a) {
+                Ok(()) => self.set_status(t.signed_ok, false),
+                Err(e) => self.set_status(e.to_string(), true),
+            }
+        }
+    }
+}
