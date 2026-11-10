@@ -1,6 +1,7 @@
 //! The team's signatures (stage P7): the check of the signed journal on the team screen and
 //! the seal of an approval next to it (tollgate decisions and validated savings).
 
+use crate::text::LocalDate;
 use eframe::egui;
 use utsim_lss_core::{Date, Id, domain};
 use utsim_lss_store::assinatura::{self, Approval, Finding, Problema, SealStatus};
@@ -11,7 +12,7 @@ use crate::text::l13::l13;
 use crate::theme;
 
 fn when(s: &Session, ms: i64) -> String {
-    Date::from_unix_ms(ms, s.clock().utc_offset_minutes()).format_br()
+    Date::from_unix_ms(ms, s.clock().utc_offset_minutes()).local()
 }
 
 fn name(s: &Session, id: Id) -> String {

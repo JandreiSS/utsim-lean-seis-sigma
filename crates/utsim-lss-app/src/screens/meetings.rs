@@ -1,6 +1,7 @@
 //! Meetings and minutes (section 1.8): the list, the agenda generated from the open items,
 //! attendance, notes and decisions, the minutes items and the cards created from them.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use serde_json::Value;
 use utsim_lss_core::board;
@@ -18,8 +19,8 @@ use crate::text::{self, texts};
 pub(super) fn agenda_line(i: &AgendaItem) -> String {
     let tl = l1();
     match i {
-        AgendaItem::OverdueAction { title, due, .. } => (tl.ag_overdue)(title, &due.format_br()),
-        AgendaItem::ActionDueSoon { title, due, .. } => (tl.ag_due_soon)(title, &due.format_br()),
+        AgendaItem::OverdueAction { title, due, .. } => (tl.ag_overdue)(title, &due.local()),
+        AgendaItem::ActionDueSoon { title, due, .. } => (tl.ag_due_soon)(title, &due.local()),
         AgendaItem::HighRisk {
             description, level, ..
         } => (tl.ag_high_risk)(description, *level),
@@ -44,7 +45,7 @@ impl App {
             );
             if ui.button(tl.new_meeting).clicked() {
                 let title = if self.l1.meeting_title.trim().is_empty() {
-                    (tl.meeting_default_title)(&s.today().format_br())
+                    (tl.meeting_default_title)(&s.today().local())
                 } else {
                     self.l1.meeting_title.trim().to_string()
                 };
@@ -66,7 +67,7 @@ impl App {
                 for m in &list {
                     let label = format!(
                         "{} {}",
-                        m.date.map(|d| d.format_br()).unwrap_or_default(),
+                        m.date.map(|d| d.local()).unwrap_or_default(),
                         m.title
                     );
                     if ui

@@ -3,6 +3,7 @@
 //! the key; the answers are the trainee's own operations, graded on the instructor's
 //! machine), the grades and the certifications with their validity.
 
+use crate::text::LocalDate;
 use eframe::egui;
 use utsim_lss_core::formacao::{self, exams, exams::QuestionKind};
 use utsim_lss_core::{Id, certificacao};
@@ -103,7 +104,7 @@ impl App {
                 "{:04} · {} · {} · {}",
                 c.number.unwrap_or(0),
                 level_name(c.level),
-                c.valid_until.map(|x| x.format_br()).unwrap_or_default(),
+                c.valid_until.map(|x| x.local()).unwrap_or_default(),
                 validity_text(v)
             ));
         }

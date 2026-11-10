@@ -5,6 +5,7 @@
 //! the value stream map with its ladder.
 //! The rendering is [`utsim_lss_core::relatorios`].
 
+use crate::text::LocalDate;
 use utsim_lss_core::analises;
 use utsim_lss_core::certificacao::Certification;
 use utsim_lss_core::domain::{self, fields as df};
@@ -35,7 +36,7 @@ fn project_title(state: &State, project: Id) -> String {
 fn value_text(v: &serde_json::Value) -> String {
     match v {
         serde_json::Value::String(s) => match s.parse::<Date>() {
-            Ok(d) => d.format_br(),
+            Ok(d) => d.local(),
             Err(_) => s.clone(),
         },
         serde_json::Value::Null => String::new(),

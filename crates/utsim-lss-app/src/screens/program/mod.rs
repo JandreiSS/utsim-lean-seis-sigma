@@ -24,6 +24,7 @@ mod reviews;
 mod structure;
 mod training;
 
+use crate::text::LocalDate;
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::time::Duration;
@@ -315,7 +316,7 @@ pub fn instant(ms: i64, offset_minutes: i32) -> String {
     let d = Date::from_unix_ms(ms, offset_minutes);
     let local = ms + i64::from(offset_minutes) * 60_000;
     let mins = local.div_euclid(60_000).rem_euclid(24 * 60);
-    format!("{} {:02}:{:02}", d.format_br(), mins / 60, mins % 60)
+    format!("{} {:02}:{:02}", d.local(), mins / 60, mins % 60)
 }
 
 impl App {

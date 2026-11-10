@@ -2,6 +2,7 @@
 //! the calendar (worked weekdays and holidays), the Gantt with the critical path and the
 //! baseline, and the probabilities from the PERT crate (classic and Monte Carlo).
 
+use crate::text::LocalDate;
 use eframe::egui::{
     self, Align2, Color32, FontId, Pos2, Rect, RichText, Sense, Stroke, StrokeKind, vec2,
 };
@@ -165,7 +166,7 @@ impl App {
             let mut remove = None;
             for (id, d, name) in &list {
                 ui.horizontal(|ui| {
-                    ui.label(d.format_br());
+                    ui.label(d.local());
                     ui.label(name);
                     if ui.small_button("✖").clicked() {
                         remove = Some(*id);
@@ -264,14 +265,14 @@ impl App {
         let tl = l1();
         ui.horizontal_wrapped(|ui| {
             ui.label((tl.schedule_finish)(
-                &r.finish.format_br(),
+                &r.finish.local(),
                 &show_number(r.duration),
             ));
             if r.sd > 0.0 {
                 ui.label((tl.schedule_sd)(&show_number((r.sd * 10.0).round() / 10.0)));
             }
             if let (Some(d), Some(p)) = (r.deadline, r.deadline_probability) {
-                ui.label((tl.deadline_probability)(&d.format_br(), &percent(p)));
+                ui.label((tl.deadline_probability)(&d.local(), &percent(p)));
             }
             if ui.button(tl.run_monte_carlo).clicked() {
                 match schedule::monte_carlo(plan, 5000, 1) {
@@ -284,7 +285,7 @@ impl App {
             let ps: Vec<String> = m
                 .percentiles
                 .iter()
-                .map(|(p, d)| format!("P{:.0} {}", p * 100.0, d.format_br()))
+                .map(|(p, d)| format!("P{:.0} {}", p * 100.0, d.local()))
                 .collect();
             ui.label((tl.monte_carlo_result)(m.samples, &ps.join(" · ")));
             if let Some(p) = m.deadline_probability {
@@ -310,7 +311,7 @@ impl App {
             if let (Some(tgt), Some(p)) = (row.target, row.probability) {
                 ui.label((tl.milestone_probability)(
                     &row.name,
-                    &tgt.format_br(),
+                    &tgt.local(),
                     &percent(p),
                 ));
             }

@@ -4,6 +4,7 @@
 //! recordings in a worker thread and `utsim_lss_core::controle` does the rest (phase II,
 //! cards, realised value, data set of origin Gêmeo). Drawing only.
 
+use crate::text::LocalDate;
 use std::collections::BTreeMap;
 use std::sync::mpsc::{self, Receiver};
 
@@ -152,7 +153,7 @@ impl App {
             Some(e) => {
                 let ok = self.commit(s, e);
                 if ok {
-                    self.set_status((t.booked)(&m.format_br()), false);
+                    self.set_status((t.booked)(&m.local()), false);
                 }
                 ok
             }

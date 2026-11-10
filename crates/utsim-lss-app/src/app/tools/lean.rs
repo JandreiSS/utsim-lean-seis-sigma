@@ -4,6 +4,7 @@
 //! them from the common `utsim_ferramentas`), every change is one field through
 //! [`Session`].
 
+use crate::text::LocalDate;
 use eframe::egui::{self, Align2, Color32, FontId, RichText, Stroke, pos2, vec2};
 use egui_plot::{Bar, BarChart, HLine, Legend, Line, Plot, PlotPoints};
 use serde_json::Value;
@@ -566,7 +567,7 @@ impl App {
                 .collect();
             self.combo_field(ui, s, dr, f::DAYS, &opts, 40.0);
             if let Some(end) = ev.end {
-                ui.weak((t.ends)(&end.format_br()));
+                ui.weak((t.ends)(&end.local()));
             }
             if ui.button(t.fill_template).clicked() {
                 let e = kaizen::template_edits(s.state(), s.project(), del, || s.new_id());
@@ -659,7 +660,7 @@ impl App {
         for x in &fu {
             ui.horizontal(|ui| {
                 ui.strong((t.after_days)(x.days));
-                ui.label(x.date.map_or("-".into(), |d| d.format_br()));
+                ui.label(x.date.map_or("-".into(), |d| d.local()));
                 if x.late > 0 {
                     ui.colored_label(theme::WARN, (t.late)(x.late));
                 } else if x.due && !x.noted {

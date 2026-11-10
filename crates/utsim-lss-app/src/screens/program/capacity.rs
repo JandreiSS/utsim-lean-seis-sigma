@@ -3,6 +3,7 @@
 //! with the overload warnings; and, for an opportunity selected or approved, the belts in
 //! order with the reasons of each position. The MBB decides; the decision is recorded.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::designacao::{self, AssignInput, Need, Overload, Reason};
 use utsim_lss_core::domain::{ProjectStatus, enum_value, fields as dfields};
@@ -185,8 +186,8 @@ impl App {
                 ui.label(format!(
                     "{}: {} a {}",
                     a.person.map_or(String::new(), |p| d.person(p)),
-                    a.start.map_or(String::new(), |x| x.format_br()),
-                    a.end.map_or(String::new(), |x| x.format_br()),
+                    a.start.map_or(String::new(), |x| x.local()),
+                    a.end.map_or(String::new(), |x| x.local()),
                 ));
                 ui.weak(&a.reason);
                 if ui.small_button(texts().delete).clicked() {

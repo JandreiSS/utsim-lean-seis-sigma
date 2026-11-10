@@ -4,6 +4,7 @@
 //! company's template of the reports (name, header, footer, colour) kept in the
 //! `modelos/` folder next to the projects. The files go to the project's `relatorios/`.
 
+use crate::text::LocalDate;
 use std::path::PathBuf;
 
 use eframe::egui;
@@ -54,7 +55,7 @@ impl App {
     }
 
     fn footer(&self, s: &Session) -> String {
-        (l5().printed_by)(&s.folder().me().name, &s.today().format_br())
+        (l5().printed_by)(&s.folder().me().name, &s.today().local())
     }
 
     /// Writes a PDF of `doc` into `relatorios/` and opens it.
@@ -64,7 +65,7 @@ impl App {
         build::dress(
             &mut doc,
             &s.folder().me().name,
-            &s.today().format_br(),
+            &s.today().local(),
             &s.folder().title(),
         );
         let bytes = pdf::render(&doc, &t, &self.footer(s));
@@ -109,7 +110,7 @@ impl App {
                 for m in ms.iter().take(12) {
                     let label = format!(
                         "{} {}",
-                        m.date.map(|d| d.format_br()).unwrap_or_default(),
+                        m.date.map(|d| d.local()).unwrap_or_default(),
                         m.title
                     );
                     if ui.button(label).clicked() {

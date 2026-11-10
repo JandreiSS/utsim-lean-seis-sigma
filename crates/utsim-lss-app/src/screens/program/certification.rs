@@ -4,6 +4,7 @@
 //! number, the manual record (MBB level), the registry with validity and renewal, the
 //! renewal rules and the certification funnel.
 
+use crate::text::LocalDate;
 use std::collections::BTreeMap;
 
 use eframe::egui;
@@ -330,8 +331,8 @@ impl App {
                 ui.label(format!("{:04}", c.number.unwrap_or(0)));
                 ui.label(c.person.map(|p| d.person(p)).unwrap_or_default());
                 ui.label(level_name(c.level));
-                ui.label(c.date.map(|x| x.format_br()).unwrap_or_default());
-                ui.label(c.valid_until.map(|x| x.format_br()).unwrap_or_default());
+                ui.label(c.date.map(|x| x.local()).unwrap_or_default());
+                ui.label(c.valid_until.map(|x| x.local()).unwrap_or_default());
                 let v = certificacao::validity(c, &d.tr.certs, d.today);
                 let vt = validity_text(v);
                 match v {
@@ -377,7 +378,7 @@ impl App {
                                         sel.quando,
                                         s.clock().utc_offset_minutes(),
                                     )
-                                    .format_br(),
+                                    .local(),
                                     &utsim_lss_store::assinatura::grouped(
                                         &utsim_lss_store::assinatura::short(&sel.publica),
                                     ),
@@ -399,7 +400,7 @@ impl App {
                         let tp = self.report_template(s);
                         let footer = (crate::text::l5::l5().printed_by)(
                             &s.folder().me().name,
-                            &d.today.format_br(),
+                            &d.today.local(),
                         );
                         let bytes = utsim_lss_core::relatorios::pdf::render(&doc, &tp, &footer);
                         let r = utsim_lss_store::program::write_certificate(

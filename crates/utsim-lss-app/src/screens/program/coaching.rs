@@ -3,6 +3,7 @@
 //! on the project's board, the progress, the competence map with its evidence and the
 //! MBB's confirmation, and the belt's timeline.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::mentoria::{
     self, Commitment, Evidence, Form, Level, Session as Coaching, SessionInput, Target,
@@ -110,7 +111,7 @@ impl App {
         for x in &sessions {
             let label = format!(
                 "{} · {} · {} min · {}",
-                x.date.map_or(String::new(), |d| d.format_br()),
+                x.date.map_or(String::new(), |d| d.local()),
                 form_name(x.form),
                 x.minutes,
                 x.topics
@@ -151,7 +152,7 @@ impl App {
         let tl = l6();
         theme::card(ui).show(ui, |ui| {
             ui.strong((tl.session_of)(
-                &x.date.map_or(String::new(), |d| d.format_br()),
+                &x.date.map_or(String::new(), |d| d.local()),
             ));
             if !x.tools.is_empty() {
                 let names: Vec<String> = x.tools.iter().map(|t| tool_label(t)).collect();
@@ -175,7 +176,7 @@ impl App {
                         target_name(c.target)
                     ));
                     if let Some(due) = c.due {
-                        ui.weak(due.format_br());
+                        ui.weak(due.local());
                     }
                     if c.target == Target::Project
                         && c.card.is_none()
@@ -538,15 +539,15 @@ impl App {
                 for e in ev {
                     let line = match e {
                         mentoria::Event::Session { date, topics } => {
-                            (tl.t_session)(&date.format_br(), &topics)
+                            (tl.t_session)(&date.local(), &topics)
                         }
                         mentoria::Event::TollgateApproved { date, phase, .. } => {
-                            (tl.t_tollgate)(&date.format_br(), &phase)
+                            (tl.t_tollgate)(&date.local(), &phase)
                         }
                         mentoria::Event::NewTool { date, tool } => {
-                            (tl.t_tool)(&date.format_br(), &tool_label(&tool))
+                            (tl.t_tool)(&date.local(), &tool_label(&tool))
                         }
-                        mentoria::Event::Certified { date } => (tl.t_certified)(&date.format_br()),
+                        mentoria::Event::Certified { date } => (tl.t_certified)(&date.local()),
                     };
                     ui.label(line);
                 }

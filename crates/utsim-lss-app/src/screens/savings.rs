@@ -1,6 +1,7 @@
 //! Savings (section 1.10, decision G1): hard and soft with the default definitions, the
 //! states with the controller's validation, the monthly entries and the follow-up.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::domain::{SavingCategory, SavingStatus, fields};
 use utsim_lss_core::op::{EntityRef, Kind};
@@ -196,14 +197,14 @@ impl App {
         if let (Some(by), Some(on)) = (plan.forecast_by, plan.forecast_on) {
             ui.weak((tl.forecast_by)(
                 &utsim_lss_core::domain::person_name(s.state(), by),
-                &on.format_br(),
+                &on.local(),
             ));
         }
         if let (Some(by), Some(on)) = (plan.validated_by, plan.validated_on) {
             ui.horizontal(|ui| {
                 ui.weak((tl.validated_by)(
                     &utsim_lss_core::domain::person_name(s.state(), by),
-                    &on.format_br(),
+                    &on.local(),
                 ));
                 let a = utsim_lss_store::assinatura::saving_approval(s.state(), s.project(), id);
                 self.approval_seal(ui, s, a);
@@ -231,7 +232,7 @@ impl App {
                         let e = savings::record_month(s.state(), id, m, v, s.new_id());
                         if self.commit(s, e) {
                             self.l1.entry_value.clear();
-                            self.l1.entry_month = m.plus(1).format_br();
+                            self.l1.entry_month = m.plus(1).local();
                         }
                     }
                     _ => self.set_status(tl.bad_month_or_value, true),
@@ -259,7 +260,7 @@ impl App {
                     }
                     ui.end_row();
                     for row in &rows {
-                        ui.label(row.month.format_br());
+                        ui.label(row.month.local());
                         ui.label(text::money(row.expected));
                         match row.realized {
                             Some(v) => {

@@ -3,6 +3,7 @@
 //! the Drive, the consent of each person with its purpose, the retention and the
 //! anonymisation, and the operations without effect.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::op::{EntityRef, FIELD_DELETED, Kind};
 use utsim_lss_core::perfis::{self, Action, Profile};
@@ -143,7 +144,7 @@ impl App {
                 );
             });
             if let Some(on) = m.consent_on {
-                ui.weak((tl.consent_on)(&on.format_br()));
+                ui.weak((tl.consent_on)(&on.local()));
             }
         }
         if d.is_mbb() {

@@ -2,6 +2,7 @@
 //! nominations with the manager's approval, the selection with the waiting list, and the
 //! training teams suggested under constraints and confirmed by the MBB.
 
+use crate::text::LocalDate;
 use eframe::egui;
 use utsim_lss_core::formacao::{
     self, ClassInput, CriterionKind, Nomination, NominationInput, NominationStatus, teams,
@@ -603,7 +604,7 @@ impl App {
                     }
                 });
                 ui.label(match (g.confirmed_by, g.confirmed_on) {
-                    (Some(b), Some(on)) => (t.confirmed_by)(&d.person(b), &on.format_br()),
+                    (Some(b), Some(on)) => (t.confirmed_by)(&d.person(b), &on.local()),
                     _ => t.not_confirmed.to_string(),
                 });
                 ui.end_row();

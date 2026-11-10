@@ -3,6 +3,7 @@
 //! review (standard and company questions, verified items already checked, the five items
 //! of the structured opinion, target time) and the quality of the reviews.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::perfis::Action;
 use utsim_lss_core::revisao::{self, BatchKey, Criterion, GroupBy, Mark, ReviewInput, ReviewItem};
@@ -35,7 +36,7 @@ impl App {
         let mut minutes_for = None;
         for (key, items) in &groups {
             let title = match key {
-                BatchKey::Day(Some(day)) => (tl.batch_day)(&day.format_br()),
+                BatchKey::Day(Some(day)) => (tl.batch_day)(&day.local()),
                 BatchKey::Day(None) => tl.batch_no_date.to_string(),
                 BatchKey::Unit(u) => d.unit_name(*u),
             };
@@ -76,7 +77,7 @@ impl App {
                                 .join(", "),
                         );
                         ui.label(&i.phase);
-                        ui.label(i.planned.map_or("-".into(), |x| x.format_br()));
+                        ui.label(i.planned.map_or("-".into(), |x| x.local()));
                         ui.label(format!("{} d", i.days_waiting));
                         if i.overdue() {
                             ui.colored_label(theme::WARN, format!("{} d", i.days_late));

@@ -100,13 +100,25 @@ impl L1Ui {
     }
 }
 
-/// A number typed in Portuguese (`1.234,5`) or with a point (`1234.5`).
+/// A number as typed: in Portuguese and Spanish `1.234,5` (or `1234.5`, with a point), in
+/// English `1,234.5` (or `1,5`, a comma not followed by groups of three digits).
 pub fn parse_number(s: &str) -> Option<f64> {
     let t = s.trim().replace(' ', "");
     if t.is_empty() {
         return None;
     }
-    let t = if t.contains(',') {
+    let english = crate::text::language() == crate::text::Language::En;
+    let t = if english {
+        let thousands = t.contains('.')
+            || t.split(',')
+                .skip(1)
+                .all(|g| g.len() == 3 && g.bytes().all(|b| b.is_ascii_digit()));
+        if thousands {
+            t.replace(',', "")
+        } else {
+            t.replace(',', ".")
+        }
+    } else if t.contains(',') {
         t.replace('.', "").replace(',', ".")
     } else {
         t
@@ -114,11 +126,11 @@ pub fn parse_number(s: &str) -> Option<f64> {
     t.parse::<f64>().ok().filter(|x| x.is_finite())
 }
 
-/// A number for the screen, with a decimal comma and no trailing zeros.
+/// A number for the screen, with the language's decimal mark and no trailing zeros.
 pub fn show_number(x: f64) -> String {
     let s = format!("{:.4}", x);
     let s = s.trim_end_matches('0').trim_end_matches('.');
-    s.replace('.', ",")
+    crate::text::decimal_mark(s)
 }
 
 /// A probability as a percentage.

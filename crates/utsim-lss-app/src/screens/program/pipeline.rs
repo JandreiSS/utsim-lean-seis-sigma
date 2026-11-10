@@ -3,6 +3,7 @@
 //! MBB), committee meetings with the generated agenda, and the decisions with their
 //! reason, which also move the idea in its portfolio.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::designacao;
 use utsim_lss_core::meeting;
@@ -80,7 +81,7 @@ impl App {
         let tl = l6();
         ui.strong(tl.committee);
         ui.weak((tl.next_committee)(
-            &programa::next_committee(s.state(), d.program, d.today).format_br(),
+            &programa::next_committee(s.state(), d.program, d.today).local(),
         ));
         let cs = programa::committees(s.state(), d.program);
         ui.horizontal(|ui| {
@@ -98,7 +99,7 @@ impl App {
                 let date = parse_date(self.l6.input("comite_data")).unwrap_or(d.today);
                 let mut title = self.l6.take_input("comite_titulo");
                 if title.trim().is_empty() {
-                    title = (tl.default_committee_title)(&date.format_br());
+                    title = (tl.default_committee_title)(&date.local());
                 }
                 let id = s.new_id();
                 if self.commit(s, programa::new_committee(d.program, id, &title, date)) {
@@ -111,7 +112,7 @@ impl App {
             for m in &cs {
                 let label = format!(
                     "{} {}",
-                    m.date.map_or(String::new(), |x| x.format_br()),
+                    m.date.map_or(String::new(), |x| x.local()),
                     m.title
                 );
                 if ui
@@ -213,7 +214,7 @@ impl App {
                 for past in programa::decisions(s.state(), o.id) {
                     ui.weak(format!(
                         "{} · {} · {}",
-                        past.date.map_or(String::new(), |x| x.format_br()),
+                        past.date.map_or(String::new(), |x| x.local()),
                         past.choice.map_or("", choice_name),
                         past.reason
                     ));

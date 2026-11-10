@@ -2,6 +2,7 @@
 //! needs a new approval), the versions with who approved them and the differences between
 //! two versions or a version and the current text.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::charter::{self, CharterStatus, VersionStatus};
 use utsim_lss_core::digest::{self, Change};
@@ -103,7 +104,7 @@ impl App {
                                 &v.approved_by
                                     .map(|p| domain::person_name(s.state(), p))
                                     .unwrap_or_default(),
-                                &v.approved_on.map(|d| d.format_br()).unwrap_or_default(),
+                                &v.approved_on.map(|d| d.local()).unwrap_or_default(),
                             ),
                         ),
                         VersionStatus::Recorded => ui.label(tl.version_recorded_state),

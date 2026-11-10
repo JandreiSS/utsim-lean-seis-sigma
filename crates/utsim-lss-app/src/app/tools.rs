@@ -2,6 +2,7 @@
 //! (etapa L2). Drawing only: the numbers come from `utsim_lss_core::tools` and every change
 //! goes through [`Session`], one field per edit, as on the action board.
 
+use crate::text::LocalDate;
 use std::hash::Hash;
 
 use eframe::egui::{self, Align2, Color32, FontId, RichText, Sense, Stroke, pos2, vec2};
@@ -40,17 +41,17 @@ enum Col {
 
 type Extra<'a> = &'a mut dyn FnMut(&mut App, &mut egui::Ui, &mut Session, Uid);
 
-/// A number as typed in Brazil: `1,5`; integers without decimals.
+/// A number with the language's decimal mark (`1,5` or `1.5`); integers without decimals.
 pub fn fmt_num(x: f64) -> String {
     if x.fract() == 0.0 && x.abs() < 1e15 {
         format!("{}", x as i64)
     } else {
-        format!("{x}").replace('.', ",")
+        crate::text::decimal_mark(&format!("{x}"))
     }
 }
 
 fn pct(x: f64) -> String {
-    format!("{:.1} %", x).replace('.', ",")
+    crate::text::decimal_mark(&format!("{:.1} %", x))
 }
 
 fn ap_color(ui: &egui::Ui, ap: Ap) -> Color32 {
@@ -1454,7 +1455,7 @@ impl App {
             .filter(|x| !x.trim().is_empty())
             .chain(
                 page.deadline
-                    .map(|d| format!("{}: {}", texts().deadline, d.format_br())),
+                    .map(|d| format!("{}: {}", texts().deadline, d.local())),
             )
             .collect();
         content[3] = page
@@ -1483,7 +1484,7 @@ impl App {
             .map(|p| {
                 let mut x = format!("[{}] {}", text::column_name(p.column), p.title);
                 if let Some(d) = p.due {
-                    x.push_str(&format!(" · {}", d.format_br()));
+                    x.push_str(&format!(" · {}", d.local()));
                 }
                 if let Some(w) = people(p.who) {
                     x.push_str(&format!(" · {w}"));

@@ -2,6 +2,7 @@
 //! the tollgate checklist (manual and verified items), the approvers and the rule, the
 //! submission, the decisions with reservations and the frozen hash.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, RichText};
 use utsim_lss_core::domain::{self, PhaseStatus, ProjectStatus, fields};
 use utsim_lss_core::tollgate::{
@@ -358,7 +359,7 @@ impl App {
             .spacing([10.0, 4.0])
             .show(ui, |ui| {
                 for d in ds.iter().rev() {
-                    ui.label(d.date.map(|x| x.format_br()).unwrap_or_default());
+                    ui.label(d.date.map(|x| x.local()).unwrap_or_default());
                     ui.label(
                         d.approver
                             .map(|p| domain::person_name(s.state(), p))

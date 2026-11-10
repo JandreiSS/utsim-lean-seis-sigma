@@ -1805,6 +1805,48 @@ pub fn language() -> Language {
     LANGUAGE.with(|c| c.get())
 }
 
+/// A number written with a point as decimal mark, put in the language's form: a comma in
+/// Portuguese and Spanish, the point kept in English.
+pub fn decimal_mark(s: &str) -> String {
+    match language() {
+        Language::En => s.to_string(),
+        Language::PtBr | Language::Es => s.replace('.', ","),
+    }
+}
+
+/// The separator of thousands in the language (the other mark from the decimal one).
+fn thousands_mark() -> char {
+    match language() {
+        Language::En => ',',
+        Language::PtBr | Language::Es => '.',
+    }
+}
+
+/// A date on the screen: `DD/MM/AAAA` in Portuguese and Spanish, `AAAA-MM-DD` in English (the
+/// form no reader takes for month-first or day-first). Both forms are accepted when typed.
+pub trait LocalDate {
+    fn local(self) -> String;
+}
+
+impl LocalDate for utsim_lss_core::date::Date {
+    fn local(self) -> String {
+        match language() {
+            Language::En => self.to_string(),
+            Language::PtBr | Language::Es => self.format_br(),
+        }
+    }
+}
+
+/// A month the same way: `MM/AAAA` or `AAAA-MM`.
+impl LocalDate for utsim_lss_core::savings::Month {
+    fn local(self) -> String {
+        match language() {
+            Language::En => self.to_string(),
+            Language::PtBr | Language::Es => self.format_br(),
+        }
+    }
+}
+
 /// The active catalogue.
 pub fn texts() -> &'static Texts {
     match language() {
@@ -1853,7 +1895,8 @@ pub fn saving_status_name(s: SavingStatus) -> &'static str {
     }
 }
 
-/// Number in the Brazilian format: `1.234,56`.
+/// An amount of money: `R$ 1.234,56` in Portuguese and Spanish, `R$ 1,234.56` in English. The
+/// currency is the company's, not the language's, so the symbol stays.
 pub fn money(v: f64) -> String {
     let neg = v < 0.0;
     let cents = (v.abs() * 100.0).round() as u64;
@@ -1862,11 +1905,12 @@ pub fn money(v: f64) -> String {
     let mut grouped = String::new();
     for (i, c) in digits.chars().enumerate() {
         if i > 0 && (digits.len() - i) % 3 == 0 {
-            grouped.push('.');
+            grouped.push(thousands_mark());
         }
         grouped.push(c);
     }
-    format!("{}R$ {grouped},{frac:02}", if neg { "−" } else { "" })
+    let point = if thousands_mark() == '.' { ',' } else { '.' };
+    format!("{}R$ {grouped}{point}{frac:02}", if neg { "−" } else { "" })
 }
 
 #[cfg(test)]
@@ -1894,6 +1938,31 @@ mod tests {
         assert_eq!(tt.fmea_headers.len(), 21, "one per column of the FMEA grid");
         assert_eq!((tt.why_n)(3), "Por quê? 3");
         assert!((tt.gaps)(2).starts_with("2 características"));
+    }
+
+    #[test]
+    fn formats_follow_the_language() {
+        use crate::app::screens::{parse_number, show_number};
+        use utsim_lss_core::date::Date;
+        use utsim_lss_core::savings::Month;
+        let d: Date = "2026-11-10".parse().unwrap();
+        let m: Month = "2026-11".parse().unwrap();
+        set_language(Language::En);
+        assert_eq!(money(1234567.891), "R$ 1,234,567.89");
+        assert_eq!(show_number(2.5), "2.5");
+        assert_eq!(d.local(), "2026-11-10");
+        assert_eq!(m.local(), "2026-11");
+        assert_eq!(parse_number("1,234.5"), Some(1234.5));
+        assert_eq!(parse_number("1,234"), Some(1234.0));
+        assert_eq!(parse_number("1,5"), Some(1.5));
+        set_language(Language::Es);
+        assert_eq!(money(1234567.891), "R$ 1.234.567,89");
+        assert_eq!(show_number(2.5), "2,5");
+        assert_eq!(d.local(), "10/11/2026");
+        assert_eq!(parse_number("1.234,5"), Some(1234.5));
+        set_language(Language::PtBr);
+        assert_eq!(m.local(), "11/2026");
+        assert_eq!(parse_number("1234.5"), Some(1234.5));
     }
 }
 

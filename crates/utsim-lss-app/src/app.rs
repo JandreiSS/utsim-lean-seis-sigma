@@ -1,6 +1,7 @@
 //! The window: first run, start screen and the project screens. Drawing only: the numbers
 //! come from `utsim-lss-core` and every change goes through [`Session`].
 
+use crate::text::LocalDate;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -990,7 +991,7 @@ impl App {
                 ui.strong(t.deadline);
                 match (o.project.deadline, o.days_to_deadline) {
                     (Some(d), Some(n)) => {
-                        let txt = format!("{} ({})", d.format_br(), (t.days_left)(n));
+                        let txt = format!("{} ({})", d.local(), (t.days_left)(n));
                         if n < 0 {
                             ui.colored_label(theme::WARN, txt)
                         } else {
@@ -1091,7 +1092,7 @@ impl App {
             });
             ui.horizontal_wrapped(|ui| {
                 if let Some(d) = a.due {
-                    let txt = d.format_br();
+                    let txt = d.local();
                     if a.is_overdue(today) {
                         ui.colored_label(theme::WARN, txt);
                     } else {

@@ -3,6 +3,7 @@
 //! prioritisation and the selection; the projects next to it are summarised from their
 //! own folders. The program screens above the portfolios are stage L6.
 
+use crate::text::LocalDate;
 use std::path::{Path, PathBuf};
 
 use eframe::egui::{self, RichText};
@@ -145,11 +146,11 @@ impl App {
                                 Some(d) if d < today => {
                                     ui.colored_label(
                                         ui.visuals().error_fg_color,
-                                        (t.late)(&d.format_br()),
+                                        (t.late)(&d.local()),
                                     );
                                 }
                                 Some(d) => {
-                                    ui.label(d.format_br());
+                                    ui.label(d.local());
                                 }
                                 None => {
                                     ui.weak("—");
@@ -408,7 +409,7 @@ impl App {
                 .entity
                 .opt_text(pf::SENT_ON)
                 .and_then(|d| d.parse::<utsim_lss_core::Date>().ok())
-                .map(|d| d.format_br())
+                .map(|d| d.local())
                 .unwrap_or_default();
             ui.horizontal_wrapped(|ui| {
                 ui.strong((t.idea_from)(&app_name, &reference));

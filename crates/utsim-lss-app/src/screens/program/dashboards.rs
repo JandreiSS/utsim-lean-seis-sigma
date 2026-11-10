@@ -4,6 +4,7 @@
 //! of the data (LSS-RNF-16). Both dashboards export to PDF (tables, rules and charts) and to
 //! `.xlsx` (one sheet per indicator), in the program's `relatorios/`.
 
+use crate::text::LocalDate;
 use eframe::egui::{self, Color32, RichText};
 use egui_plot::{Bar, BarChart, Legend, Plot};
 use utsim_lss_core::domain::SavingStatus;
@@ -1004,12 +1005,12 @@ impl App {
                 crate::reports::dress(
                     &mut doc,
                     &s.folder().me().name,
-                    &d.today.format_br(),
+                    &d.today.local(),
                     &s.folder().title(),
                 );
                 let tp = self.report_template(s);
                 let footer =
-                    (crate::text::l5::l5().printed_by)(&s.folder().me().name, &d.today.format_br());
+                    (crate::text::l5::l5().printed_by)(&s.folder().me().name, &d.today.local());
                 (
                     crate::app::screens::reports::file_name(&doc.title, "pdf"),
                     pdf::render(&doc, &tp, &footer),
