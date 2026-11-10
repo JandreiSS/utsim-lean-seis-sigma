@@ -436,7 +436,14 @@ pub fn a3_doc(state: &State, project: Id) -> Document {
 }
 
 /// The certificate of a certification (A4, printed by the program).
-pub fn certificate_doc(c: &Certification, person: &str, program: &str, issuer: &str) -> Document {
+/// `seal` is the line of the issuer's electronic signature, when the certificate has one.
+pub fn certificate_doc(
+    c: &Certification,
+    person: &str,
+    program: &str,
+    issuer: &str,
+    seal: Option<&str>,
+) -> Document {
     let t = crate::text::l5::l5();
     let mut d = Document::new(t.certificate, program);
     d.blocks
@@ -471,6 +478,9 @@ pub fn certificate_doc(c: &Certification, person: &str, program: &str, issuer: &
             rows,
             &[2.0, 2.0, 2.5],
         );
+    }
+    if let Some(line) = seal {
+        d.para(line);
     }
     d.signatures(vec![(t.issuer_sign)(issuer)]);
     d

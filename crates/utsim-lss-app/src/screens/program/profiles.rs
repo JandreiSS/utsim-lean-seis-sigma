@@ -55,6 +55,7 @@ impl App {
             )];
             self.commit(s, e);
         }
+        self.roles_signature(ui, s, d, &grants);
         ui.horizontal(|ui| {
             if let Some(p) = Self::member_combo(ui, d, "perfil_pessoa", self.l6.grant_person, false)
             {

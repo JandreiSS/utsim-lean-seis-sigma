@@ -29,6 +29,8 @@ pub struct Scan {
     pub portfolio: Option<PathBuf>,
     pub projects: Vec<(PathBuf, ProjectSummary)>,
     pub docs: Vec<Doc>,
+    /// The open cards of the person in every project: folder, project title, card.
+    pub mine: Vec<(PathBuf, String, utsim_lss_core::domain::Action)>,
 }
 
 /// Looks at the folder holding `root`: the portfolio folder (if any), and the summary and
@@ -60,6 +62,9 @@ pub fn scan(root: &Path, me: &Identity, cache: &Path) -> Scan {
         }
         if let Some(sum) = portfolio::summary(f.state(), f.project_id()) {
             out.docs.extend(lessons::docs_of(f.state(), f.project_id()));
+            for a in utsim_lss_core::kanban::assigned(f.state(), f.project_id(), me.person) {
+                out.mine.push((d.clone(), sum.title.clone(), a));
+            }
             out.projects.push((d, sum));
         }
     }
@@ -107,6 +112,62 @@ impl PortfolioUi {
 }
 
 impl App {
+    /// "Minhas ações": the open cards of this person in every project of the portfolio.
+    fn my_actions(&mut self, ui: &mut egui::Ui, s: &Session) {
+        let t = crate::text::l13::l13();
+        let Some(scan) = self.l1.portfolio.scan.as_ref() else {
+            return;
+        };
+        let today = s.today();
+        let here = s.folder().root().to_path_buf();
+        let mut open = None;
+        egui::CollapsingHeader::new((t.my_actions)(scan.mine.len()))
+            .id_salt("minhas_acoes")
+            .default_open(!scan.mine.is_empty())
+            .show(ui, |ui| {
+                if scan.mine.is_empty() {
+                    ui.weak(t.my_actions_none);
+                    return;
+                }
+                egui::Grid::new("minhas_acoes_grade")
+                    .num_columns(5)
+                    .striped(true)
+                    .spacing([12.0, 4.0])
+                    .show(ui, |ui| {
+                        for h in [t.col_project, t.col_action, t.col_due, t.col_column, ""] {
+                            ui.strong(h);
+                        }
+                        ui.end_row();
+                        for (path, project, a) in &scan.mine {
+                            ui.label(project);
+                            ui.label(&a.title);
+                            match a.due {
+                                Some(d) if d < today => {
+                                    ui.colored_label(
+                                        ui.visuals().error_fg_color,
+                                        (t.late)(&d.format_br()),
+                                    );
+                                }
+                                Some(d) => {
+                                    ui.label(d.format_br());
+                                }
+                                None => {
+                                    ui.weak("—");
+                                }
+                            }
+                            ui.label(crate::text::column_name(a.column));
+                            if *path != here && ui.small_button(t.open).clicked() {
+                                open = Some(path.clone());
+                            }
+                            ui.end_row();
+                        }
+                    });
+            });
+        if let Some(p) = open {
+            self.l1.portfolio.open_request = Some(p);
+        }
+    }
+
     pub(in crate::app) fn portfolio_l1(&mut self, ui: &mut egui::Ui, s: &mut Session) {
         let t = texts();
         let tl = l1();
@@ -123,6 +184,7 @@ impl App {
                 .portfolio
                 .ensure_scan(s.folder().root(), &me, &cache);
         }
+        self.my_actions(ui, s);
         ui.add_space(6.0);
         if s.folder().is_portfolio() {
             self.portfolio_body(ui, s);

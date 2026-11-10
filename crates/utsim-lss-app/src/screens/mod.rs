@@ -6,6 +6,8 @@
 //! through [`Session::apply`], hence through the journal.
 
 mod actions;
+// Stage P7, the team's signatures.
+mod assinaturas;
 mod charter;
 mod closure;
 pub mod inicio;
