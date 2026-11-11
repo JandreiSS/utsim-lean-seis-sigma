@@ -201,6 +201,8 @@ pub struct App {
     ctl: controle::CtlUi,
     /// The signing key of this computer (stage P7), once the identity is known.
     signer: Option<utsim_lss_store::assinatura::Signer>,
+    /// The gemba page, when turned on (P7).
+    gemba: screens::gemba::GembaUi,
 }
 
 impl App {
@@ -263,6 +265,7 @@ impl App {
             exp: screens::experiments::ExpUi::default(),
             ctl: controle::CtlUi::default(),
             signer: None,
+            gemba: screens::gemba::GembaUi::default(),
         };
         app.load_signer();
         app
@@ -465,6 +468,7 @@ impl App {
         }
         self.l1.close();
         self.l6.close();
+        self.gemba.close();
         self.screen = Screen::Start;
         self.drafts.clear();
         self.editing = None;
@@ -489,7 +493,11 @@ impl App {
 
     /// Switching to another project asked by a screen (after the frame, when no session is
     /// borrowed).
-    fn after_frame(&mut self, _ctx: &egui::Context) {
+    fn after_frame(&mut self, ctx: &egui::Context) {
+        match &self.session {
+            Some(s) => self.gemba.refresh(ctx, s),
+            None => self.gemba.close(),
+        }
         if let Some(p) = self.l1.portfolio.open_request.take() {
             self.close_project();
             self.open_project(&p);

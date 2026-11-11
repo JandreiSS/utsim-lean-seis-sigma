@@ -280,6 +280,14 @@ impl Session {
         Date::from_unix_ms(self.clock.now_ms(), self.clock.utc_offset_minutes())
     }
 
+    /// The time now, `HH:MM`, in the local time of this computer.
+    pub fn local_time(&self) -> String {
+        let minutes =
+            self.clock.now_ms().div_euclid(60_000) + i64::from(self.clock.utc_offset_minutes());
+        let m = minutes.rem_euclid(24 * 60);
+        format!("{:02}:{:02}", m / 60, m % 60)
+    }
+
     /// An id generator for edits that create several entities.
     pub fn ids(&self) -> impl FnMut() -> Id + '_ {
         || self.clock.new_id()

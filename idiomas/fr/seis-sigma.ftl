@@ -2164,6 +2164,27 @@ l9-soon = bientôt
 l9-yes = oui
 l9-no = non
 
+## text/l15.rs :: L15Texts
+
+l15-title = Accès par le réseau local
+l15-intro = Affiche les actions ouvertes du projet sur une page en lecture seule, pour une tablette ou un téléphone au gemba. La page se met à jour toute seule et personne ne modifie rien par elle. Fermée au réseau, seul cet ordinateur l'ouvre.
+l15-open_lan = Ouvrir au réseau local
+l15-open_lan_help = L'adresse comporte alors un jeton ; sans l'adresse complète, personne n'entre.
+l15-start = Allumer la page
+l15-stop = Éteindre
+l15-address = Adresse :
+l15-copy = Copier
+l15-copied = Adresse copiée.
+l15-lan_warning = Toute personne du réseau ayant cette adresse lit les actions du projet. Éteignez-la quand elle n'est plus utile.
+l15-local_only = Seul cet ordinateur ouvre la page.
+l15-error = Impossible d'allumer la page : { $e }
+l15-page_title = { $p } : actions ouvertes
+l15-page_updated = Mise à jour à { $t }. La page se recharge toutes les 30 secondes.
+l15-page_no_owner = Sans responsable
+l15-page_none = Aucune action ouverte.
+l15-page_where = Où
+l15-forbidden = Adresse sans le jeton d'accès. Demandez l'adresse complète à la personne qui a allumé la page.
+
 ## Textos fora das tabelas (tipos de dado, dias da semana, tela inicial)
 
 t-data_types-continuo = Continue

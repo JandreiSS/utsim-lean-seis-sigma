@@ -15,6 +15,7 @@ impl App {
     pub(in crate::app) fn team(&mut self, ui: &mut egui::Ui, s: &mut Session) {
         self.team_body(ui, s);
         self.integrity_section(ui, s);
+        self.gemba_section(ui, s);
     }
 
     fn team_body(&mut self, ui: &mut egui::Ui, s: &mut Session) {

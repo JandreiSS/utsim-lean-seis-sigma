@@ -10,6 +10,7 @@ mod actions;
 mod assinaturas;
 mod charter;
 mod closure;
+pub mod gemba;
 pub mod inicio;
 mod meetings;
 mod portfolio;

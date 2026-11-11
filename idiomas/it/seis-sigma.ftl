@@ -2165,6 +2165,27 @@ l9-soon = presto
 l9-yes = sì
 l9-no = no
 
+## text/l15.rs :: L15Texts
+
+l15-title = Accesso dalla rete locale
+l15-intro = Mostra le azioni aperte del progetto in una pagina di sola lettura, per un tablet o un telefono nel gemba. La pagina si aggiorna da sola e nessuno modifica tramite essa. Chiusa alla rete, la apre solo questo computer.
+l15-open_lan = Aprire alla rete locale
+l15-open_lan_help = L'indirizzo porta allora un token; senza l'indirizzo completo nessuno entra.
+l15-start = Accendere la pagina
+l15-stop = Spegnere
+l15-address = Indirizzo:
+l15-copy = Copia
+l15-copied = Indirizzo copiato.
+l15-lan_warning = Chiunque nella rete abbia questo indirizzo legge le azioni del progetto. Spegnetela quando non serve più.
+l15-local_only = Solo questo computer apre la pagina.
+l15-error = Impossibile accendere la pagina: { $e }
+l15-page_title = { $p }: azioni aperte
+l15-page_updated = Aggiornata alle { $t }. La pagina si ricarica ogni 30 secondi.
+l15-page_no_owner = Senza responsabile
+l15-page_none = Nessuna azione aperta.
+l15-page_where = Dove
+l15-forbidden = Indirizzo senza il token di accesso. Chiedete l'indirizzo completo a chi ha acceso la pagina.
+
 ## Textos fora das tabelas (tipos de dado, dias da semana, tela inicial)
 
 t-data_types-continuo = Continuo

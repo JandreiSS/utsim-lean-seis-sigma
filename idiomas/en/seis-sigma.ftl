@@ -2159,6 +2159,27 @@ l9-soon = coming soon
 l9-yes = yes
 l9-no = no
 
+## text/l15.rs :: L15Texts
+
+l15-title = Local network access
+l15-intro = Shows the project's open actions on a read-only page, for a tablet or phone at the gemba. The page refreshes by itself and nobody edits through it. Closed to the network, only this computer opens it.
+l15-open_lan = Open to the local network
+l15-open_lan_help = The address then carries a token; without the full address nobody gets in.
+l15-start = Turn the page on
+l15-stop = Turn off
+l15-address = Address:
+l15-copy = Copy
+l15-copied = Address copied.
+l15-lan_warning = Anyone on the network with this address can read the project's actions. Turn it off when it is no longer needed.
+l15-local_only = Only this computer opens the page.
+l15-error = Could not turn the page on: { $e }
+l15-page_title = { $p }: open actions
+l15-page_updated = Updated at { $t }. The page reloads every 30 seconds.
+l15-page_no_owner = No owner
+l15-page_none = No open action.
+l15-page_where = Where
+l15-forbidden = Address without the access token. Ask whoever turned the page on for the full address.
+
 ## Textos fora das tabelas (tipos de dado, dias da semana, tela inicial)
 
 t-data_types-continuo = Continuous
