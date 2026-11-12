@@ -49,6 +49,8 @@ pub struct Texts {
     // Navigation.
     pub nav_portfolio: &'static str,
     pub nav_project: &'static str,
+    pub nav_execution: &'static str,
+    pub nav_analysis: &'static str,
     pub nav_overview: &'static str,
     pub nav_charter: &'static str,
     pub nav_phases: &'static str,
@@ -779,6 +781,8 @@ fn construir_texts() -> Texts {
         change_identity: tx("t-change_identity"),
         nav_portfolio: tx("t-nav_portfolio"),
         nav_project: tx("t-nav_project"),
+        nav_execution: tx("t-nav_execution"),
+        nav_analysis: tx("t-nav_analysis"),
         nav_overview: tx("t-nav_overview"),
         nav_charter: tx("t-nav_charter"),
         nav_phases: tx("t-nav_phases"),
