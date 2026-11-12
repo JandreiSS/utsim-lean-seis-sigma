@@ -706,7 +706,7 @@ impl App {
         });
         egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui));
         egui::Panel::left("navegacao")
-            .default_size(190.0)
+            .default_size(utsim_ui_tema::navegacao::LARGURA)
             .resizable(false)
             .show(ui, |ui| self.navigation(ui, &s));
         if self.nav == Nav::Actions && self.selected_card.is_some() {
@@ -753,48 +753,79 @@ impl App {
         }
     }
 
+    /// The left bar: the common family sidebar (app name and icon, the project title and
+    /// the screens in groups).
     fn navigation(&mut self, ui: &mut egui::Ui, s: &Session) {
+        use utsim_ui_tema::navegacao::{Barra, Grupo, Item};
         let t = texts();
-        ui.add_space(6.0);
-        if ui
-            .selectable_label(self.nav == Nav::Portfolio, t.nav_portfolio)
-            .clicked()
-        {
-            self.nav = Nav::Portfolio;
+        // Labels with counts live here so the items can borrow them.
+        let actions = domain::of_project(s.state(), Kind::Action, s.project(), |id, _| id).len();
+        let label = |n: Nav| match n {
+            Nav::Actions if actions > 0 => format!("{} ({actions})", n.label()),
+            _ => n.label().to_string(),
+        };
+        let labels: Vec<(Nav, String)> = Nav::PROJECT.iter().map(|&n| (n, label(n))).collect();
+        let conflicts = s.state().conflicts.len();
+        let conflicts_label = format!("{} ({conflicts})", t.nav_conflicts);
+        let items = |of: &[Nav]| -> Vec<Item<'_, Nav>> {
+            labels
+                .iter()
+                .filter(|(n, _)| of.contains(n))
+                .map(|(n, l)| Item::novo(*n, l.as_str()))
+                .collect()
+        };
+        let mut top = vec![Item::novo(Nav::Portfolio, t.nav_portfolio)];
+        if conflicts > 0 {
+            top.push(Item::novo(Nav::Conflicts, conflicts_label.as_str()));
         }
-        ui.add_space(6.0);
-        if s.folder().is_portfolio() {
+        let mut groups = vec![Grupo {
+            titulo: None,
+            itens: top,
+        }];
+        if !s.folder().is_portfolio() {
             // A portfolio folder has no project screens.
-            return;
+            groups.push(Grupo {
+                titulo: Some(t.nav_project),
+                itens: items(&[
+                    Nav::Overview,
+                    Nav::Roadmap,
+                    Nav::Charter,
+                    Nav::Team,
+                    Nav::Phases,
+                ]),
+            });
+            groups.push(Grupo {
+                titulo: Some(t.nav_execution),
+                itens: items(&[
+                    Nav::Actions,
+                    Nav::Risks,
+                    Nav::Meetings,
+                    Nav::Schedule,
+                    Nav::Savings,
+                    Nav::Closure,
+                ]),
+            });
+            groups.push(Grupo {
+                titulo: Some(t.nav_analysis),
+                itens: items(&[
+                    Nav::Tools,
+                    Nav::Analyses,
+                    Nav::Experiments,
+                    Nav::Model,
+                    Nav::Reports,
+                    Nav::Data,
+                ]),
+            });
         }
-        ui.strong(t.nav_project);
-        for n in Nav::PROJECT {
-            let mut label = n.label().to_string();
-            if n == Nav::Actions {
-                let count =
-                    domain::of_project(s.state(), Kind::Action, s.project(), |id, _| id).len();
-                if count > 0 {
-                    label = format!("{label} ({count})");
-                }
-            }
-            if ui
-                .selectable_label(self.nav == n, format!("  {label}"))
-                .clicked()
-            {
-                self.nav = n;
-            }
+        let lines = [s.folder().title().to_string()];
+        Barra {
+            nome: t.app_name,
+            cor: screens::inicio::COR,
+            icone: Some(screens::inicio::ICONE),
+            linhas: &lines,
+            grupos: &groups,
         }
-        let n = s.state().conflicts.len();
-        if n > 0 {
-            ui.add_space(6.0);
-            let label = RichText::new(format!("{} ({n})", t.nav_conflicts)).color(theme::WARN);
-            if ui
-                .selectable_label(self.nav == Nav::Conflicts, label)
-                .clicked()
-            {
-                self.nav = Nav::Conflicts;
-            }
-        }
+        .mostrar(ui, &mut self.nav);
     }
 
     /// A text box bound to a field: shows the current value, keeps what is typed while it
