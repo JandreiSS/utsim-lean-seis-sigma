@@ -862,6 +862,7 @@ l10-exp_add_factor = Aggiungi fattore
 l10-exp_fraction = Piano
 l10-exp_full = fattoriale completo ({ $n } punti)
 l10-exp_frac = frazione 1/{ $den } ({ $n } punti)
+l10-exp_pb = Plackett-Burman, screening ({ $n } punti)
 l10-exp_replicates = Repliche
 l10-exp_centers = Punti centrali
 l10-exp_seed = Seme

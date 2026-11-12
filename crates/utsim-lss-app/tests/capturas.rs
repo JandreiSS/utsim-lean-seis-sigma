@@ -182,6 +182,7 @@ fn screens_and_reports_of_version_2() {
             },
         ],
         fraction: 0,
+        screening: false,
         replicates: 2,
         center_points: 0,
         seed: 7,

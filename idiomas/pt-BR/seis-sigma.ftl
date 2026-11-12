@@ -829,6 +829,7 @@ l10-exp_add_factor = Adicionar fator
 l10-exp_fraction = Plano
 l10-exp_full = fatorial completo ({ $n } pontos)
 l10-exp_frac = fração 1/{ $den } ({ $n } pontos)
+l10-exp_pb = Plackett-Burman, triagem ({ $n } pontos)
 l10-exp_replicates = Réplicas
 l10-exp_centers = Pontos centrais
 l10-exp_seed = Semente

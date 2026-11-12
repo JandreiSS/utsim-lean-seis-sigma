@@ -45,6 +45,7 @@ pub struct L10Texts {
     pub exp_fraction: S,
     pub exp_full: fn(usize) -> String,
     pub exp_frac: fn(usize, usize) -> String,
+    pub exp_pb: fn(usize) -> String,
     pub exp_replicates: S,
     pub exp_centers: S,
     pub exp_seed: S,
@@ -210,6 +211,7 @@ fn construir_l10_texts() -> L10Texts {
                 &[("den", (1usize << p).into()), ("n", n.into())],
             )
         },
+        exp_pb: |n| fx("l10-exp_pb", &[("n", n.into())]),
         exp_replicates: tx("l10-exp_replicates"),
         exp_centers: tx("l10-exp_centers"),
         exp_seed: tx("l10-exp_seed"),

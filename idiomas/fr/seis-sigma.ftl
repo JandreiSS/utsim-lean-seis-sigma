@@ -862,6 +862,7 @@ l10-exp_add_factor = Ajouter un facteur
 l10-exp_fraction = Plan
 l10-exp_full = factoriel complet ({ $n } points)
 l10-exp_frac = fraction 1/{ $den } ({ $n } points)
+l10-exp_pb = Plackett-Burman, criblage ({ $n } points)
 l10-exp_replicates = Répétitions
 l10-exp_centers = Points centraux
 l10-exp_seed = Graine

@@ -152,3 +152,45 @@ fn experiment_designed_run_on_the_model_and_analysed() {
     frames(&mut app, &ctx, 3);
     assert!(app.status().is_none_or(|(_, e)| !e), "{:?}", app.status());
 }
+
+#[test]
+fn plackett_burman_screening_drawn_and_saved() {
+    let dir = tempfile::tempdir().unwrap();
+    let ctx = egui::Context::default();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 12))),
+    );
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com"));
+    let work = dir.path().join("Drive");
+    std::fs::create_dir_all(&work).unwrap();
+    assert!(app.create_project(&work, "Triagem da solda", Approach::Dmaic));
+    app.nav = Nav::Experiments;
+    frames(&mut app, &ctx, 2);
+    // Eleven factors: past the table of fractions, so the screen keeps the screening.
+    app.set_experiment(ExperimentSpec {
+        name: "Triagem".into(),
+        factors: (0..11)
+            .map(|i| FactorSpec {
+                name: format!("Fator {}", i + 1),
+                low: "1".into(),
+                high: "2".into(),
+                ..FactorSpec::default()
+            })
+            .collect(),
+        replicates: 1,
+        center_points: 2,
+        seed: 9,
+        ..ExperimentSpec::default()
+    });
+    frames(&mut app, &ctx, 2);
+    assert!(app.status().is_none_or(|(_, e)| !e), "{:?}", app.status());
+    let sheet = app.save_experiment_sheet().unwrap();
+    let text = app.session().unwrap().folder().read_data(&sheet).unwrap();
+    let t = Table::parse(&text);
+    assert_eq!(t.rows.len(), 12 + 2);
+    let (f, resp) = experimentos::columns(&t.header);
+    assert_eq!(f.len(), 11);
+    assert!(resp.is_some());
+}

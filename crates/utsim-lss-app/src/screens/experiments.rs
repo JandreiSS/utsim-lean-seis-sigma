@@ -1,6 +1,6 @@
 //! The design of experiments of a project (P3, `docs/plano_lean_seis_sigma.md`, 2.4 and
-//! 3.4): the factors with their levels, the full factorial or a fraction with the alias
-//! structure, replicates, center points and the seed; the collection worksheet saved in
+//! 3.4): the factors with their levels, the full factorial, a fraction with the alias
+//! structure or a Plackett-Burman screening (up to 15 factors), replicates, center points and the seed; the collection worksheet saved in
 //! `dados/`; and, with a linked model, the experiment run on the simulator (a worker
 //! thread) and saved as a data set of origin Simulado. The analysis is the recipe
 //! "Experimento fatorial 2^k" of the analyses screen.
@@ -269,33 +269,55 @@ impl App {
             self.exp.spec.factors.remove(i);
         }
         let k = self.exp.spec.factors.len();
-        if k < experimentos::MAX_FACTORS && ui.button(t.exp_add_factor).clicked() {
+        if k < experimentos::MAX_SCREENING && ui.button(t.exp_add_factor).clicked() {
             self.exp.spec.factors.push(FactorSpec {
                 name: utsim_stats::doe::letter(k).to_string(),
                 ..FactorSpec::default()
             });
         }
         let k = self.exp.spec.factors.len();
-        let fractions = ExperimentSpec::fractions(k);
+        // The plan: a fraction `p` (0 for the full factorial), or `None` for the screening.
+        let fractions: Vec<usize> = if k <= experimentos::MAX_FACTORS {
+            ExperimentSpec::fractions(k)
+        } else {
+            Vec::new()
+        };
+        if fractions.is_empty() {
+            self.exp.spec.screening = true;
+        }
         if !fractions.contains(&self.exp.spec.fraction) {
             self.exp.spec.fraction = 0;
         }
-        let label = |p: usize| {
-            if p == 0 {
-                (t.exp_full)(1 << k)
-            } else {
-                (t.exp_frac)(p, 1 << (k - p))
-            }
+        let screening = ExperimentSpec::screening_runs(k);
+        let label = |c: Option<usize>| match c {
+            None => (t.exp_pb)(screening.unwrap_or(0)),
+            Some(0) => (t.exp_full)(1 << k),
+            Some(p) => (t.exp_frac)(p, 1 << (k - p)),
+        };
+        let mut choice = if self.exp.spec.screening {
+            None
+        } else {
+            Some(self.exp.spec.fraction)
         };
         ui.horizontal_wrapped(|ui| {
             ui.label(t.exp_fraction);
             egui::ComboBox::from_id_salt("fracao")
-                .selected_text(label(self.exp.spec.fraction))
+                .selected_text(label(choice))
                 .show_ui(ui, |ui| {
                     for p in &fractions {
-                        ui.selectable_value(&mut self.exp.spec.fraction, *p, label(*p));
+                        ui.selectable_value(&mut choice, Some(*p), label(Some(*p)));
+                    }
+                    if screening.is_some() {
+                        ui.selectable_value(&mut choice, None, label(None));
                     }
                 });
+            match choice {
+                None => self.exp.spec.screening = true,
+                Some(p) => {
+                    self.exp.spec.screening = false;
+                    self.exp.spec.fraction = p;
+                }
+            }
             for (l, v) in [
                 (t.exp_replicates, &mut self.exp.replicates),
                 (t.exp_centers, &mut self.exp.centers),
@@ -312,7 +334,7 @@ impl App {
             Ok(d) => {
                 ui.label((t.exp_runs)(d.runs.len()));
                 ui.strong(t.exp_aliases);
-                for l in experimentos::alias_lines(&d) {
+                for l in experimentos::alias_lines(&spec, &d) {
                     ui.monospace(l);
                 }
             }

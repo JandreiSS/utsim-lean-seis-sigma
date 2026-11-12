@@ -859,6 +859,7 @@ l10-exp_add_factor = Add factor
 l10-exp_fraction = Design
 l10-exp_full = full factorial ({ $n } points)
 l10-exp_frac = 1/{ $den } fraction ({ $n } points)
+l10-exp_pb = Plackett-Burman screening ({ $n } points)
 l10-exp_replicates = Replicates
 l10-exp_centers = Center points
 l10-exp_seed = Seed
