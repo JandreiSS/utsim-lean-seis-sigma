@@ -20,7 +20,7 @@ use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 26] = [
+pub const KINDS: [&str; 28] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -47,6 +47,8 @@ pub const KINDS: [&str; 26] = [
     "anova_dois_fatores",
     "regressao",
     "tamanho_amostra",
+    "ewma",
+    "cusum",
 ];
 
 /// The analyses screen's state.
@@ -426,6 +428,19 @@ impl App {
                     numbox(ui, x.p2_power, 2, &mut u.numbers);
                     numbox(ui, x.p2_alpha, 3, &mut u.numbers);
                 }
+                "ewma" | "cusum" => {
+                    let x = l10();
+                    Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
+                    if k == "ewma" {
+                        numbox(ui, x.p2_lambda, 0, &mut u.numbers);
+                        numbox(ui, x.p2_width, 1, &mut u.numbers);
+                    } else {
+                        numbox(ui, x.p2_k, 0, &mut u.numbers);
+                        numbox(ui, x.p2_h, 1, &mut u.numbers);
+                    }
+                    numbox(ui, x.p2_target_opt, 2, &mut u.numbers);
+                    numbox(ui, x.p2_sigma_opt, 3, &mut u.numbers);
+                }
                 _ => {}
             }
         });
@@ -555,6 +570,20 @@ impl App {
                     alpha: n(3).unwrap_or(0.05),
                 }
             }
+            "ewma" => Recipe::Ewma {
+                col: u.a,
+                lambda: n(0).unwrap_or(0.2),
+                l: n(1).unwrap_or(3.0),
+                target: n(2),
+                sigma: n(3),
+            },
+            "cusum" => Recipe::Cusum {
+                col: u.a,
+                k: n(0).unwrap_or(0.5),
+                h: n(1).unwrap_or(5.0),
+                target: n(2),
+                sigma: n(3),
+            },
             _ => return Err("análise desconhecida".into()),
         })
     }
@@ -585,18 +614,34 @@ impl App {
             .filter(|(_, y)| y.is_finite())
             .map(|(i, y)| [i as f64 + 1.0, *y])
             .collect();
-        let sig: PlotPoints = o
-            .signals
-            .iter()
-            .filter_map(|i| o.series.get(*i).map(|y| [*i as f64 + 1.0, *y]))
-            .collect();
+        let sig: PlotPoints = if o.signal_marks.is_empty() {
+            o.signals
+                .iter()
+                .filter_map(|i| o.series.get(*i).map(|y| [*i as f64 + 1.0, *y]))
+                .collect()
+        } else {
+            o.signal_marks
+                .iter()
+                .map(|(i, y)| [*i as f64 + 1.0, *y])
+                .collect()
+        };
         let limits = o.limits;
+        let extra = o.lines_on_chart.clone();
         Plot::new("grafico_analise").height(220.0).show(ui, |p| {
             p.line(Line::new(t.values, pts));
             if let Some((c, l, u)) = limits {
                 p.hline(HLine::new(t.center, c));
                 p.hline(HLine::new(t.lcl, l));
                 p.hline(HLine::new(t.ucl, u));
+            }
+            for (name, ys) in extra {
+                let line: PlotPoints = ys
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, y)| y.is_finite())
+                    .map(|(i, y)| [i as f64 + 1.0, *y])
+                    .collect();
+                p.line(Line::new(name, line));
             }
             p.points(Points::new(t.signals, sig).radius(4.0).color(theme::WARN));
         });

@@ -591,8 +591,8 @@ pub fn project_tables(state: &State, project: Id) -> Vec<(String, Vec<String>, V
 
 // --- Charts (version 2) ----------------------------------------------------------------------
 
-/// The charts of the result of an analysis: the values with the limits and the signals
-/// (control chart, run of the data) and the further plots (effects of an experiment).
+/// The charts of the result of an analysis: the values with the limits, the further lines
+/// (EWMA limits, the other side of a CUSUM) and the signals (control chart, run of the data) and the further plots (effects of an experiment).
 pub fn outcome_charts(o: &analises::Outcome, title: &str) -> Vec<Chart> {
     let mut v = Vec::new();
     if !o.series.is_empty() {
@@ -606,7 +606,9 @@ pub fn outcome_charts(o: &analises::Outcome, title: &str) -> Vec<Chart> {
             title: title.to_string(),
             bars: false,
             labels: (1..=o.series.len()).map(|i| i.to_string()).collect(),
-            series: vec![("valores".to_string(), o.series.clone())],
+            series: std::iter::once(("valores".to_string(), o.series.clone()))
+                .chain(o.lines_on_chart.iter().cloned())
+                .collect(),
             hlines,
             marks: o.signals.clone(),
             ..Chart::default()

@@ -938,6 +938,12 @@ l10-p2_p1 = Proportion 1
 l10-p2_p2 = Proportion 2
 l10-p2_power = Power (0.8)
 l10-p2_alpha = Significance (0.05)
+l10-p2_lambda = λ, weight of the new point (0.2)
+l10-p2_width = L, width of the limits in σ (3)
+l10-p2_k = k, slack in σ (0.5)
+l10-p2_h = h, decision limit in σ (5)
+l10-p2_target_opt = Target (empty: mean of the data)
+l10-p2_sigma_opt = σ (empty: from the moving range)
 l10-items_title = Item analysis for this class
 l10-items_intro = Difficulty: how many got it right. Discrimination: correct answers of the best 27 % minus those of the worst 27 % (by the rest of the exam); the item-rest correlation says the same in another way. A good question is answered correctly more often by those who know.
 l10-items_question = Question
@@ -1318,6 +1324,8 @@ l3-kind_name-22 = Friedman
 l3-kind_name-23 = Two-way ANOVA
 l3-kind_name-24 = Linear regression
 l3-kind_name-25 = Sample size and power
+l3-kind_name-ewma = EWMA chart
+l3-kind_name-cusum = CUSUM chart
 
 ## text/l4.rs :: L4Texts
 

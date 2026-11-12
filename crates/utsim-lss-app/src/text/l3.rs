@@ -143,6 +143,8 @@ pub fn kind_name(k: &str) -> &'static str {
         "anova_dois_fatores" => tx("l3-kind_name-23"),
         "regressao" => tx("l3-kind_name-24"),
         "tamanho_amostra" => tx("l3-kind_name-25"),
+        "ewma" => tx("l3-kind_name-ewma"),
+        "cusum" => tx("l3-kind_name-cusum"),
         _ => "?",
     }
 }

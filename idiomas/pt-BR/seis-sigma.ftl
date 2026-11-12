@@ -905,6 +905,12 @@ l10-p2_p1 = Proporção 1
 l10-p2_p2 = Proporção 2
 l10-p2_power = Poder (0,8)
 l10-p2_alpha = Significância (0,05)
+l10-p2_lambda = λ, peso do ponto novo (0,2)
+l10-p2_width = L, largura dos limites em σ (3)
+l10-p2_k = k, folga em σ (0,5)
+l10-p2_h = h, limite de decisão em σ (5)
+l10-p2_target_opt = Alvo (vazio: média dos dados)
+l10-p2_sigma_opt = σ (vazio: pela amplitude móvel)
 l10-items_title = Análise dos itens desta turma
 l10-items_intro = Dificuldade: quantos acertaram. Discriminação: acertos dos 27 % melhores menos dos 27 % piores (pelo resto da prova); a correlação item-resto diz o mesmo de outro jeito. Uma questão boa é acertada mais pelos que sabem.
 l10-items_question = Questão
@@ -1280,6 +1286,8 @@ l3-kind_name-22 = Friedman
 l3-kind_name-23 = ANOVA de dois fatores
 l3-kind_name-24 = Regressão linear
 l3-kind_name-25 = Tamanho de amostra e poder
+l3-kind_name-ewma = Carta EWMA
+l3-kind_name-cusum = Carta CUSUM
 
 ## text/l4.rs :: L4Texts
 
