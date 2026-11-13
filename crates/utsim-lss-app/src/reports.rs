@@ -662,7 +662,12 @@ pub fn analysis_doc(state: &State, project: Id, a: &analises::Analysis) -> Docum
         a.outcome
             .lines
             .iter()
-            .map(|(k, v)| vec![k.clone(), crate::app::screens::show_number(*v)])
+            .map(|(k, v)| {
+                vec![
+                    utsim_lss_core::texto::rotulo(k),
+                    crate::app::screens::show_number(*v),
+                ]
+            })
             .collect(),
         &[2.0, 1.0],
     );
