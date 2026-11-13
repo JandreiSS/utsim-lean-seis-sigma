@@ -600,7 +600,7 @@ impl App {
         ui.strong(&o.verdict);
         egui::Grid::new("resultado").striped(true).show(ui, |ui| {
             for (l, v) in &o.lines {
-                ui.label(l);
+                ui.label(utsim_lss_core::texto::rotulo(l));
                 ui.label(crate::app::screens::show_number(*v));
                 ui.end_row();
             }
