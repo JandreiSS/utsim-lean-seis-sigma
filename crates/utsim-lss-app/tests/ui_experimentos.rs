@@ -194,3 +194,41 @@ fn plackett_burman_screening_drawn_and_saved() {
     assert_eq!(f.len(), 11);
     assert!(resp.is_some());
 }
+
+#[test]
+fn response_surface_drawn_and_saved() {
+    let dir = tempfile::tempdir().unwrap();
+    let ctx = egui::Context::default();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 13))),
+    );
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com"));
+    let work = dir.path().join("Drive");
+    std::fs::create_dir_all(&work).unwrap();
+    assert!(app.create_project(&work, "Ponto ótimo do forno", Approach::Dmaic));
+    app.nav = Nav::Experiments;
+    frames(&mut app, &ctx, 2);
+    let f = |n: &str, lo: &str, hi: &str| FactorSpec {
+        name: n.into(),
+        low: lo.into(),
+        high: hi.into(),
+        ..FactorSpec::default()
+    };
+    app.set_experiment(ExperimentSpec {
+        name: "Forno".into(),
+        factors: vec![f("Temperatura", "180", "200"), f("Tempo", "10", "14")],
+        surface: Some(experimentos::Surface::CentralComposite),
+        center_points: 5,
+        seed: 2,
+        ..ExperimentSpec::default()
+    });
+    frames(&mut app, &ctx, 2);
+    assert!(app.status().is_none_or(|(_, e)| !e), "{:?}", app.status());
+    let sheet = app.save_experiment_sheet().unwrap();
+    let text = app.session().unwrap().folder().read_data(&sheet).unwrap();
+    let t = Table::parse(&text);
+    assert_eq!(t.rows.len(), 4 + 4 + 5);
+    assert_eq!(t.rows.iter().filter(|r| r[2] == "axial").count(), 4);
+}

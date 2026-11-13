@@ -860,6 +860,9 @@ l10-exp_fraction = Plan
 l10-exp_full = factorial completo ({ $n } puntos)
 l10-exp_frac = fracción 1/{ $den } ({ $n } puntos)
 l10-exp_pb = Plackett-Burman, cribado ({ $n } puntos)
+l10-exp_ccd = compuesto central rotable
+l10-exp_face = compuesto centrado en las caras (tres niveles)
+l10-exp_bb = Box-Behnken
 l10-exp_replicates = Réplicas
 l10-exp_centers = Puntos centrales
 l10-exp_seed = Semilla
@@ -1333,6 +1336,7 @@ l3-kind_name-24 = Regresión lineal
 l3-kind_name-25 = Tamaño de muestra y potencia
 l3-kind_name-ewma = Carta EWMA
 l3-kind_name-cusum = Carta CUSUM
+l3-kind_name-surface = Superficie de respuesta
 
 ## text/l4.rs :: L4Texts
 

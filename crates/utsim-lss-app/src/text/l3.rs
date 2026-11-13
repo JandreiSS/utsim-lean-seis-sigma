@@ -145,6 +145,7 @@ pub fn kind_name(k: &str) -> &'static str {
         "tamanho_amostra" => tx("l3-kind_name-25"),
         "ewma" => tx("l3-kind_name-ewma"),
         "cusum" => tx("l3-kind_name-cusum"),
+        "superficie_resposta" => tx("l3-kind_name-surface"),
         _ => "?",
     }
 }

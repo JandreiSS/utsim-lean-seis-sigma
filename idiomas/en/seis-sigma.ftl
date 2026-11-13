@@ -860,6 +860,9 @@ l10-exp_fraction = Design
 l10-exp_full = full factorial ({ $n } points)
 l10-exp_frac = 1/{ $den } fraction ({ $n } points)
 l10-exp_pb = Plackett-Burman screening ({ $n } points)
+l10-exp_ccd = rotatable central composite
+l10-exp_face = face-centered central composite (three levels)
+l10-exp_bb = Box-Behnken
 l10-exp_replicates = Replicates
 l10-exp_centers = Center points
 l10-exp_seed = Seed
@@ -1329,6 +1332,7 @@ l3-kind_name-24 = Linear regression
 l3-kind_name-25 = Sample size and power
 l3-kind_name-ewma = EWMA chart
 l3-kind_name-cusum = CUSUM chart
+l3-kind_name-surface = Response surface
 
 ## text/l4.rs :: L4Texts
 

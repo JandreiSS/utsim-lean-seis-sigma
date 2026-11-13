@@ -20,7 +20,7 @@ use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 28] = [
+pub const KINDS: [&str; 29] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -49,6 +49,7 @@ pub const KINDS: [&str; 28] = [
     "tamanho_amostra",
     "ewma",
     "cusum",
+    "superficie_resposta",
 ];
 
 /// The analyses screen's state.
@@ -346,7 +347,7 @@ impl App {
                         Self::column_combo(ui, "col_d", x.standard, table, &mut u.d);
                     }
                 }
-                "experimento_fatorial" => {
+                "experimento_fatorial" | "superficie_resposta" => {
                     let x = l10();
                     if u.factors.is_empty() {
                         let (f, r) = utsim_lss_core::experimentos::columns(&table.header);
@@ -371,7 +372,9 @@ impl App {
                         }
                     }
                     Self::column_combo(ui, "col_a", x.fact_response, table, &mut u.a);
-                    numbox(ui, x.fact_order, 0, &mut u.numbers);
+                    if k == "experimento_fatorial" {
+                        numbox(ui, x.fact_order, 0, &mut u.numbers);
+                    }
                 }
                 "variancias" | "kruskal_wallis" | "mediana_mood" => {
                     Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
@@ -528,6 +531,10 @@ impl App {
                 factors: u.factors.clone(),
                 response: u.a,
                 order: n(0).map_or(2, |x| x.max(1.0) as usize),
+            },
+            "superficie_resposta" => Recipe::Surface {
+                factors: u.factors.clone(),
+                response: u.a,
             },
             "variancias" => Recipe::Variances {
                 col: u.a,

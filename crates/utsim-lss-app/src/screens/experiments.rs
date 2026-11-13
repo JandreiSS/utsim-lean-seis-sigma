@@ -1,6 +1,7 @@
 //! The design of experiments of a project (P3, `docs/plano_lean_seis_sigma.md`, 2.4 and
 //! 3.4): the factors with their levels, the full factorial, a fraction with the alias
-//! structure or a Plackett-Burman screening (up to 15 factors), replicates, center points and the seed; the collection worksheet saved in
+//! structure, a Plackett-Burman screening (up to 15 factors) or a response surface
+//! (central composite or Box-Behnken), replicates, center points and the seed; the collection worksheet saved in
 //! `dados/`; and, with a linked model, the experiment run on the simulator (a worker
 //! thread) and saved as a data set of origin Simulado. The analysis is the recipe
 //! "Experimento fatorial 2^k" of the analyses screen.
@@ -9,7 +10,7 @@ use std::sync::mpsc::{self, Receiver};
 
 use eframe::egui;
 use utsim_lss_core::dados;
-use utsim_lss_core::experimentos::{self, ExperimentSpec, FactorSpec};
+use utsim_lss_core::experimentos::{self, ExperimentSpec, FactorSpec, Surface};
 use utsim_lss_core::simulacao;
 
 use super::super::App;
@@ -98,7 +99,7 @@ impl App {
 
     fn save_sheet(&mut self, s: &mut Session) -> Option<String> {
         let spec = self.exp.read();
-        let d = match spec.design() {
+        let d = match spec.plan() {
             Ok(d) => d,
             Err(e) => {
                 self.set_status(e.to_string(), true);
@@ -133,10 +134,7 @@ impl App {
             return false;
         };
         let spec = self.exp.read();
-        let points = match spec
-            .design()
-            .and_then(|d| experimentos::scenarios(&spec, &d))
-        {
+        let points = match spec.plan().and_then(|d| experimentos::scenarios(&spec, &d)) {
             Ok(p) => p,
             Err(e) => {
                 self.set_status(e.to_string(), true);
@@ -276,28 +274,41 @@ impl App {
             });
         }
         let k = self.exp.spec.factors.len();
-        // The plan: a fraction `p` (0 for the full factorial), or `None` for the screening.
+        // The plan: a fraction `p` (0 for the full factorial), the screening or a surface.
+        #[derive(Clone, Copy, PartialEq)]
+        enum Choice {
+            Fraction(usize),
+            Screening,
+            Surface(Surface),
+        }
         let fractions: Vec<usize> = if k <= experimentos::MAX_FACTORS {
             ExperimentSpec::fractions(k)
         } else {
             Vec::new()
         };
-        if fractions.is_empty() {
+        let surfaces: Vec<Surface> = Surface::ALL.into_iter().filter(|s| s.fits(k)).collect();
+        if self.exp.spec.surface.is_some_and(|s| !s.fits(k)) {
+            self.exp.spec.surface = None;
+        }
+        if fractions.is_empty() && self.exp.spec.surface.is_none() {
             self.exp.spec.screening = true;
         }
         if !fractions.contains(&self.exp.spec.fraction) {
             self.exp.spec.fraction = 0;
         }
         let screening = ExperimentSpec::screening_runs(k);
-        let label = |c: Option<usize>| match c {
-            None => (t.exp_pb)(screening.unwrap_or(0)),
-            Some(0) => (t.exp_full)(1 << k),
-            Some(p) => (t.exp_frac)(p, 1 << (k - p)),
+        let label = |c: Choice| match c {
+            Choice::Screening => (t.exp_pb)(screening.unwrap_or(0)),
+            Choice::Fraction(0) => (t.exp_full)(1 << k),
+            Choice::Fraction(p) => (t.exp_frac)(p, 1 << (k - p)),
+            Choice::Surface(Surface::CentralComposite) => t.exp_ccd.to_string(),
+            Choice::Surface(Surface::FaceCentered) => t.exp_face.to_string(),
+            Choice::Surface(Surface::BoxBehnken) => t.exp_bb.to_string(),
         };
-        let mut choice = if self.exp.spec.screening {
-            None
-        } else {
-            Some(self.exp.spec.fraction)
+        let mut choice = match (self.exp.spec.surface, self.exp.spec.screening) {
+            (Some(s), _) => Choice::Surface(s),
+            (None, true) => Choice::Screening,
+            (None, false) => Choice::Fraction(self.exp.spec.fraction),
         };
         ui.horizontal_wrapped(|ui| {
             ui.label(t.exp_fraction);
@@ -305,18 +316,32 @@ impl App {
                 .selected_text(label(choice))
                 .show_ui(ui, |ui| {
                     for p in &fractions {
-                        ui.selectable_value(&mut choice, Some(*p), label(Some(*p)));
+                        let c = Choice::Fraction(*p);
+                        ui.selectable_value(&mut choice, c, label(c));
                     }
                     if screening.is_some() {
-                        ui.selectable_value(&mut choice, None, label(None));
+                        ui.selectable_value(
+                            &mut choice,
+                            Choice::Screening,
+                            label(Choice::Screening),
+                        );
+                    }
+                    for s in &surfaces {
+                        let c = Choice::Surface(*s);
+                        ui.selectable_value(&mut choice, c, label(c));
                     }
                 });
             match choice {
-                None => self.exp.spec.screening = true,
-                Some(p) => {
+                Choice::Screening => {
+                    self.exp.spec.screening = true;
+                    self.exp.spec.surface = None;
+                }
+                Choice::Fraction(p) => {
                     self.exp.spec.screening = false;
+                    self.exp.spec.surface = None;
                     self.exp.spec.fraction = p;
                 }
+                Choice::Surface(s) => self.exp.spec.surface = Some(s),
             }
             for (l, v) in [
                 (t.exp_replicates, &mut self.exp.replicates),
@@ -330,11 +355,11 @@ impl App {
             ui.add(egui::TextEdit::singleline(&mut self.exp.spec.response).desired_width(120.0));
         });
         let spec = self.exp.read();
-        match spec.design() {
+        match spec.plan() {
             Ok(d) => {
                 ui.label((t.exp_runs)(d.runs.len()));
                 ui.strong(t.exp_aliases);
-                for l in experimentos::alias_lines(&spec, &d) {
+                for l in &d.lines {
                     ui.monospace(l);
                 }
             }
