@@ -20,7 +20,7 @@ use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 29] = [
+pub const KINDS: [&str; 30] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -50,7 +50,20 @@ pub const KINDS: [&str; 29] = [
     "ewma",
     "cusum",
     "superficie_resposta",
+    "desejabilidade",
 ];
+
+/// One response of the desirability form: its column, goal (0 maximize, 1 minimize,
+/// 2 target), limits and importance as typed.
+#[derive(Default, Clone)]
+pub struct GoalUi {
+    pub col: usize,
+    pub kind: usize,
+    pub low: String,
+    pub target: String,
+    pub high: String,
+    pub importance: String,
+}
 
 /// The analyses screen's state.
 #[derive(Default)]
@@ -68,6 +81,7 @@ pub struct L3Ui {
     pub numbers: [String; 4],
     pub chart: usize,
     pub flag: bool,
+    pub goals: Vec<GoalUi>,
     pub result: Option<(Recipe, Result<Outcome, String>)>,
     pub name: String,
     pub justification: String,
@@ -84,6 +98,7 @@ impl App {
         self.l3.dataset = Some(dataset);
         self.l3.kind = KINDS.iter().position(|k| *k == kind).unwrap_or(0);
         self.l3.factors.clear();
+        self.l3.goals.clear();
     }
 
     pub(in crate::app) fn analyses_screen(&mut self, ui: &mut egui::Ui, s: &mut Session) {
@@ -376,6 +391,76 @@ impl App {
                         numbox(ui, x.fact_order, 0, &mut u.numbers);
                     }
                 }
+                "desejabilidade" => {
+                    let x = l10();
+                    if u.factors.is_empty() {
+                        let (f, r) = utsim_lss_core::experimentos::columns(&table.header);
+                        if f.len() >= 2 {
+                            u.factors = f;
+                            if u.goals.is_empty() {
+                                u.goals.push(GoalUi {
+                                    col: r.unwrap_or(0),
+                                    importance: "1".into(),
+                                    ..GoalUi::default()
+                                });
+                            }
+                        }
+                    }
+                    ui.label(x.fact_factors);
+                    for (i, h) in table.header.iter().enumerate() {
+                        let mut on = u.factors.contains(&i);
+                        if ui.checkbox(&mut on, h).changed() {
+                            if on {
+                                u.factors.push(i);
+                                u.factors.sort();
+                            } else {
+                                u.factors.retain(|c| *c != i);
+                            }
+                        }
+                    }
+                    let goals = [x.des_max, x.des_min, x.des_on_target];
+                    let mut remove = None;
+                    for (i, g) in u.goals.iter_mut().enumerate() {
+                        ui.horizontal_wrapped(|ui| {
+                            Self::column_combo(
+                                ui,
+                                &format!("des_col{i}"),
+                                x.des_response,
+                                table,
+                                &mut g.col,
+                            );
+                            egui::ComboBox::from_id_salt(format!("des_obj{i}"))
+                                .selected_text(goals[g.kind.min(2)])
+                                .show_ui(ui, |ui| {
+                                    for (j, l) in goals.iter().enumerate() {
+                                        ui.selectable_value(&mut g.kind, j, *l);
+                                    }
+                                });
+                            let mut boxes = vec![(x.des_low, &mut g.low)];
+                            if g.kind == 2 {
+                                boxes.push((x.des_target, &mut g.target));
+                            }
+                            boxes.push((x.des_high, &mut g.high));
+                            boxes.push((x.des_importance, &mut g.importance));
+                            for (l, v) in boxes {
+                                ui.label(l);
+                                ui.add(egui::TextEdit::singleline(v).desired_width(60.0));
+                            }
+                            if ui.small_button("✖").clicked() {
+                                remove = Some(i);
+                            }
+                        });
+                    }
+                    if let Some(i) = remove {
+                        u.goals.remove(i);
+                    }
+                    if ui.button(x.des_add).clicked() {
+                        u.goals.push(GoalUi {
+                            importance: "1".into(),
+                            ..GoalUi::default()
+                        });
+                    }
+                }
                 "variancias" | "kruskal_wallis" | "mediana_mood" => {
                     Self::column_combo(ui, "col_a", t.column, table, &mut u.a);
                     Self::column_combo(ui, "col_b", t.group, table, &mut u.b);
@@ -532,6 +617,33 @@ impl App {
                 response: u.a,
                 order: n(0).map_or(2, |x| x.max(1.0) as usize),
             },
+            "desejabilidade" => {
+                let x = l10();
+                let v = |s: &str, what: &str| num(s).ok_or_else(|| (l3().fill)(what));
+                let mut responses = Vec::new();
+                for g in &u.goals {
+                    let low = v(&g.low, x.des_low)?;
+                    let high = v(&g.high, x.des_high)?;
+                    let goal = match g.kind {
+                        0 => analises::Goal::Maximize { low, high },
+                        1 => analises::Goal::Minimize { low, high },
+                        _ => analises::Goal::Target {
+                            low,
+                            target: v(&g.target, x.des_target)?,
+                            high,
+                        },
+                    };
+                    responses.push(analises::ResponseGoal {
+                        col: g.col,
+                        goal,
+                        importance: num(&g.importance).unwrap_or(1.0),
+                    });
+                }
+                Recipe::Desirability {
+                    factors: u.factors.clone(),
+                    responses,
+                }
+            }
             "superficie_resposta" => Recipe::Surface {
                 factors: u.factors.clone(),
                 response: u.a,

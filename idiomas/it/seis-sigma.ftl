@@ -883,6 +883,15 @@ l10-exp_no_model = Collega un modello nella schermata Modello UTSim per eseguirv
 l10-exp_saved_sim = Risultati salvati come insieme simulato: analizzali in Dati e analisi con "Esperimento fattoriale 2^k"
 l10-exp_analyse_hint = Dopo aver compilato e importato il foglio, usa "Esperimento fattoriale 2^k" in Dati e analisi: l'app individua da sola le colonne A, B, C...
 l10-fact_factors = Fattori
+l10-des_response = Risposta
+l10-des_max = massimizzare
+l10-des_min = minimizzare
+l10-des_on_target = raggiungere l'obiettivo
+l10-des_low = limite inferiore
+l10-des_target = obiettivo
+l10-des_high = limite superiore
+l10-des_importance = importanza
+l10-des_add = + risposta
 l10-fact_response = Risposta
 l10-fact_order = Interazioni fino all'ordine
 l10-vsm_current = Stato attuale
@@ -1339,6 +1348,7 @@ l3-kind_name-25 = Dimensione del campione e potenza
 l3-kind_name-ewma = Carta EWMA
 l3-kind_name-cusum = Carta CUSUM
 l3-kind_name-surface = Superficie di risposta
+l3-kind_name-desirability = Desiderabilità di più risposte
 
 ## text/l4.rs :: L4Texts
 

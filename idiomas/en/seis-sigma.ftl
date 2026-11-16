@@ -880,6 +880,15 @@ l10-exp_no_model = Link a model in the UTSim model screen to run the experiment 
 l10-exp_saved_sim = Results kept as a simulated dataset: analyse them in Data and analyses with "2^k factorial experiment"
 l10-exp_analyse_hint = After filling in and importing the sheet, use "2^k factorial experiment" in Data and analyses: the app finds the columns A, B, C... by itself.
 l10-fact_factors = Factors
+l10-des_response = Response
+l10-des_max = maximize
+l10-des_min = minimize
+l10-des_on_target = hit the target
+l10-des_low = lower limit
+l10-des_target = target
+l10-des_high = upper limit
+l10-des_importance = importance
+l10-des_add = + response
 l10-fact_response = Response
 l10-fact_order = Interactions up to order
 l10-vsm_current = Current state
@@ -1333,6 +1342,7 @@ l3-kind_name-25 = Sample size and power
 l3-kind_name-ewma = EWMA chart
 l3-kind_name-cusum = CUSUM chart
 l3-kind_name-surface = Response surface
+l3-kind_name-desirability = Desirability of several responses
 
 ## text/l4.rs :: L4Texts
 
