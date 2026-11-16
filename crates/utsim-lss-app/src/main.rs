@@ -5,25 +5,19 @@
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use eframe::egui;
 use utsim_lss_app::App;
 use utsim_lss_app::text::texts;
 use utsim_lss_store::user::AppDirs;
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    match args.first().map(String::as_str) {
-        Some("--versao" | "--version" | "-V") => {
-            println!("utsim-seis-sigma {}", env!("CARGO_PKG_VERSION"));
-            return ExitCode::SUCCESS;
-        }
-        Some("--ajuda" | "--help" | "-h") => {
-            println!(
-                "utsim-seis-sigma [pasta.lss]\n  sem argumentos: abre a janela\n  pasta.lss: abre esse projeto"
-            );
-            return ExitCode::SUCCESS;
-        }
-        _ => {}
+    if let Some(c) = utsim_ui_tema::janela::versao_ou_ajuda(
+        args.first().map(String::as_str),
+        "utsim-seis-sigma",
+        env!("CARGO_PKG_VERSION"),
+        "utsim-seis-sigma [pasta.lss]\n  sem argumentos: abre a janela\n  pasta.lss: abre esse projeto",
+    ) {
+        return c;
     }
     let Some(dirs) = AppDirs::standard() else {
         eprintln!("erro: não encontrei a pasta do usuário");
@@ -32,11 +26,7 @@ fn main() -> ExitCode {
     let open = args.first().map(PathBuf::from);
     let name = texts().app_name;
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title(name)
-            .with_inner_size([1180.0, 760.0])
-            .with_min_inner_size([760.0, 480.0])
-            .with_maximized(true),
+        viewport: utsim_ui_tema::janela::viewport(name, [1180.0, 760.0], [760.0, 480.0], None),
         ..Default::default()
     };
     let result = eframe::run_native(
@@ -52,11 +42,5 @@ fn main() -> ExitCode {
             Ok(Box::new(app))
         }),
     );
-    match result {
-        Ok(()) => ExitCode::SUCCESS,
-        Err(e) => {
-            eprintln!("erro na janela: {e}");
-            ExitCode::FAILURE
-        }
-    }
+    utsim_ui_tema::janela::saida(result)
 }
