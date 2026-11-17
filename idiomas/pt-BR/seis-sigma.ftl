@@ -836,6 +836,7 @@ l10-exp_bb = Box-Behnken
 l10-exp_replicates = Réplicas
 l10-exp_centers = Pontos centrais
 l10-exp_seed = Semente
+l10-exp_blocks = Blocos
 l10-exp_response = Nome da resposta
 l10-exp_runs = { $n } corridas
 l10-exp_aliases = Estrutura de confusão

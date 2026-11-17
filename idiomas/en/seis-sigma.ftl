@@ -866,6 +866,7 @@ l10-exp_bb = Box-Behnken
 l10-exp_replicates = Replicates
 l10-exp_centers = Center points
 l10-exp_seed = Seed
+l10-exp_blocks = Blocks
 l10-exp_response = Response name
 l10-exp_runs = { $n ->
         [1] 1 run

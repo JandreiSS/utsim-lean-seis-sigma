@@ -866,6 +866,7 @@ l10-exp_bb = Box-Behnken
 l10-exp_replicates = Réplicas
 l10-exp_centers = Puntos centrales
 l10-exp_seed = Semilla
+l10-exp_blocks = Bloques
 l10-exp_response = Nombre de la respuesta
 l10-exp_runs = { $n ->
         [1] 1 corrida

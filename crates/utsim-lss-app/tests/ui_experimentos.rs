@@ -232,3 +232,47 @@ fn response_surface_drawn_and_saved() {
     assert_eq!(t.rows.len(), 4 + 4 + 5);
     assert_eq!(t.rows.iter().filter(|r| r[2] == "axial").count(), 4);
 }
+
+#[test]
+fn factorial_in_blocks_drawn_and_saved() {
+    let dir = tempfile::tempdir().unwrap();
+    let ctx = egui::Context::default();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 17))),
+    );
+    assert!(app.submit_identity("Ana Lima", "ana@empresa.com"));
+    let work = dir.path().join("Drive");
+    std::fs::create_dir_all(&work).unwrap();
+    assert!(app.create_project(&work, "Lotes de matéria-prima", Approach::Dmaic));
+    app.nav = Nav::Experiments;
+    frames(&mut app, &ctx, 2);
+    let f = |n: &str, lo: &str, hi: &str| FactorSpec {
+        name: n.into(),
+        low: lo.into(),
+        high: hi.into(),
+        ..FactorSpec::default()
+    };
+    app.set_experiment(ExperimentSpec {
+        name: "Lotes".into(),
+        factors: vec![
+            f("Temperatura", "180", "200"),
+            f("Tempo", "10", "14"),
+            f("Pressão", "1", "2"),
+        ],
+        blocks: 4,
+        seed: 5,
+        ..ExperimentSpec::default()
+    });
+    frames(&mut app, &ctx, 2);
+    assert!(app.status().is_none_or(|(_, e)| !e), "{:?}", app.status());
+    let sheet = app.save_experiment_sheet().unwrap();
+    let text = app.session().unwrap().folder().read_data(&sheet).unwrap();
+    let t = Table::parse(&text);
+    assert_eq!(t.header[3], "bloco");
+    assert_eq!(t.rows.len(), 8);
+    for b in ["1", "2", "3", "4"] {
+        assert_eq!(t.rows.iter().filter(|r| r[3] == b).count(), 2);
+    }
+}

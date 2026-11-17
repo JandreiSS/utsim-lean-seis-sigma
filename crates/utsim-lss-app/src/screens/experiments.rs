@@ -1,7 +1,7 @@
 //! The design of experiments of a project (P3, `docs/plano_lean_seis_sigma.md`, 2.4 and
 //! 3.4): the factors with their levels, the full factorial, a fraction with the alias
 //! structure, a Plackett-Burman screening (up to 15 factors) or a response surface
-//! (central composite or Box-Behnken), replicates, center points and the seed; the collection worksheet saved in
+//! (central composite or Box-Behnken), replicates, center points, blocks and the seed; the collection worksheet saved in
 //! `dados/`; and, with a linked model, the experiment run on the simulator (a worker
 //! thread) and saved as a data set of origin Simulado. The analysis is the recipe
 //! "Experimento fatorial 2^k" of the analyses screen.
@@ -354,6 +354,25 @@ impl App {
             ui.label(t.exp_response);
             ui.add(egui::TextEdit::singleline(&mut self.exp.spec.response).desired_width(120.0));
         });
+        // Blocks: only the numbers this plan accepts; one block when it accepts no other.
+        let blocks = self.exp.spec.block_options();
+        if !blocks.contains(&self.exp.spec.blocks.max(1)) {
+            self.exp.spec.blocks = 1;
+        }
+        if blocks.len() > 1 {
+            ui.horizontal(|ui| {
+                ui.label(t.exp_blocks);
+                let mut b = self.exp.spec.blocks.max(1);
+                egui::ComboBox::from_id_salt("blocos")
+                    .selected_text(b.to_string())
+                    .show_ui(ui, |ui| {
+                        for n in &blocks {
+                            ui.selectable_value(&mut b, *n, n.to_string());
+                        }
+                    });
+                self.exp.spec.blocks = b;
+            });
+        }
         let spec = self.exp.read();
         match spec.plan() {
             Ok(d) => {
