@@ -870,6 +870,8 @@ l10-exp_replicates = Repliche
 l10-exp_centers = Punti centrali
 l10-exp_seed = Seme
 l10-exp_blocks = Blocchi
+l10-exp_general = fattoriale generale (più di due livelli)
+l10-exp_levels = Livelli (separati da ;)
 l10-exp_response = Nome della risposta
 l10-exp_runs = { $n ->
         [one] { $n } prova
@@ -1350,6 +1352,7 @@ l3-kind_name-ewma = Carta EWMA
 l3-kind_name-cusum = Carta CUSUM
 l3-kind_name-surface = Superficie di risposta
 l3-kind_name-desirability = Desiderabilità di più risposte
+l3-kind_name-general = Fattoriale generale (ANOVA)
 
 ## text/l4.rs :: L4Texts
 

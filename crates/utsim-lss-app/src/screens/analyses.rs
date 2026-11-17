@@ -20,7 +20,7 @@ use crate::text::texts;
 use crate::theme;
 
 /// The kinds of analysis offered, in the screen's order.
-pub const KINDS: [&str; 30] = [
+pub const KINDS: [&str; 31] = [
     "descritiva",
     "normalidade",
     "capacidade",
@@ -51,6 +51,7 @@ pub const KINDS: [&str; 30] = [
     "cusum",
     "superficie_resposta",
     "desejabilidade",
+    "fatorial_geral",
 ];
 
 /// One response of the desirability form: its column, goal (0 maximize, 1 minimize,
@@ -362,7 +363,7 @@ impl App {
                         Self::column_combo(ui, "col_d", x.standard, table, &mut u.d);
                     }
                 }
-                "experimento_fatorial" | "superficie_resposta" => {
+                "experimento_fatorial" | "superficie_resposta" | "fatorial_geral" => {
                     let x = l10();
                     if u.factors.is_empty() {
                         let (f, r) = utsim_lss_core::experimentos::columns(&table.header);
@@ -644,6 +645,10 @@ impl App {
                     responses,
                 }
             }
+            "fatorial_geral" => Recipe::GeneralFactorial {
+                factors: u.factors.clone(),
+                response: u.a,
+            },
             "superficie_resposta" => Recipe::Surface {
                 factors: u.factors.clone(),
                 response: u.a,

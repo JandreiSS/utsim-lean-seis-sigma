@@ -1,7 +1,8 @@
 //! The design of experiments of a project (P3, `docs/plano_lean_seis_sigma.md`, 2.4 and
 //! 3.4): the factors with their levels, the full factorial, a fraction with the alias
 //! structure, a Plackett-Burman screening (up to 15 factors) or a response surface
-//! (central composite or Box-Behnken), replicates, center points, blocks and the seed; the collection worksheet saved in
+//! (central composite or Box-Behnken), a general factorial with the levels of each factor,
+//! replicates, center points, blocks and the seed; the collection worksheet saved in
 //! `dados/`; and, with a linked model, the experiment run on the simulator (a worker
 //! thread) and saved as a data set of origin Simulado. The analysis is the recipe
 //! "Experimento fatorial 2^k" of the analyses screen.
@@ -221,16 +222,24 @@ impl App {
             ui.add(egui::TextEdit::singleline(&mut self.exp.spec.name).desired_width(280.0));
         });
         let mut remove = None;
+        // A general factorial lists the levels of each factor; the other plans take two
+        // levels and the center.
+        let general = self.exp.spec.general && self.exp.spec.surface.is_none();
         egui::Grid::new("fatores").striped(true).show(ui, |ui| {
-            for h in [
-                "",
-                t.exp_factor,
-                t.exp_low,
-                t.exp_high,
-                t.exp_center,
-                t.exp_key,
-                "",
-            ] {
+            let heads: Vec<&str> = if general {
+                vec!["", t.exp_factor, t.exp_levels, t.exp_key, ""]
+            } else {
+                vec![
+                    "",
+                    t.exp_factor,
+                    t.exp_low,
+                    t.exp_high,
+                    t.exp_center,
+                    t.exp_key,
+                    "",
+                ]
+            };
+            for h in heads {
                 ui.strong(h);
             }
             ui.end_row();
@@ -241,18 +250,25 @@ impl App {
                     [120.0, ui.spacing().interact_size.y],
                     egui::TextEdit::singleline(&mut f.name),
                 );
-                ui.add_sized(
-                    [110.0, ui.spacing().interact_size.y],
-                    egui::TextEdit::singleline(&mut f.low),
-                );
-                ui.add_sized(
-                    [110.0, ui.spacing().interact_size.y],
-                    egui::TextEdit::singleline(&mut f.high),
-                );
-                ui.add_sized(
-                    [90.0, ui.spacing().interact_size.y],
-                    egui::TextEdit::singleline(&mut f.center),
-                );
+                if general {
+                    ui.add_sized(
+                        [320.0, ui.spacing().interact_size.y],
+                        egui::TextEdit::singleline(&mut f.levels),
+                    );
+                } else {
+                    ui.add_sized(
+                        [110.0, ui.spacing().interact_size.y],
+                        egui::TextEdit::singleline(&mut f.low),
+                    );
+                    ui.add_sized(
+                        [110.0, ui.spacing().interact_size.y],
+                        egui::TextEdit::singleline(&mut f.high),
+                    );
+                    ui.add_sized(
+                        [90.0, ui.spacing().interact_size.y],
+                        egui::TextEdit::singleline(&mut f.center),
+                    );
+                }
                 ui.add_sized(
                     [150.0, ui.spacing().interact_size.y],
                     egui::TextEdit::singleline(&mut f.key),
@@ -279,6 +295,7 @@ impl App {
         enum Choice {
             Fraction(usize),
             Screening,
+            General,
             Surface(Surface),
         }
         let fractions: Vec<usize> = if k <= experimentos::MAX_FACTORS {
@@ -290,7 +307,7 @@ impl App {
         if self.exp.spec.surface.is_some_and(|s| !s.fits(k)) {
             self.exp.spec.surface = None;
         }
-        if fractions.is_empty() && self.exp.spec.surface.is_none() {
+        if fractions.is_empty() && self.exp.spec.surface.is_none() && !self.exp.spec.general {
             self.exp.spec.screening = true;
         }
         if !fractions.contains(&self.exp.spec.fraction) {
@@ -299,6 +316,7 @@ impl App {
         let screening = ExperimentSpec::screening_runs(k);
         let label = |c: Choice| match c {
             Choice::Screening => (t.exp_pb)(screening.unwrap_or(0)),
+            Choice::General => t.exp_general.to_string(),
             Choice::Fraction(0) => (t.exp_full)(1 << k),
             Choice::Fraction(p) => (t.exp_frac)(p, 1 << (k - p)),
             Choice::Surface(Surface::CentralComposite) => t.exp_ccd.to_string(),
@@ -307,6 +325,7 @@ impl App {
         };
         let mut choice = match (self.exp.spec.surface, self.exp.spec.screening) {
             (Some(s), _) => Choice::Surface(s),
+            (None, _) if self.exp.spec.general => Choice::General,
             (None, true) => Choice::Screening,
             (None, false) => Choice::Fraction(self.exp.spec.fraction),
         };
@@ -326,6 +345,9 @@ impl App {
                             label(Choice::Screening),
                         );
                     }
+                    if k <= experimentos::MAX_FACTORS {
+                        ui.selectable_value(&mut choice, Choice::General, label(Choice::General));
+                    }
                     for s in &surfaces {
                         let c = Choice::Surface(*s);
                         ui.selectable_value(&mut choice, c, label(c));
@@ -334,14 +356,34 @@ impl App {
             match choice {
                 Choice::Screening => {
                     self.exp.spec.screening = true;
+                    self.exp.spec.general = false;
                     self.exp.spec.surface = None;
                 }
                 Choice::Fraction(p) => {
                     self.exp.spec.screening = false;
+                    self.exp.spec.general = false;
                     self.exp.spec.surface = None;
                     self.exp.spec.fraction = p;
                 }
-                Choice::Surface(s) => self.exp.spec.surface = Some(s),
+                Choice::General => {
+                    self.exp.spec.screening = false;
+                    self.exp.spec.general = true;
+                    self.exp.spec.surface = None;
+                    // Start each factor's list from its two levels.
+                    for f in &mut self.exp.spec.factors {
+                        if f.levels.trim().is_empty() {
+                            let two: Vec<&str> = [f.low.trim(), f.high.trim()]
+                                .into_iter()
+                                .filter(|s| !s.is_empty())
+                                .collect();
+                            f.levels = two.join("; ");
+                        }
+                    }
+                }
+                Choice::Surface(s) => {
+                    self.exp.spec.general = false;
+                    self.exp.spec.surface = Some(s);
+                }
             }
             for (l, v) in [
                 (t.exp_replicates, &mut self.exp.replicates),

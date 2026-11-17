@@ -184,6 +184,7 @@ fn screens_and_reports_of_version_2() {
         fraction: 0,
         screening: false,
         surface: None,
+        general: false,
         blocks: 1,
         replicates: 2,
         center_points: 0,

@@ -867,6 +867,8 @@ l10-exp_replicates = Réplicas
 l10-exp_centers = Puntos centrales
 l10-exp_seed = Semilla
 l10-exp_blocks = Bloques
+l10-exp_general = factorial general (más de dos niveles)
+l10-exp_levels = Niveles (separados por ;)
 l10-exp_response = Nombre de la respuesta
 l10-exp_runs = { $n ->
         [1] 1 corrida
@@ -1348,6 +1350,7 @@ l3-kind_name-ewma = Carta EWMA
 l3-kind_name-cusum = Carta CUSUM
 l3-kind_name-surface = Superficie de respuesta
 l3-kind_name-desirability = Deseabilidad de varias respuestas
+l3-kind_name-general = Factorial general (ANOVA)
 
 ## text/l4.rs :: L4Texts
 

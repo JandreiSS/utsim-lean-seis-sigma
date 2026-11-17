@@ -867,6 +867,8 @@ l10-exp_replicates = Replicates
 l10-exp_centers = Center points
 l10-exp_seed = Seed
 l10-exp_blocks = Blocks
+l10-exp_general = general factorial (more than two levels)
+l10-exp_levels = Levels (separated by ;)
 l10-exp_response = Response name
 l10-exp_runs = { $n ->
         [1] 1 run
@@ -1344,6 +1346,7 @@ l3-kind_name-ewma = EWMA chart
 l3-kind_name-cusum = CUSUM chart
 l3-kind_name-surface = Response surface
 l3-kind_name-desirability = Desirability of several responses
+l3-kind_name-general = General factorial (ANOVA)
 
 ## text/l4.rs :: L4Texts
 
