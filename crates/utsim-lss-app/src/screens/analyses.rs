@@ -86,6 +86,11 @@ pub struct L3Ui {
     pub result: Option<(Recipe, Result<Outcome, String>)>,
     pub name: String,
     pub justification: String,
+    /// The data set or analysis waiting for the second click of "Apagar".
+    pub confirm_delete: Option<utsim_lss_core::Id>,
+    /// The parsed table of the data set on screen, by its id and hash (read once, not on
+    /// every frame).
+    pub table: Option<(utsim_lss_core::Id, String, Table)>,
 }
 
 fn num(s: &str) -> Option<f64> {
@@ -123,6 +128,9 @@ impl App {
                         ui.selectable_value(&mut self.l3.dataset, Some(d.id), d.labeled());
                     }
                 });
+            if let Some(id) = self.l3.dataset.filter(|i| ds.iter().any(|d| d.id == *i)) {
+                self.delete_button(ui, s, id, true);
+            }
         });
         let Some(d) = self
             .l3
@@ -135,14 +143,23 @@ impl App {
         if d.origin != DataOrigin::Real {
             ui.colored_label(theme::WARN, (t.not_real)(origin_name(d.origin)));
         }
-        let text = match s.folder().read_data(&d.file) {
-            Ok(x) => x,
-            Err(e) => {
-                ui.colored_label(theme::WARN, e.to_string());
-                return;
+        let fresh = self
+            .l3
+            .table
+            .as_ref()
+            .is_some_and(|(i, h, _)| *i == d.id && *h == d.hash);
+        if !fresh {
+            match s.folder().read_data(&d.file) {
+                Ok(x) => self.l3.table = Some((d.id, d.hash.clone(), Table::parse(&x))),
+                Err(e) => {
+                    ui.colored_label(theme::WARN, e.to_string());
+                    return;
+                }
             }
+        }
+        let Some((_, _, table)) = self.l3.table.clone() else {
+            return;
         };
-        let table = Table::parse(&text);
         self.recipe_form(ui, &table);
         if ui.button(t.run).clicked() {
             match self.build_recipe() {
@@ -809,6 +826,47 @@ impl App {
             });
     }
 
+    /// "Apagar" for a data set (`dataset`) or a saved analysis, with a second click to
+    /// confirm. A data set used by a saved analysis stays: its analyses go first.
+    fn delete_button(
+        &mut self,
+        ui: &mut egui::Ui,
+        s: &mut Session,
+        id: utsim_lss_core::Id,
+        dataset: bool,
+    ) {
+        let t = l3();
+        if self.l3.confirm_delete != Some(id) {
+            if ui.small_button(t.delete).clicked() {
+                self.l3.confirm_delete = Some(id);
+            }
+            return;
+        }
+        if ui.small_button(t.delete_confirm).clicked() {
+            self.l3.confirm_delete = None;
+            if dataset && dados::in_use(&analises::analyses(s.state(), s.project()), id) {
+                self.set_status(t.dataset_in_use, true);
+                return;
+            }
+            let e = if dataset {
+                dados::delete(id)
+            } else {
+                analises::delete(id)
+            };
+            if self.report(s.apply(e)).is_some() {
+                if dataset {
+                    self.l3.dataset = None;
+                    self.l3.table = None;
+                    self.l3.result = None;
+                }
+                self.set_status(t.deleted, false);
+            }
+        }
+        if ui.small_button(t.delete_cancel).clicked() {
+            self.l3.confirm_delete = None;
+        }
+    }
+
     fn saved_analyses(&mut self, ui: &mut egui::Ui, s: &mut Session) {
         let t = l3();
         ui.strong(t.saved_title);
@@ -840,6 +898,7 @@ impl App {
                         self.report(r);
                     }
                 }
+                self.delete_button(ui, s, a.id, false);
                 if let Some(d) = d
                     && ui.small_button(t.rerun).clicked()
                 {

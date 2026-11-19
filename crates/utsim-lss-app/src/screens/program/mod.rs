@@ -440,7 +440,7 @@ impl App {
                 ProgramNav::Capacity => self.program_capacity(ui, &mut s, &d),
                 ProgramNav::Coaching => self.program_coaching(ui, &mut s, &d),
                 ProgramNav::Reviews => self.program_reviews(ui, &mut s, &d),
-                ProgramNav::MbbDashboard => self.program_mbb(ui, &s, &d),
+                ProgramNav::MbbDashboard => self.program_mbb(ui, &mut s, &d),
                 ProgramNav::LeadershipDashboard => self.program_leadership(ui, &s, &d),
                 ProgramNav::Profiles => self.program_profiles(ui, &mut s, &d),
                 ProgramNav::Training => self.program_training(ui, &mut s, &d),

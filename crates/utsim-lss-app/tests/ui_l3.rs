@@ -168,5 +168,14 @@ fn analyses_screen_and_the_medir_checks() {
         format!("{:?}", analises::rerun(&saved[1], &text).unwrap().lines),
         format!("{:?}", saved[1].outcome.lines)
     );
+    // Deleting, as the "Apagar" buttons do: a data set with a saved analysis is in use;
+    // after its analysis goes, it can go too, and the lists leave both out.
+    assert!(dados::in_use(&saved, ds[1].id));
+    s.apply(analises::delete(saved[1].id)).unwrap();
+    let saved = analises::analyses(s.state(), p);
+    assert_eq!(saved.len(), 1);
+    assert!(!dados::in_use(&saved, ds[1].id));
+    s.apply(dados::delete(ds[1].id)).unwrap();
+    assert_eq!(dados::datasets(s.state(), p).len(), 1);
     frames(&mut app, &ctx, 2);
 }

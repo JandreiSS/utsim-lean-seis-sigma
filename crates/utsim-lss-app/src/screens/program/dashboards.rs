@@ -8,6 +8,7 @@ use crate::text::LocalDate;
 use eframe::egui::{self, Color32, RichText};
 use egui_plot::{Bar, BarChart, Legend, Plot};
 use utsim_lss_core::domain::SavingStatus;
+use utsim_lss_core::op::{EntityRef, Kind};
 use utsim_lss_core::painel::{self, Filter, Inputs, Kpi};
 use utsim_lss_core::perfis::Action;
 use utsim_lss_core::programa::{self, Stage};
@@ -172,7 +173,7 @@ impl App {
         )));
     }
 
-    pub(in crate::app) fn program_mbb(&mut self, ui: &mut egui::Ui, s: &Session, d: &Data) {
+    pub(in crate::app) fn program_mbb(&mut self, ui: &mut egui::Ui, s: &mut Session, d: &Data) {
         let tl = l6();
         ui.heading(tl.nav_mbb);
         if !self.may_view(ui, s, Action::ViewMbbDashboard) {
@@ -239,7 +240,13 @@ impl App {
         // Cycle time per phase.
         ui.separator();
         ui.strong(tl.ind_cycle);
-        let ct = painel::cycle_times(&d.records, &f, None, |p| d.level_of(p));
+        let ct = painel::cycle_times(
+            &d.records,
+            &f,
+            None,
+            |p| d.level_of(p),
+            |ph| painel::program_target_days(s.state(), d.program, ph),
+        );
         if ct.is_empty() {
             ui.weak(tl.no_data);
         }
@@ -272,6 +279,21 @@ impl App {
             }
         });
         rule(ui, tl.rule_cycle);
+        // The MBB sets the target days of each phase for the whole program.
+        egui::CollapsingHeader::new(tl.targets_edit)
+            .id_salt("metas_fase")
+            .show(ui, |ui| {
+                let pr = EntityRef::new(Kind::Program, d.program);
+                egui::Grid::new("metas_fase_grade").show(ui, |ui| {
+                    for ph in painel::all_phases() {
+                        ui.label(ph);
+                        self.num_field(ui, s, pr, &painel::target_field(ph), 50.0);
+                        let shown = painel::program_target_days(s.state(), d.program, ph);
+                        ui.weak(shown.map_or("-".into(), |v| format!("{v:.0} d")));
+                        ui.end_row();
+                    }
+                });
+            });
 
         // Savings by state.
         ui.separator();
@@ -615,7 +637,13 @@ fn mbb_doc(s: &Session, d: &Data, f: &Filter) -> Document {
     });
     doc.para(tl.rule_funnel);
 
-    let ct = painel::cycle_times(&d.records, f, None, |p| d.level_of(p));
+    let ct = painel::cycle_times(
+        &d.records,
+        f,
+        None,
+        |p| d.level_of(p),
+        |ph| painel::program_target_days(s.state(), d.program, ph),
+    );
     doc.heading(tl.ind_cycle);
     let fmt = |x: Option<f64>| x.map_or("-".into(), |v| format!("{v:.0} d"));
     doc.table(
