@@ -124,9 +124,17 @@ impl App {
             }
         }
         ui.add_space(6.0);
+        // Quanto do checklist já está cumprido, à vista.
+        let res = tollgate::evaluate(s.state(), s.project(), &tg);
+        let ok = res.iter().filter(|r| r.ok).count();
+        if !res.is_empty() {
+            ui.add(
+                egui::ProgressBar::new(ok as f32 / res.len() as f32)
+                    .desired_width(420.0)
+                    .text(format!("{ok}/{}", res.len())),
+            );
+        }
         self.checklist(ui, s, &tg);
-        ui.add_space(8.0);
-        self.approvers(ui, s, &tg);
         ui.add_space(8.0);
         match tg.status {
             TollgateStatus::Submitted => self.decision_form(ui, s, &tg),
@@ -152,7 +160,15 @@ impl App {
             }
         }
         ui.add_space(8.0);
-        self.decision_history(ui, s, &tg);
+        // O avançado (aprovadores e regra, histórico de decisões) fica recolhido.
+        egui::CollapsingHeader::new(crate::text::l16::l16().portao_avancado)
+            .id_salt(("portao_avancado", tg.id))
+            .default_open(false)
+            .show(ui, |ui| {
+                self.approvers(ui, s, &tg);
+                ui.add_space(8.0);
+                self.decision_history(ui, s, &tg);
+            });
         if phase.status == PhaseStatus::Approved {
             ui.weak(tl.phase_approved_note);
         }

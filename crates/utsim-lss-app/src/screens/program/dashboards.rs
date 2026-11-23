@@ -192,290 +192,338 @@ impl App {
         self.export_buttons(ui, false);
         self.run_export(s, d, false, year, &f);
 
-        // Pipeline.
-        ui.separator();
-        ui.strong(tl.ind_funnel);
-        let fun = painel::funnel(&d.ideas, &d.opps, &d.records, d.today, &f);
-        egui::Grid::new("funil_mbb").striped(true).show(ui, |ui| {
-            ui.strong(tl.stage);
-            ui.strong(tl.count);
-            ui.strong(tl.mean_age);
-            ui.strong(tl.conversion);
-            ui.end_row();
-            for st in Stage::ALL {
-                ui.label(stage_name(st));
-                ui.label(fun.totals.get(&st).copied().unwrap_or(0).to_string());
-                ui.label(
-                    fun.mean_age
-                        .get(&st)
-                        .map_or(String::new(), |a| format!("{a:.0} d")),
-                );
-                ui.label(
-                    fun.conversion
-                        .iter()
-                        .find(|c| c.0 == st)
-                        .map_or(String::new(), |c| format!("→ {:.0} %", c.2 * 100.0)),
-                );
-                ui.end_row();
-            }
-        });
-        bars(
-            ui,
-            "funil_barras",
-            Stage::ALL
-                .iter()
-                .map(|s| stage_name(*s).to_string())
-                .collect(),
-            vec![(
-                tl.count,
-                Stage::ALL
-                    .iter()
-                    .map(|s| fun.totals.get(s).copied().unwrap_or(0) as f64)
-                    .collect(),
-                theme::accent(ui),
-            )],
-        );
-        rule(ui, tl.rule_funnel);
-
-        // Cycle time per phase.
-        ui.separator();
-        ui.strong(tl.ind_cycle);
-        let ct = painel::cycle_times(
-            &d.records,
-            &f,
-            None,
-            |p| d.level_of(p),
-            |ph| painel::program_target_days(s.state(), d.program, ph),
-        );
-        if ct.is_empty() {
-            ui.weak(tl.no_data);
-        }
-        egui::Grid::new("ciclo").striped(true).show(ui, |ui| {
-            for h in [
-                tl.approach,
-                tl.phase,
-                tl.samples,
-                tl.median,
-                tl.p80,
-                tl.target,
-            ] {
-                ui.strong(h);
-            }
-            ui.end_row();
-            for c in &ct {
-                ui.label(approach_name(c.approach));
-                ui.label(&c.phase);
-                ui.label(c.samples.len().to_string());
-                let fmt = |x: Option<f64>| x.map_or("-".into(), |v| format!("{v:.0} d"));
-                let late = c.median.zip(c.target).is_some_and(|(m, t)| m > t);
-                if late {
-                    ui.colored_label(theme::WARN, fmt(c.median));
-                } else {
-                    ui.label(fmt(c.median));
+        // O essencial em cartões; as tabelas de cada indicador ficam recolhidas.
+        {
+            let fun = painel::funnel(&d.ideas, &d.opps, &d.records, d.today, &f);
+            let sv = painel::savings_by_state(&d.records, &f);
+            let od = painel::overdue(&d.records, &d.reviews, d.today, &f);
+            let wl = painel::workload(&d.loads);
+            let ideias: usize = fun.totals.values().sum();
+            let sobrecarga: usize = wl.values().map(|v| v.overloaded).sum();
+            let cartoes = [
+                (tl.ind_funnel, ideias.to_string(), None),
+                (tl.ind_savings, money(painel::official_total(&sv)), None),
+                (
+                    tl.ind_overdue,
+                    od.items.len().to_string(),
+                    (!od.items.is_empty()).then_some(theme::WARN),
+                ),
+                (
+                    tl.ind_load,
+                    sobrecarga.to_string(),
+                    (sobrecarga > 0).then_some(theme::WARN),
+                ),
+            ];
+            ui.add_space(6.0);
+            ui.horizontal_wrapped(|ui| {
+                for (rotulo, valor, cor) in cartoes {
+                    theme::card(ui).show(ui, |ui| {
+                        ui.set_min_width(150.0);
+                        ui.vertical(|ui| {
+                            ui.label(RichText::new(rotulo).small().weak());
+                            let v = RichText::new(valor).size(20.0).strong();
+                            ui.label(match cor {
+                                Some(c) => v.color(c),
+                                None => v,
+                            });
+                        });
+                    });
                 }
-                ui.label(fmt(c.p80));
-                ui.label(fmt(c.target));
-                ui.end_row();
-            }
-        });
-        rule(ui, tl.rule_cycle);
-        // The MBB sets the target days of each phase for the whole program.
-        egui::CollapsingHeader::new(tl.targets_edit)
-            .id_salt("metas_fase")
+            });
+        }
+        egui::CollapsingHeader::new(crate::text::l16::l16().painel_tabelas)
+            .id_salt("mbb_tabelas")
+            .default_open(false)
             .show(ui, |ui| {
-                let pr = EntityRef::new(Kind::Program, d.program);
-                egui::Grid::new("metas_fase_grade").show(ui, |ui| {
-                    for ph in painel::all_phases() {
-                        ui.label(ph);
-                        self.num_field(ui, s, pr, &painel::target_field(ph), 50.0);
-                        let shown = painel::program_target_days(s.state(), d.program, ph);
-                        ui.weak(shown.map_or("-".into(), |v| format!("{v:.0} d")));
+                // Pipeline.
+                ui.separator();
+                ui.strong(tl.ind_funnel);
+                let fun = painel::funnel(&d.ideas, &d.opps, &d.records, d.today, &f);
+                egui::Grid::new("funil_mbb").striped(true).show(ui, |ui| {
+                    ui.strong(tl.stage);
+                    ui.strong(tl.count);
+                    ui.strong(tl.mean_age);
+                    ui.strong(tl.conversion);
+                    ui.end_row();
+                    for st in Stage::ALL {
+                        ui.label(stage_name(st));
+                        ui.label(fun.totals.get(&st).copied().unwrap_or(0).to_string());
+                        ui.label(
+                            fun.mean_age
+                                .get(&st)
+                                .map_or(String::new(), |a| format!("{a:.0} d")),
+                        );
+                        ui.label(
+                            fun.conversion
+                                .iter()
+                                .find(|c| c.0 == st)
+                                .map_or(String::new(), |c| format!("→ {:.0} %", c.2 * 100.0)),
+                        );
                         ui.end_row();
                     }
                 });
-            });
+                bars(
+                    ui,
+                    "funil_barras",
+                    Stage::ALL
+                        .iter()
+                        .map(|s| stage_name(*s).to_string())
+                        .collect(),
+                    vec![(
+                        tl.count,
+                        Stage::ALL
+                            .iter()
+                            .map(|s| fun.totals.get(s).copied().unwrap_or(0) as f64)
+                            .collect(),
+                        theme::accent(ui),
+                    )],
+                );
+                rule(ui, tl.rule_funnel);
 
-        // Savings by state.
-        ui.separator();
-        ui.strong(tl.ind_savings);
-        let sv = painel::savings_by_state(&d.records, &f);
-        egui::Grid::new("ganhos_estado")
-            .striped(true)
-            .show(ui, |ui| {
-                ui.strong(tl.unit);
-                ui.strong(tl.category);
-                for st in [
-                    SavingStatus::Estimated,
-                    SavingStatus::Forecast,
-                    SavingStatus::Realized,
-                    SavingStatus::Validated,
-                ] {
-                    ui.strong(saving_status_name(st));
+                // Cycle time per phase.
+                ui.separator();
+                ui.strong(tl.ind_cycle);
+                let ct = painel::cycle_times(
+                    &d.records,
+                    &f,
+                    None,
+                    |p| d.level_of(p),
+                    |ph| painel::program_target_days(s.state(), d.program, ph),
+                );
+                if ct.is_empty() {
+                    ui.weak(tl.no_data);
                 }
-                ui.end_row();
-                let mut units: Vec<Option<utsim_lss_core::Id>> = sv.keys().map(|k| k.0).collect();
-                units.dedup();
-                for u in units {
-                    for c in [Category::Hard, Category::Soft] {
-                        ui.label(d.unit_name(u));
-                        ui.label(if c == Category::Hard { "hard" } else { "soft" });
+                egui::Grid::new("ciclo").striped(true).show(ui, |ui| {
+                    for h in [
+                        tl.approach,
+                        tl.phase,
+                        tl.samples,
+                        tl.median,
+                        tl.p80,
+                        tl.target,
+                    ] {
+                        ui.strong(h);
+                    }
+                    ui.end_row();
+                    for c in &ct {
+                        ui.label(approach_name(c.approach));
+                        ui.label(&c.phase);
+                        ui.label(c.samples.len().to_string());
+                        let fmt = |x: Option<f64>| x.map_or("-".into(), |v| format!("{v:.0} d"));
+                        let late = c.median.zip(c.target).is_some_and(|(m, t)| m > t);
+                        if late {
+                            ui.colored_label(theme::WARN, fmt(c.median));
+                        } else {
+                            ui.label(fmt(c.median));
+                        }
+                        ui.label(fmt(c.p80));
+                        ui.label(fmt(c.target));
+                        ui.end_row();
+                    }
+                });
+                rule(ui, tl.rule_cycle);
+                // The MBB sets the target days of each phase for the whole program.
+                egui::CollapsingHeader::new(tl.targets_edit)
+                    .id_salt("metas_fase")
+                    .show(ui, |ui| {
+                        let pr = EntityRef::new(Kind::Program, d.program);
+                        egui::Grid::new("metas_fase_grade").show(ui, |ui| {
+                            for ph in painel::all_phases() {
+                                ui.label(ph);
+                                self.num_field(ui, s, pr, &painel::target_field(ph), 50.0);
+                                let shown = painel::program_target_days(s.state(), d.program, ph);
+                                ui.weak(shown.map_or("-".into(), |v| format!("{v:.0} d")));
+                                ui.end_row();
+                            }
+                        });
+                    });
+
+                // Savings by state.
+                ui.separator();
+                ui.strong(tl.ind_savings);
+                let sv = painel::savings_by_state(&d.records, &f);
+                egui::Grid::new("ganhos_estado")
+                    .striped(true)
+                    .show(ui, |ui| {
+                        ui.strong(tl.unit);
+                        ui.strong(tl.category);
                         for st in [
                             SavingStatus::Estimated,
                             SavingStatus::Forecast,
                             SavingStatus::Realized,
                             SavingStatus::Validated,
                         ] {
-                            ui.label(money(sv.get(&(u, c, st)).copied().unwrap_or(0.0)));
+                            ui.strong(saving_status_name(st));
+                        }
+                        ui.end_row();
+                        let mut units: Vec<Option<utsim_lss_core::Id>> =
+                            sv.keys().map(|k| k.0).collect();
+                        units.dedup();
+                        for u in units {
+                            for c in [Category::Hard, Category::Soft] {
+                                ui.label(d.unit_name(u));
+                                ui.label(if c == Category::Hard { "hard" } else { "soft" });
+                                for st in [
+                                    SavingStatus::Estimated,
+                                    SavingStatus::Forecast,
+                                    SavingStatus::Realized,
+                                    SavingStatus::Validated,
+                                ] {
+                                    ui.label(money(sv.get(&(u, c, st)).copied().unwrap_or(0.0)));
+                                }
+                                ui.end_row();
+                            }
+                        }
+                    });
+                ui.label(
+                    RichText::new((tl.official_total)(&money(painel::official_total(&sv))))
+                        .strong(),
+                );
+                rule(ui, tl.rule_savings);
+
+                // Belts by area.
+                ui.separator();
+                ui.strong(tl.ind_belts);
+                let br = painel::belts_by_unit(&d.units, &d.members, &d.records, d.today);
+                egui::Grid::new("belts_area").striped(true).show(ui, |ui| {
+                    for h in [
+                        tl.unit,
+                        tl.active,
+                        tl.trained,
+                        tl.certified,
+                        tl.coverage,
+                        tl.expiring,
+                    ] {
+                        ui.strong(h);
+                    }
+                    ui.end_row();
+                    let fmt = |m: &std::collections::BTreeMap<programa::BeltLevel, usize>| {
+                        m.iter()
+                            .map(|(l, n)| format!("{} {n}", level_name(*l)))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    };
+                    for r in br.iter().filter(|r| f.unit.is_none() || r.unit == f.unit) {
+                        ui.label(d.unit_name(r.unit));
+                        ui.label(fmt(&r.active));
+                        ui.label(fmt(&r.trained));
+                        ui.label(fmt(&r.certified));
+                        ui.label(r.coverage.map_or("-".into(), |c| format!("{c:.1}")));
+                        if r.expiring > 0 {
+                            ui.colored_label(theme::WARN, r.expiring.to_string());
+                        } else {
+                            ui.label("0");
                         }
                         ui.end_row();
                     }
-                }
-            });
-        ui.label(RichText::new((tl.official_total)(&money(painel::official_total(&sv)))).strong());
-        rule(ui, tl.rule_savings);
+                });
+                rule(ui, tl.rule_belts);
 
-        // Belts by area.
-        ui.separator();
-        ui.strong(tl.ind_belts);
-        let br = painel::belts_by_unit(&d.units, &d.members, &d.records, d.today);
-        egui::Grid::new("belts_area").striped(true).show(ui, |ui| {
-            for h in [
-                tl.unit,
-                tl.active,
-                tl.trained,
-                tl.certified,
-                tl.coverage,
-                tl.expiring,
-            ] {
-                ui.strong(h);
-            }
-            ui.end_row();
-            let fmt = |m: &std::collections::BTreeMap<programa::BeltLevel, usize>| {
-                m.iter()
-                    .map(|(l, n)| format!("{} {n}", level_name(*l)))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            };
-            for r in br.iter().filter(|r| f.unit.is_none() || r.unit == f.unit) {
-                ui.label(d.unit_name(r.unit));
-                ui.label(fmt(&r.active));
-                ui.label(fmt(&r.trained));
-                ui.label(fmt(&r.certified));
-                ui.label(r.coverage.map_or("-".into(), |c| format!("{c:.1}")));
-                if r.expiring > 0 {
-                    ui.colored_label(theme::WARN, r.expiring.to_string());
-                } else {
-                    ui.label("0");
-                }
-                ui.end_row();
-            }
-        });
-        rule(ui, tl.rule_belts);
-
-        // Tool usage.
-        ui.separator();
-        ui.strong(tl.ind_tools);
-        let tools = utsim_lss_core::mentoria::all_tools();
-        let tu = painel::tool_usage(&d.records, &tools, &d.map, &f);
-        egui::Grid::new("uso_ferramentas")
-            .striped(true)
-            .show(ui, |ui| {
-                ui.strong(tl.tool);
-                ui.strong(tl.projects);
-                ui.strong(tl.by_phase);
-                ui.strong(tl.belts_applied);
-                ui.end_row();
-                for (tool, n) in &tu.projects {
-                    ui.label(crate::text::l6::tool_label(tool));
-                    ui.label(n.to_string());
-                    let phases = tu.by_tool.get(tool).map_or(String::new(), |m| {
-                        m.iter()
-                            .map(|(i, n)| format!("{}: {n}", i + 1))
-                            .collect::<Vec<_>>()
-                            .join(" · ")
+                // Tool usage.
+                ui.separator();
+                ui.strong(tl.ind_tools);
+                let tools = utsim_lss_core::mentoria::all_tools();
+                let tu = painel::tool_usage(&d.records, &tools, &d.map, &f);
+                egui::Grid::new("uso_ferramentas")
+                    .striped(true)
+                    .show(ui, |ui| {
+                        ui.strong(tl.tool);
+                        ui.strong(tl.projects);
+                        ui.strong(tl.by_phase);
+                        ui.strong(tl.belts_applied);
+                        ui.end_row();
+                        for (tool, n) in &tu.projects {
+                            ui.label(crate::text::l6::tool_label(tool));
+                            ui.label(n.to_string());
+                            let phases = tu.by_tool.get(tool).map_or(String::new(), |m| {
+                                m.iter()
+                                    .map(|(i, n)| format!("{}: {n}", i + 1))
+                                    .collect::<Vec<_>>()
+                                    .join(" · ")
+                            });
+                            ui.label(phases);
+                            ui.label(tu.belts.get(tool).copied().unwrap_or(0).to_string());
+                            ui.end_row();
+                        }
                     });
-                    ui.label(phases);
-                    ui.label(tu.belts.get(tool).copied().unwrap_or(0).to_string());
-                    ui.end_row();
+                if !tu.never_applied.is_empty() {
+                    let names: Vec<String> = tu
+                        .never_applied
+                        .iter()
+                        .map(|t| crate::text::l6::tool_label(t))
+                        .collect();
+                    ui.weak((tl.never_applied)(&names.join(", ")));
                 }
+                rule(ui, tl.rule_tools);
+
+                // Overdue tollgates.
+                ui.separator();
+                ui.strong(tl.ind_overdue);
+                let od = painel::overdue(&d.records, &d.reviews, d.today, &f);
+                ui.label((tl.pending_reviews)(od.pending_reviews));
+                for i in &od.items {
+                    let belts: Vec<String> = i.belts.iter().map(|b| d.person(*b)).collect();
+                    ui.colored_label(
+                        theme::WARN,
+                        (tl.overdue_line)(
+                            &i.title,
+                            &i.phase,
+                            i.days_late,
+                            &d.unit_name(i.unit),
+                            &belts.join(", "),
+                        ),
+                    );
+                }
+                if od.items.is_empty() {
+                    ui.weak(tl.none_overdue);
+                }
+                rule(ui, tl.rule_overdue);
+
+                // Workload.
+                ui.separator();
+                ui.strong(tl.ind_load);
+                let wl = painel::workload(&d.loads);
+                egui::Grid::new("carga_nivel").striped(true).show(ui, |ui| {
+                    for h in [
+                        tl.level,
+                        tl.people,
+                        tl.hours_committed,
+                        tl.capacity,
+                        tl.overloaded,
+                    ] {
+                        ui.strong(h);
+                    }
+                    ui.end_row();
+                    for (l, v) in &wl {
+                        ui.label(l.map_or(tl.no_level, level_name));
+                        ui.label(v.people.to_string());
+                        ui.label(format!("{:.1} h", v.hours));
+                        ui.label(format!("{:.1} h", v.capacity));
+                        ui.label(v.overloaded.to_string());
+                        ui.end_row();
+                    }
+                });
+                for l in d
+                    .loads
+                    .iter()
+                    .filter(|l| l.over_hours() || l.over_projects())
+                {
+                    ui.colored_label(
+                        theme::WARN,
+                        (tl.person_load)(
+                            &d.person(l.person),
+                            l.hours,
+                            l.capacity,
+                            l.projects.len(),
+                            l.project_limit,
+                        ),
+                    );
+                }
+                rule(ui, tl.rule_load);
+                // The certification funnel (stage L7).
+                ui.separator();
+                self.certification_funnel(ui, s, d);
             });
-        if !tu.never_applied.is_empty() {
-            let names: Vec<String> = tu
-                .never_applied
-                .iter()
-                .map(|t| crate::text::l6::tool_label(t))
-                .collect();
-            ui.weak((tl.never_applied)(&names.join(", ")));
-        }
-        rule(ui, tl.rule_tools);
-
-        // Overdue tollgates.
-        ui.separator();
-        ui.strong(tl.ind_overdue);
-        let od = painel::overdue(&d.records, &d.reviews, d.today, &f);
-        ui.label((tl.pending_reviews)(od.pending_reviews));
-        for i in &od.items {
-            let belts: Vec<String> = i.belts.iter().map(|b| d.person(*b)).collect();
-            ui.colored_label(
-                theme::WARN,
-                (tl.overdue_line)(
-                    &i.title,
-                    &i.phase,
-                    i.days_late,
-                    &d.unit_name(i.unit),
-                    &belts.join(", "),
-                ),
-            );
-        }
-        if od.items.is_empty() {
-            ui.weak(tl.none_overdue);
-        }
-        rule(ui, tl.rule_overdue);
-
-        // Workload.
-        ui.separator();
-        ui.strong(tl.ind_load);
-        let wl = painel::workload(&d.loads);
-        egui::Grid::new("carga_nivel").striped(true).show(ui, |ui| {
-            for h in [
-                tl.level,
-                tl.people,
-                tl.hours_committed,
-                tl.capacity,
-                tl.overloaded,
-            ] {
-                ui.strong(h);
-            }
-            ui.end_row();
-            for (l, v) in &wl {
-                ui.label(l.map_or(tl.no_level, level_name));
-                ui.label(v.people.to_string());
-                ui.label(format!("{:.1} h", v.hours));
-                ui.label(format!("{:.1} h", v.capacity));
-                ui.label(v.overloaded.to_string());
-                ui.end_row();
-            }
-        });
-        for l in d
-            .loads
-            .iter()
-            .filter(|l| l.over_hours() || l.over_projects())
-        {
-            ui.colored_label(
-                theme::WARN,
-                (tl.person_load)(
-                    &d.person(l.person),
-                    l.hours,
-                    l.capacity,
-                    l.projects.len(),
-                    l.project_limit,
-                ),
-            );
-        }
-        rule(ui, tl.rule_load);
-        // The certification funnel (stage L7).
-        ui.separator();
-        self.certification_funnel(ui, s, d);
     }
 
     pub(in crate::app) fn program_leadership(&mut self, ui: &mut egui::Ui, s: &Session, d: &Data) {

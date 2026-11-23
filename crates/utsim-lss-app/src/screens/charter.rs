@@ -44,90 +44,158 @@ impl App {
         }
         ui.add_space(8.0);
         let w = 520.0;
-        egui::Grid::new("termo_l1")
-            .num_columns(2)
-            .spacing([16.0, 8.0])
-            .show(ui, |ui| {
-                for f in charter::CHARTER_FIELDS {
-                    ui.label(field_label(f));
-                    if f == fields::project::DEADLINE || f == schedule::fields::START {
-                        self.date_field(ui, s, p, f);
-                    } else {
-                        let multi = matches!(
-                            f,
-                            fields::project::PROBLEM
-                                | fields::project::SCOPE_IN
-                                | fields::project::SCOPE_OUT
-                                | fields::project::BUSINESS_CASE
-                                | charter::fields::ASSUMPTIONS
-                                | charter::fields::CONSTRAINTS
-                                | charter::fields::INITIAL_RISKS
-                        );
-                        self.text_field(ui, s, p, f, multi, w);
+        let t16 = crate::text::l16::l16();
+        // O essencial à vista (os campos que o portão confere), com quantos já estão escritos.
+        let faltam = charter::missing_fields(s.state(), s.project()).len();
+        let total = charter::REQUIRED_FIELDS.len();
+        ui.add(
+            egui::ProgressBar::new((total - faltam) as f32 / total as f32)
+                .desired_width(w)
+                .text(crate::text::fx(
+                    "l16-termo_essenciais",
+                    &[
+                        ("n", ((total - faltam) as i64).into()),
+                        ("total", (total as i64).into()),
+                    ],
+                )),
+        );
+        ui.add_space(4.0);
+        let mut campos = |ui: &mut egui::Ui, lista: &[&'static str], salt: &str| {
+            egui::Grid::new(salt)
+                .num_columns(2)
+                .spacing([16.0, 8.0])
+                .show(ui, |ui| {
+                    for &f in lista {
+                        ui.label(field_label(f));
+                        if f == fields::project::DEADLINE || f == schedule::fields::START {
+                            self.date_field(ui, s, p, f);
+                        } else {
+                            let multi = matches!(
+                                f,
+                                fields::project::PROBLEM
+                                    | fields::project::SCOPE_IN
+                                    | fields::project::SCOPE_OUT
+                                    | fields::project::BUSINESS_CASE
+                                    | charter::fields::ASSUMPTIONS
+                                    | charter::fields::CONSTRAINTS
+                                    | charter::fields::INITIAL_RISKS
+                            );
+                            self.text_field(ui, s, p, f, multi, w);
+                        }
+                        ui.end_row();
                     }
-                    ui.end_row();
-                }
-            });
-        ui.add_space(12.0);
-        ui.strong(tl.versions);
-        ui.horizontal(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.l1.version_reason)
-                    .hint_text(tl.version_reason_hint)
-                    .desired_width(360.0),
-            );
-            if ui.button(tl.record_version).clicked() {
+                });
+        };
+        campos(ui, &charter::REQUIRED_FIELDS, "termo_essencial");
+        let outros: Vec<&'static str> = charter::CHARTER_FIELDS
+            .iter()
+            .copied()
+            .filter(|f| !charter::REQUIRED_FIELDS.contains(f))
+            .collect();
+        egui::CollapsingHeader::new(t16.termo_mais_campos)
+            .id_salt("termo_mais")
+            .default_open(false)
+            .show(ui, |ui| campos(ui, &outros, "termo_l1"));
+        let versions = charter::versions(s.state(), s.project());
+        // Com o essencial escrito e nenhuma versão, o próximo passo fica à vista.
+        if faltam == 0 && versions.is_empty() {
+            ui.add_space(8.0);
+            ui.colored_label(theme::accent(ui), t16.termo_pronto);
+            if ui
+                .add(utsim_ui_tema::widgets::primary(t16.termo_pedir_aprovacao))
+                .clicked()
+            {
                 let reason = std::mem::take(&mut self.l1.version_reason);
                 let e = charter::new_version(s.state(), s.project(), s.new_id(), &reason);
                 if self.commit(s, e) {
                     self.set_status(tl.version_recorded, false);
                 }
             }
-        });
-        let versions = charter::versions(s.state(), s.project());
-        if versions.is_empty() {
-            ui.weak(tl.no_versions);
         }
-        let current = charter::current(s.state(), s.project());
+        ui.add_space(8.0);
         let mut approve = None;
-        egui::Grid::new("versoes")
-            .num_columns(5)
-            .striped(true)
-            .spacing([12.0, 4.0])
+        let abrir_versoes = !versions.is_empty()
+            && !matches!(
+                charter::status(s.state(), s.project()),
+                CharterStatus::Approved { .. }
+            );
+        egui::CollapsingHeader::new(t16.termo_versoes)
+            .id_salt("termo_versoes")
+            .default_open(abrir_versoes)
             .show(ui, |ui| {
-                for v in versions.iter().rev() {
-                    ui.label(format!("v{}", v.number));
-                    match v.status {
-                        VersionStatus::Approved => ui.colored_label(
-                            theme::accent(ui),
-                            (tl.approved_by)(
-                                &v.approved_by
-                                    .map(|p| domain::person_name(s.state(), p))
-                                    .unwrap_or_default(),
-                                &v.approved_on.map(|d| d.local()).unwrap_or_default(),
-                            ),
-                        ),
-                        VersionStatus::Recorded => ui.label(tl.version_recorded_state),
-                    };
-                    ui.label(&v.reason);
-                    if ui
-                        .selectable_label(self.l1.compare == Some(v.id), tl.compare)
-                        .clicked()
-                    {
-                        self.l1.compare = if self.l1.compare == Some(v.id) {
-                            None
-                        } else {
-                            Some(v.id)
-                        };
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.l1.version_reason)
+                            .hint_text(tl.version_reason_hint)
+                            .desired_width(360.0),
+                    );
+                    if ui.button(tl.record_version).clicked() {
+                        let reason = std::mem::take(&mut self.l1.version_reason);
+                        let e = charter::new_version(s.state(), s.project(), s.new_id(), &reason);
+                        if self.commit(s, e) {
+                            self.set_status(tl.version_recorded, false);
+                        }
                     }
-                    let latest = versions.last().map(|l| l.id) == Some(v.id);
-                    if latest
-                        && v.status == VersionStatus::Recorded
-                        && ui.button(tl.approve_version).clicked()
-                    {
-                        approve = Some(v.id);
+                });
+                if versions.is_empty() {
+                    ui.weak(tl.no_versions);
+                }
+                let current = charter::current(s.state(), s.project());
+                egui::Grid::new("versoes")
+                    .num_columns(5)
+                    .striped(true)
+                    .spacing([12.0, 4.0])
+                    .show(ui, |ui| {
+                        for v in versions.iter().rev() {
+                            ui.label(format!("v{}", v.number));
+                            match v.status {
+                                VersionStatus::Approved => ui.colored_label(
+                                    theme::accent(ui),
+                                    (tl.approved_by)(
+                                        &v.approved_by
+                                            .map(|p| domain::person_name(s.state(), p))
+                                            .unwrap_or_default(),
+                                        &v.approved_on.map(|d| d.local()).unwrap_or_default(),
+                                    ),
+                                ),
+                                VersionStatus::Recorded => ui.label(tl.version_recorded_state),
+                            };
+                            ui.label(&v.reason);
+                            if ui
+                                .selectable_label(self.l1.compare == Some(v.id), tl.compare)
+                                .clicked()
+                            {
+                                self.l1.compare = if self.l1.compare == Some(v.id) {
+                                    None
+                                } else {
+                                    Some(v.id)
+                                };
+                            }
+                            let latest = versions.last().map(|l| l.id) == Some(v.id);
+                            if latest
+                                && v.status == VersionStatus::Recorded
+                                && ui.button(tl.approve_version).clicked()
+                            {
+                                approve = Some(v.id);
+                            }
+                            ui.end_row();
+                        }
+                    });
+                if let Some(id) = self.l1.compare
+                    && let Some(i) = versions.iter().position(|v| v.id == id)
+                {
+                    let v = &versions[i];
+                    ui.add_space(6.0);
+                    if i > 0 {
+                        ui.strong((tl.diff_between)(versions[i - 1].number, v.number));
+                        changes_table(
+                            ui,
+                            "dif_ant",
+                            &charter::diff(&versions[i - 1].content, &v.content),
+                        );
                     }
-                    ui.end_row();
+                    ui.strong((tl.diff_to_current)(v.number));
+                    changes_table(ui, "dif_atual", &charter::diff(&v.content, &current));
                 }
             });
         if let Some(v) = approve {
@@ -135,22 +203,6 @@ impl App {
             if self.commit_rule(s, r) {
                 self.set_status(tl.version_approved, false);
             }
-        }
-        if let Some(id) = self.l1.compare
-            && let Some(i) = versions.iter().position(|v| v.id == id)
-        {
-            let v = &versions[i];
-            ui.add_space(6.0);
-            if i > 0 {
-                ui.strong((tl.diff_between)(versions[i - 1].number, v.number));
-                changes_table(
-                    ui,
-                    "dif_ant",
-                    &charter::diff(&versions[i - 1].content, &v.content),
-                );
-            }
-            ui.strong((tl.diff_to_current)(v.number));
-            changes_table(ui, "dif_atual", &charter::diff(&v.content, &current));
         }
     }
 }

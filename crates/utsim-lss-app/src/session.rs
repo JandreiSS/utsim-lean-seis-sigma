@@ -31,6 +31,8 @@ pub struct Session {
     authorized: Option<perfis::Authorized>,
     /// The check of the signed journal and the approval seals (stage P7), read on demand.
     signatures: Option<(assinatura::Integrity, assinatura::Seals)>,
+    /// Operations of a draft right after it was made: more than that is work not saved.
+    ops_inicio: usize,
 }
 
 /// The permission rules of a folder (`docs/plano_lean_seis_sigma.md`, 8.8).
@@ -248,7 +250,63 @@ impl Session {
             guard: Guard::Free,
             authorized: None,
             signatures: None,
+            ops_inicio: 0,
         }
+    }
+
+    /// A new project with no folder yet ("começar sem pasta"): it lives in a temporary
+    /// folder until [`Session::save_as`].
+    pub fn draft(
+        title: &str,
+        approach: Approach,
+        me: &Identity,
+        clock: Box<dyn Clock>,
+    ) -> utsim_lss_store::Result<Self> {
+        let folder = ProjectFolder::create_draft(title, approach, me, clock.as_ref())?;
+        let mut s = Self::with(folder, clock);
+        s.ops_inicio = s.folder.journal().len();
+        Ok(s)
+    }
+
+    /// The project was never saved in a folder of the person.
+    pub fn is_draft(&self) -> bool {
+        self.folder.is_draft()
+    }
+
+    /// There is work that is not in a folder: a draft with changes, or, with automatic
+    /// saving off, operations waiting for the Save.
+    pub fn nao_salvo(&self) -> bool {
+        if self.is_draft() {
+            self.folder.journal().len() > self.ops_inicio
+        } else {
+            self.folder.deferred_count() > 0
+        }
+    }
+
+    /// Automatic saving (always off for a draft, which has no folder to save in).
+    pub fn automatico(&self) -> bool {
+        !self.is_draft() && !self.folder.is_deferred()
+    }
+
+    /// Turns automatic saving on or off; turning it on writes what was waiting.
+    pub fn set_automatico(&mut self, ligado: bool) -> utsim_lss_store::Result<usize> {
+        if self.is_draft() {
+            return Ok(0);
+        }
+        self.folder.set_defer(!ligado)
+    }
+
+    /// The Save with a folder: writes what was waiting. Returns how many files.
+    pub fn salvar(&mut self) -> utsim_lss_store::Result<usize> {
+        self.folder.write_deferred()
+    }
+
+    /// Saves the project in `dest` and goes on working there.
+    pub fn save_as(&mut self, dest: &Path) -> utsim_lss_store::Result<()> {
+        self.folder.save_as(dest)?;
+        self.ops_inicio = 0;
+        self.last_beat_ms = i64::MIN / 2;
+        Ok(())
     }
 
     pub fn folder(&self) -> &ProjectFolder {

@@ -29,6 +29,8 @@ pub mod analyses;
 pub mod experiments;
 // The DMAIC roadmap.
 pub mod roadmap;
+// O painel do projeto: a trilha das fases e o "agora faça".
+pub mod painel;
 // Stage L6, the implementation program.
 pub mod program;
 
@@ -57,6 +59,10 @@ pub struct L1Ui {
     person_email: String,
     role_person: Option<Id>,
     role_kind: domain::RoleKind,
+    // Painel: a fase escolhida na trilha (a atual quando `None`) e se a barra mostra as
+    // telas de "Mais".
+    pub(crate) painel_fase: Option<usize>,
+    pub(crate) mais: bool,
     // Phases.
     phase: Option<Id>,
     decision: Option<utsim_lss_core::tollgate::Decision>,

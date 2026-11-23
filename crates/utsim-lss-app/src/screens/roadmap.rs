@@ -44,7 +44,7 @@ const TOOL_H: f32 = 22.0;
 
 impl App {
     /// Opens where a tool of the roadmap lives.
-    fn open_target(&mut self, s: &Session, target: Target) {
+    pub(in crate::app) fn open_target(&mut self, s: &Session, target: Target) {
         match target {
             Target::Deliverable(tool) => {
                 self.nav = Nav::Tools;
@@ -56,6 +56,10 @@ impl App {
             Target::Screen(key) => {
                 if let Some(n) = Nav::from_key(key) {
                     self.nav = n;
+                    // Quem abre uma tela de "Mais" a vê na barra.
+                    if !n.essencial() {
+                        self.l1.mais = true;
+                    }
                 }
             }
             Target::Analysis(key) => {

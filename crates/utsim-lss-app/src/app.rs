@@ -27,6 +27,8 @@ const LSSZ: utsim_ui_tema::arquivos::Filtro = utsim_ui_tema::arquivos::Filtro {
 // Stage L1 screens (portfolio, charter versions, team, tollgates, risks, meetings,
 // schedule, savings, closing, opening screen).
 mod controle;
+// Começar sem pasta: Salvar, Salvar como e a guarda das mudanças não salvas.
+pub mod documento;
 #[path = "screens/mod.rs"]
 pub mod screens;
 mod tools;
@@ -99,6 +101,22 @@ impl Nav {
             Nav::Roadmap => "roteiro",
             Nav::Experiments => "experimentos",
         }
+    }
+
+    /// As telas sempre à vista na barra; as outras ficam em "Mais".
+    pub fn essencial(self) -> bool {
+        matches!(
+            self,
+            Nav::Portfolio
+                | Nav::Overview
+                | Nav::Charter
+                | Nav::Team
+                | Nav::Phases
+                | Nav::Tools
+                | Nav::Analyses
+                | Nav::Actions
+                | Nav::Conflicts
+        )
     }
 
     pub fn from_key(key: &str) -> Option<Nav> {
@@ -203,6 +221,8 @@ pub struct App {
     signer: Option<utsim_lss_store::assinatura::Signer>,
     /// The gemba page, when turned on (P7).
     gemba: screens::gemba::GembaUi,
+    /// The project as a document: Save, Save as and the guard of unsaved work.
+    pub doc: documento::Documento,
 }
 
 impl App {
@@ -213,6 +233,10 @@ impl App {
         if first_run {
             app.config.language = crate::text::language_of(utsim_idiomas::Idioma::inicial());
             crate::text::set_language(app.config.language);
+        }
+        // Começar sem pasta: com a pessoa conhecida, o app abre já num projeto em branco.
+        if app.screen == Screen::Start {
+            app.comecar_sem_pasta();
         }
         app
     }
@@ -266,6 +290,7 @@ impl App {
             ctl: controle::CtlUi::default(),
             signer: None,
             gemba: screens::gemba::GembaUi::default(),
+            doc: documento::Documento::default(),
         };
         app.load_signer();
         app
@@ -416,8 +441,17 @@ impl App {
         let cache = self.dirs.cache.clone();
         let r = Session::open(path, &me, Some(&cache), (self.clock)());
         match self.report(r) {
-            Some(s) => {
+            Some(mut s) => {
                 self.status = None;
+                // O salvamento automático desligado é lembrado por projeto.
+                if self
+                    .config
+                    .sem_automatico
+                    .iter()
+                    .any(|p| p == s.folder().root())
+                {
+                    let _ = s.set_automatico(false);
+                }
                 self.entered(s);
                 true
             }
@@ -481,6 +515,17 @@ impl App {
             theme::apply(ui.ctx(), self.config.theme);
             self.theme_applied = Some(self.config.theme);
         }
+        if self.screen == Screen::Project {
+            // A barra do documento, no canto de cima à esquerda, antes dos outros painéis.
+            if self
+                .session
+                .as_ref()
+                .is_some_and(|s| !s.is_program() && !s.folder().is_portfolio())
+            {
+                egui::Panel::top("documento").show(ui, |ui| self.barra_documento(ui));
+            }
+            self.atalhos_documento(ui.ctx());
+        }
         match self.screen {
             Screen::Identity => {
                 egui::CentralPanel::default().show(ui, |ui| self.identity_screen(ui));
@@ -489,6 +534,7 @@ impl App {
             Screen::Project => self.project_screen(ui),
         }
         self.after_frame(ui.ctx());
+        self.quadro_documento(ui.ctx());
     }
 
     /// Switching to another project asked by a screen (after the frame, when no session is
@@ -716,7 +762,7 @@ impl App {
         }
         egui::CentralPanel::default().show(ui, |ui| {
             egui::ScrollArea::both().show(ui, |ui| match self.nav {
-                Nav::Overview => self.overview(ui, &s),
+                Nav::Overview => self.painel(ui, &mut s),
                 Nav::Charter => self.charter_l1(ui, &mut s),
                 Nav::Phases => self.phases_l1(ui, &mut s),
                 Nav::Actions => self.board(ui, &mut s),
@@ -743,13 +789,10 @@ impl App {
         let r = s.tick(self.nav.key(), editing);
         self.report(r);
         ui.ctx().request_repaint_after(Duration::from_millis(500));
+        self.session = Some(s);
         if close {
-            s.close();
-            self.l1.close();
-            self.screen = Screen::Start;
-            self.drafts.clear();
-        } else {
-            self.session = Some(s);
+            // Com trabalho não salvo, pergunta antes de fechar.
+            self.pedir_troca(documento::Depois::Fechar);
         }
     }
 
@@ -784,40 +827,57 @@ impl App {
         }];
         if !s.folder().is_portfolio() {
             // A portfolio folder has no project screens.
+            // O essencial à vista, na ordem do trabalho; o resto em "Mais", recolhido (a
+            // tela aberta fica à vista mesmo lá).
             groups.push(Grupo {
                 titulo: Some(t.nav_project),
-                itens: items(&[
-                    Nav::Overview,
-                    Nav::Roadmap,
-                    Nav::Charter,
-                    Nav::Team,
-                    Nav::Phases,
-                ]),
+                itens: items(&[Nav::Overview, Nav::Charter, Nav::Team, Nav::Phases]),
             });
             groups.push(Grupo {
                 titulo: Some(t.nav_execution),
-                itens: items(&[
-                    Nav::Actions,
-                    Nav::Risks,
-                    Nav::Meetings,
-                    Nav::Schedule,
-                    Nav::Savings,
-                    Nav::Closure,
-                ]),
+                itens: items(&[Nav::Tools, Nav::Analyses, Nav::Actions]),
             });
-            groups.push(Grupo {
-                titulo: Some(t.nav_analysis),
-                itens: items(&[
-                    Nav::Tools,
-                    Nav::Analyses,
-                    Nav::Experiments,
-                    Nav::Model,
-                    Nav::Reports,
-                    Nav::Data,
-                ]),
-            });
+            let mais: Vec<Nav> = [
+                Nav::Roadmap,
+                Nav::Risks,
+                Nav::Meetings,
+                Nav::Schedule,
+                Nav::Savings,
+                Nav::Closure,
+                Nav::Experiments,
+                Nav::Model,
+                Nav::Reports,
+                Nav::Data,
+            ]
+            .into_iter()
+            .filter(|n| self.l1.mais || *n == self.nav)
+            .collect();
+            if !mais.is_empty() {
+                groups.push(Grupo {
+                    titulo: Some(crate::text::l16::l16().mais),
+                    itens: items(&mais),
+                });
+            }
         }
         let lines = [s.folder().title().to_string()];
+        if !s.folder().is_portfolio() {
+            // "Mais telas" no pé da barra (a barra comum ocupa o resto da altura).
+            let tl = crate::text::l16::l16();
+            let rotulo = if self.l1.mais {
+                tl.menos_telas
+            } else {
+                tl.mais_telas
+            };
+            egui::Panel::bottom("mais_telas")
+                .show_separator_line(false)
+                .show_inside(ui, |ui| {
+                    ui.add_space(4.0);
+                    if ui.button(rotulo).clicked() {
+                        self.l1.mais = !self.l1.mais;
+                    }
+                    ui.add_space(4.0);
+                });
+        }
         Barra {
             nome: t.app_name,
             cor: screens::inicio::COR,

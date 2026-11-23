@@ -235,3 +235,37 @@ fn screens_and_reports_of_version_2() {
         }
     }
 }
+
+/// O painel do projeto (a trilha das fases e o "agora faça"), o termo com o essencial e a
+/// barra do documento, num projeto começado sem pasta.
+#[test]
+fn painel_do_projeto_sem_pasta() {
+    let dir = tempfile::tempdir().unwrap();
+    let counter = Arc::new(AtomicU64::new(0));
+    let mut app = App::with_clock(
+        AppDirs::under(&dir.path().join("cfg")),
+        Box::new(move || Box::new(Salted(Arc::clone(&counter), 23))),
+    );
+    assert!(app.submit_identity("Ana Souza", "ana@empresa.com"));
+    assert!(app.comecar_sem_pasta());
+    {
+        let s = app.session_mut().unwrap();
+        let p = domain::Project::entity_ref(s.project());
+        s.set_field(
+            p,
+            domain::fields::project::PROBLEM,
+            Value::from("O refugo da tampa subiu de 2,1 % para 4,8 % em seis meses."),
+            None,
+        )
+        .unwrap();
+    }
+    let ctx = Context::default();
+    ctx.set_fonts(utsim_ui_tema::fonts_with(None));
+    let mut cap = Captura::new(ctx, vec2(1280.0, 860.0));
+    for (nav, nome) in [(Nav::Overview, "lss_painel"), (Nav::Charter, "lss_termo")] {
+        app.nav = nav;
+        let img = cap.imagem(4, |ui| app.draw(ui));
+        assert!(colours(&img) > 20, "{nome} quase não pintou nada");
+        save(&img, nome);
+    }
+}

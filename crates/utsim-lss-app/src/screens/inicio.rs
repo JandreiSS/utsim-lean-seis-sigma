@@ -42,7 +42,14 @@ impl App {
         let t = texts();
         let l = l14();
         let acoes = [
-            Acao::nova("abrir", Simbolo::Abrir, l.open_project, l.open_help).principal(),
+            Acao::nova(
+                "sem_pasta",
+                Simbolo::Novo,
+                crate::text::tx("l16-comecar_sem_pasta"),
+                crate::text::tx("l16-comecar_sem_pasta_ajuda"),
+            )
+            .principal(),
+            Acao::nova("abrir", Simbolo::Abrir, l.open_project, l.open_help),
             Acao::nova("novo", Simbolo::Novo, t.new_project, l.new_help),
             Acao::nova(
                 "programa",
@@ -74,6 +81,9 @@ impl App {
         };
         let escolha = abertura.mostrar(ui, |_| {}, |_| {});
         match escolha {
+            Some(Escolha::Acao("sem_pasta")) => {
+                self.comecar_sem_pasta();
+            }
             Some(Escolha::Acao("abrir")) => {
                 let inicio = self
                     .config

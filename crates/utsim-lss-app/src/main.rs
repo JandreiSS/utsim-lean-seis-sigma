@@ -35,6 +35,8 @@ fn main() -> ExitCode {
         Box::new(move |cc| {
             cc.egui_ctx
                 .set_pixels_per_point(cc.egui_ctx.pixels_per_point().max(1.1));
+            // egui's fonts with the symbols (● △ ◆) of the drawn tools.
+            cc.egui_ctx.set_fonts(utsim_ui_tema::fonts_with(None));
             let mut app = App::new(dirs);
             if let Some(p) = open {
                 app.open_project(&p);
