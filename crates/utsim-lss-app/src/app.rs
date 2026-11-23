@@ -870,7 +870,7 @@ impl App {
             };
             egui::Panel::bottom("mais_telas")
                 .show_separator_line(false)
-                .show_inside(ui, |ui| {
+                .show(ui, |ui| {
                     ui.add_space(4.0);
                     if ui.button(rotulo).clicked() {
                         self.l1.mais = !self.l1.mais;
