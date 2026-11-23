@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publica o UTSim Seis Sigma pelo launcher, como produto próprio (`lean-seis-sigma`): monta a
+# Publica o UTSim LSS pelo launcher, como produto próprio (`lean-seis-sigma`): monta a
 # pasta do programa, cifra, assina e grava o pacote e o manifesto na pasta de publicação (a
 # pasta do Google Drive). Não envia nada à internet: o Google Drive para computador sincroniza
 # a pasta. O launcher já instalado passa a mostrar o produto; ele não precisa mudar.
@@ -10,7 +10,7 @@
 #
 # Antes: cargo build --release -p utsim-lss-app -p utsim-publicar
 # Notas da versão: a seção "## [lss-<versão>]" do CHANGELOG.md, se existir; senão, os itens
-# da seção "## [Não lançado]" que citam o UTSim Seis Sigma.
+# da seção "## [Não lançado]" que citam o UTSim LSS (ou o nome antigo, UTSim Seis Sigma).
 
 set -eu
 
@@ -44,14 +44,14 @@ cp docs/manual/src/seis-sigma.md "$PASTA/seis-sigma/manual/"
 if grep -q "^## \[lss-$VERSAO\]" CHANGELOG.md; then
     bash scripts/notas-versao.sh "lss-$VERSAO" > "$PASTA/notas.md"
 else
-    awk '/^## \[/ { n++ } n == 1 && /^- / && /UTSim Seis Sigma/ { print }' CHANGELOG.md > "$PASTA/notas.md"
+    awk '/^## \[/ { n++ } n == 1 && /^- / && /UTSim (LSS|Seis Sigma)/ { print }' CHANGELOG.md > "$PASTA/notas.md"
 fi
 [ -s "$PASTA/notas.md" ] || echo "(sem notas)" > "$PASTA/notas.md"
 
 "$PUBLICAR" publicar \
     --saida "$SAIDA" \
     --produto lean-seis-sigma \
-    --nome "UTSim Seis Sigma" \
+    --nome "UTSim LSS" \
     --descricao "Gerenciador de projetos Lean Seis Sigma da família UTSim" \
     --subtitulo "Projetos Lean Seis Sigma" \
     --autor "UTSim" \

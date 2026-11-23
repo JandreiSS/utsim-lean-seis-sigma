@@ -3,8 +3,8 @@
 
 ## text.rs :: Texts
 
-t-app_name = UTSim Seis Sigma
-t-identity_title = Bienvenue dans UTSim Seis Sigma
+t-app_name = UTSim LSS
+t-identity_title = Bienvenue dans UTSim LSS
 t-identity_intro = Avant de commencer, dites qui vous êtes. Votre nom figure sur chaque modification que vous apportez aux projets, afin que l'équipe sache qui a changé quoi et quand.
 t-identity_name = Nom
 t-identity_email = E-mail
@@ -1222,7 +1222,7 @@ l13-outdated = ⚠ la signature de { $n } correspond à une autre version du con
 l13-invalid = ⚠ signature non conforme
 l13-not_signed = non signé
 l13-signed_ok = Signature enregistrée.
-l13-pdf_signed = Signé électroniquement par { $issuer } le { $when }, avec la clé { $key } (sceau { $seal }). La signature peut être vérifiée dans UTSim Seis Sigma, à l'écran Certification du programme. Elle n'a pas la valeur juridique d'une signature numérique certifiée.
+l13-pdf_signed = Signé électroniquement par { $issuer } le { $when }, avec la clé { $key } (sceau { $seal }). La signature peut être vérifiée dans UTSim LSS, à l'écran Certification du programme. Elle n'a pas la valeur juridique d'une signature numérique certifiée.
 l13-roles_title = Signature de la liste des rôles
 l13-roles_intro = Le master black belt signe la liste des rôles avec sa clé. Un rôle ajouté après la dernière signature, par n'importe qui, apparaît ci-dessous jusqu'à ce que la liste soit de nouveau signée. La première signature est valable si elle émane du créateur du programme ; les suivantes, si elles émanent d'un master black belt de la liste signée précédemment.
 l13-roles_never = La liste des rôles n'a pas encore été signée.

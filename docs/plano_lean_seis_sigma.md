@@ -3,7 +3,7 @@
 Plano técnico, sem implementação, de um aplicativo próprio da família UTSim para gerenciar
 projetos de melhoria Lean Seis Sigma, distribuído pelo mesmo launcher do simulador e integrado a
 ele. Objetivo do dono: "gerenciar os projetos e ter todo o fluxo natural de um projeto Lean Six
-Sigma à mão". Nome provisório (decisão N1, 2026-11-03): **UTSim Seis Sigma**, produto
+Sigma à mão". Nome provisório (decisão N1, 2026-11-03): **UTSim LSS**, produto
 `lean-seis-sigma` no launcher; o dono pode trocar depois. No texto ele aparece como **app LSS** e
 as crates com o prefixo `utsim-lss`.
 
@@ -651,7 +651,7 @@ mentoria, a fila de revisões de tollgate com trabalho padrão, uma onda de form
 belts (candidatos, aprovação do gestor, turma, currículo ligado às ferramentas, presença, prova,
 requisitos de certificação conferidos pelo app e registro com validade), os painéis do programa
 e os perfis de acesso. São as fases L6 e L7 da seção 5.2. O modo de ensino (antigo L8) saiu do
-UTSim Seis Sigma (decisão N2, seção 7): vira um app próprio baseado no UTSim.
+UTSim LSS (decisão N2, seção 7): vira um app próprio baseado no UTSim.
 
 ### 5.2 Fases
 
@@ -670,7 +670,7 @@ plano; Haiku para tarefas mecânicas).
 | *Subtotal L0 a L5* | | *167–230* | *Opus ≈ 61–86; Sonnet ≈ 104–140; Haiku ≈ 2–4* |
 | **L6 Programa de implantação** (MVP ampliado, seção 8.1 a 8.4, 8.7 e 8.8) | (**feita** em 2026-11-03: regras em `utsim-lss-core` nos módulos `programa`, `designacao`, `mentoria`, `revisao`, `painel`, `perfis` e `privacidade` (decisão MB9) e telas em `utsim-lss-app/src/screens/program`; pasta de programa com diário próprio ao lado das carteiras e dos projetos (`utsim_lss_store::program`), que lê só o resumo de cada pasta; diário de mentoria em pasta restrita por belt (`mentoria/<belt>.lss`); permissão conferida na ação e na reconstrução, pelo perfil do autor no instante da operação; anonimização que reescreve o histórico dos campos pessoais. Ficam para depois: a lista de papéis assinada (P7), a exportação dos painéis em PDF e `.xlsx` (L5), os pedidos de projeto de certificação na pauta do comitê, o funil de certificação dos painéis e os níveis estudou e praticou alimentados pela formação e pelo ensino (L7 e L8, entidades prontas: pessoa com nível, formação e certificação, mapa de competências), o modelo de fluxo da empresa (4.7; o tempo-alvo por fase o MBB já define no painel desde 2026-11-19) e as pastas restritas de finanças, questões e notas, que o app ainda não cria) programa com unidades de negócio, objetivos e metas; funil entre carteiras (ideia, triagem, seleção, abertura) com comitê de seleção; capacidade de belts e champions; designação com sugestão ordenada; diário de mentoria e mapa de competências; fila de revisões de tollgate com trabalho padrão e parecer do MBB; painéis do programa; perfis e pastas restritas | 36–50 | Opus 10–14 (agregação do programa, validação de autoria por perfil, sugestão de designação, indicadores de tempo de ciclo); Sonnet 25–34 (telas, painéis, roteiros de revisão); Haiku 1–2 (catálogo de textos) |
 | **L7 Formação e certificação** (MVP ampliado, seção 8.5) | (**feita** em 2026-11-03: módulos `formacao` (com `curriculum`, `teams` e `exams`) e `certificacao` de `utsim-lss-core`, telas em `utsim-lss-app/src/screens/program`; pastas restritas `formacao/questoes.lss`, `formacao/notas.lss` e `formacao/turmas/<turma>.lss` com diário próprio e escrita conferida; problema prático calculado por `utsim-stats` e `utsim-quality`; ficam para L5 o certificado em PDF e para P9 a importação de pessoas por CSV, a análise dos itens e a avaliação de reação) ondas e turmas, indicação com critérios, aprovação do gestor, checagem de capacidade, lista de espera, montagem das equipes de formação, currículo por belt ligado às ferramentas, presença, banco de questões e provas com sorteio reprodutível e correção, requisitos de certificação conferidos sobre os dados do app, registro com validade e renovação, instrutores, certificado em PDF | 34–46 | Opus 8–11 (motor de requisitos, montagem das equipes com restrições, sorteio e correção numérica); Sonnet 25–33 (telas, certificado, relatórios da turma); Haiku 1–2 (importação de listas de pessoas por CSV) |
-| ~~**L8 Modo de ensino**~~ (**saiu do UTSim Seis Sigma** por decisão do dono de 2026-11-03: vira um app de ensino próprio, baseado no UTSim, com plano à parte; as horas não contam mais aqui) | espaço de treino separado da carteira real, três projetos-exemplo completos, conjuntos de dados didáticos com resposta conhecida, pacotes de exercícios com correção automática, criação de casos pelo MBB (do zero, de projeto encerrado anonimizado ou de modelo UTSim), progresso da turma | 23–34 | Opus 6–9 (geradores de dados com efeito plantado, anonimização, correção com tolerância); Sonnet 15–22 (projetos-exemplo, enunciados, telas); Haiku 2–3 (empacotamento dos exercícios, conferência de catálogo) |
+| ~~**L8 Modo de ensino**~~ (**saiu do UTSim LSS** por decisão do dono de 2026-11-03: vira um app de ensino próprio, baseado no UTSim, com plano à parte; as horas não contam mais aqui) | espaço de treino separado da carteira real, três projetos-exemplo completos, conjuntos de dados didáticos com resposta conhecida, pacotes de exercícios com correção automática, criação de casos pelo MBB (do zero, de projeto encerrado anonimizado ou de modelo UTSim), progresso da turma | 23–34 | Opus 6–9 (geradores de dados com efeito plantado, anonimização, correção com tolerância); Sonnet 15–22 (projetos-exemplo, enunciados, telas); Haiku 2–3 (empacotamento dos exercícios, conferência de catálogo) |
 | **Total do MVP** (L0 a L7 com P1, decisões M1, M2 e N2) | | **255–351** | Opus ≈ 93–130; Sonnet ≈ 158–213; Haiku ≈ 4–8 |
 | P1 MSA (no MVP pela decisão M1) | (**feita** em 2026-11-05: Gage R&R e tipo 1 na tela Dados e análises, o tipo 1 (Cg e Cgk) em `utsim_lss_core::analises`; itens verificados do Medir "MSA aprovado" e "linha de base com dado Real"; vício, linearidade e atributos com kappa entraram na tela em 2026-11-06, e a concordância de atributos com kappa ≥ 0,75 também aprova o MSA) Gage R&R por ANOVA e médias e amplitudes, tipo 1, vício e linearidade, atributos com kappa de Cohen e Fleiss; checklist verificado do Medir | 18–25 | Opus 14–19; Sonnet 4–6 |
 | P2 Estatística ampliada | (**feita a maior parte** em 2026-11-07: Levene, Bartlett, Kruskal-Wallis, Mood, Friedman, ANOVA de dois fatores, regressão múltipla com VIF e resíduos, poder e tamanho de amostra em `utsim-stats` e na tela Dados e análises; cartas EWMA e CUSUM com ARL na tela em 2026-11-11; ficam para depois Johnson, logística e seleção de variáveis) Johnson, Levene e Bartlett, ANOVA de dois fatores, Kruskal-Wallis, Mood, Friedman, Fisher, poder e tamanho de amostra, correlação, regressão múltipla com diagnósticos, logística, seleção de variáveis, EWMA e CUSUM com ARL (**feitos** em `utsim-quality`) | 30–42 | Opus 25–35; Sonnet 5–7 |
@@ -923,7 +923,7 @@ Programa de implantação, formação e ensino (seção 8):
 **Decididas em 2026-11-03.** O dono escolheu um aplicativo de verdade, sem navegador, e aceitou
 as demais propostas, com uma mudança no FMEA:
 
-- **N1** nome provisório "UTSim Seis Sigma" (pode mudar depois; muda só o rótulo).
+- **N1** nome provisório "UTSim LSS" (pode mudar depois; muda só o rótulo).
 - **I1, I2 e I3 substituídas:** janela própria em Rust com `eframe`/`egui`, a mesma versão do
   launcher (`=0.36.2`) e do visualizador, para o `Cargo.lock` manter um só egui. Nada de
   servidor HTTP nem navegador. Gráficos com `egui_plot` na tela; impressão (A3, tollgate,
@@ -944,7 +944,7 @@ as demais propostas, com uma mudança no FMEA:
 Registro original das perguntas:
 
 
-1. **N1 Nome do app.** Provisório desde 2026-11-03: "UTSim Seis Sigma" (o dono deixou a escolha
+1. **N1 Nome do app.** Provisório desde 2026-11-03: "UTSim LSS" (o dono deixou a escolha
    e pode mudar). As crates ficam com o prefixo `utsim-lss-*`, que não depende do nome exibido;
    trocar o nome muda só o rótulo no launcher e nas telas.
 2. **I1 Interface.** Proposta: web servida localmente pelo próprio binário, no padrão do painel.
@@ -1017,8 +1017,8 @@ decididas acima continuam valendo; estas são propostas:
     formação e ensino.
 24. **N2 Ensino fora do Seis Sigma** (decisão do dono, 2026-11-03): "O modo ensino não deve
     fazer parte do Seis Sigma e sim ser um novo app, baseado no UTSim". O antigo L8 (seção 8.6)
-    sai do MVP do UTSim Seis Sigma (MVP agora L0 a L7 com P1, 255–351 h); o módulo `ensino` de
-    MB9 não é criado aqui. Fica no UTSim Seis Sigma só o ponto de ligação: o nível `praticou`
+    sai do MVP do UTSim LSS (MVP agora L0 a L7 com P1, 255–351 h); o módulo `ensino` de
+    MB9 não é criado aqui. Fica no UTSim LSS só o ponto de ligação: o nível `praticou`
     do mapa de competências vem dos exercícios marcados na presença das turmas (L7) e de
     entradas `competencia` de origem `exercicio`, que o app de ensino poderá gravar no diário
     do programa (`mentoria::record_level`). O plano do app de ensino será escrito à parte.
@@ -1197,9 +1197,9 @@ reação dos alunos.
 
 ### 8.6 Modo de ensino
 
-> **Saiu do UTSim Seis Sigma** (decisão N2 de 2026-11-03, seção 7): esta seção fica como
+> **Saiu do UTSim LSS** (decisão N2 de 2026-11-03, seção 7): esta seção fica como
 > referência para o app de ensino próprio, baseado no UTSim, que terá plano à parte. No
-> UTSim Seis Sigma fica só o ponto de ligação com o mapa de competências.
+> UTSim LSS fica só o ponto de ligação com o mapa de competências.
 
 O modo de ensino serve à formação da empresa (seção 8.5) e ao uso em aula do dono (decisão U1).
 

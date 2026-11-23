@@ -1,4 +1,4 @@
-//! UTSim Seis Sigma, the Lean Six Sigma project manager of the UTSim family
+//! UTSim LSS, the Lean Six Sigma project manager of the UTSim family
 //! (`docs/plano_lean_seis_sigma.md`): a native window (eframe/egui, the same egui as the
 //! launcher), with no server but the optional read-only gemba page ([`rede`]).
 //!

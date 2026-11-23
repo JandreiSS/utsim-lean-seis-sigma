@@ -1,7 +1,7 @@
 ## text.rs :: Texts
 
-t-app_name = UTSim Seis Sigma
-t-identity_title = Bem-vindo ao UTSim Seis Sigma
+t-app_name = UTSim LSS
+t-identity_title = Bem-vindo ao UTSim LSS
 t-identity_intro = Antes de começar, diga quem você é. O seu nome vai em cada alteração que você fizer nos projetos, para a equipe saber quem mudou o quê e quando.
 t-identity_name = Nome
 t-identity_email = E-mail
@@ -1178,7 +1178,7 @@ l13-outdated = ⚠ a assinatura de { $n } é de outra versão do conteúdo
 l13-invalid = ⚠ assinatura que não confere
 l13-not_signed = sem assinatura
 l13-signed_ok = Assinatura gravada.
-l13-pdf_signed = Assinado eletronicamente por { $issuer } em { $when }, com a chave { $key } (selo { $seal }).              A assinatura pode ser conferida no UTSim Seis Sigma, na tela Certificação do              programa. Ela não tem a validade jurídica de uma assinatura digital certificada.
+l13-pdf_signed = Assinado eletronicamente por { $issuer } em { $when }, com a chave { $key } (selo { $seal }).              A assinatura pode ser conferida no UTSim LSS, na tela Certificação do              programa. Ela não tem a validade jurídica de uma assinatura digital certificada.
 l13-roles_title = Assinatura da lista de papéis
 l13-roles_intro = O master black belt assina a lista de papéis com a sua chave. Um papel         incluído depois da última assinatura, por quem quer que seja, aparece abaixo até a         lista ser assinada de novo. A primeira assinatura vale quando é do criador do         programa; as seguintes, quando são de um master black belt da lista assinada antes.
 l13-roles_never = A lista de papéis ainda não foi assinada.
