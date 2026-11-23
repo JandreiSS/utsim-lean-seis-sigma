@@ -797,7 +797,7 @@ pub fn dress(doc: &mut Document, author: &str, date: &str, source: &str) {
         return;
     }
     doc.cover = Some(utsim_lss_core::relatorios::Cover {
-        app: "UTSim Seis Sigma".into(),
+        app: "UTSim LSS".into(),
         title: doc.title.clone(),
         subtitle: doc.subtitle.clone(),
         author: author.into(),

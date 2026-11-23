@@ -6,10 +6,10 @@ fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") {
         let mut res = winresource::WindowsResource::new();
         res.set_icon("../../assets/icone/familia/lean-seis-sigma.ico");
-        res.set("ProductName", "UTSim Seis Sigma");
+        res.set("ProductName", "UTSim LSS");
         res.set(
             "FileDescription",
-            "UTSim Seis Sigma: gerenciador de projetos Lean Seis Sigma da família UTSim",
+            "UTSim LSS: gerenciador de projetos Lean Seis Sigma da família UTSim",
         );
         res.set("LegalCopyright", "© 2026 Jandrei");
         if let Err(e) = res.compile() {
