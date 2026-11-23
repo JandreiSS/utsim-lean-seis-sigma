@@ -27,6 +27,9 @@ utsim-core.workspace = true
 # The data and analyses screen reads CSV and draws the charts (stage L3).
 utsim-quality.workspace = true
 utsim-diagram.workspace = true
+# The drawn tools (fishbone, whys tree, live Pareto, S × O matrix), the same as in UTSim
+# Qualidade and Segurança.
+utsim-visual = { path = "../utsim-visual" }
 utsim-launcher-core = { path = "../utsim-launcher-core" }
 serde_json.workspace = true
 serde.workspace = true

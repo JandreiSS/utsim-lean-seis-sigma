@@ -5,8 +5,7 @@
 use crate::text::LocalDate;
 use std::hash::Hash;
 
-use eframe::egui::{self, Align2, Color32, FontId, RichText, Sense, Stroke, pos2, vec2};
-use egui_plot::{Bar, BarChart, HLine, Line, Plot, PlotPoints};
+use eframe::egui::{self, Color32, RichText, Stroke};
 use serde_json::Value;
 use utsim_lss_core::domain;
 use utsim_lss_core::tools::ap::Ap;
@@ -18,6 +17,7 @@ use utsim_lss_core::{EntityRef, Id as Uid};
 
 use super::{App, Nav};
 
+mod desenho;
 mod lean;
 use crate::session::Session;
 use crate::text::l10::l10;
@@ -757,7 +757,7 @@ impl App {
             self.text_field(ui, s, d, f::EFFECT, false, 420.0);
         });
         let g = ishikawa::diagram(s.state(), del);
-        fishbone(ui, &g);
+        self.espinha_lss(ui, s, del, &g);
         if !g.cycles.is_empty() {
             ui.colored_label(theme::WARN, tt.cycle_broken);
         }
@@ -847,6 +847,7 @@ impl App {
                     ui.label(tt.from_cause);
                     self.combo_field(ui, s, item_ref(ch.id), f::CAUSE, &cause_opts, 300.0);
                 });
+                self.arvore_lss(ui, s, del, ch);
                 for w in &ch.whys {
                     let r = item_ref(w.id);
                     ui.horizontal(|ui| {
@@ -976,7 +977,7 @@ impl App {
         }
         ui.add_space(8.0);
         ui.strong(tt.ce_pareto);
-        pareto_chart(ui, ("pareto_ce", del), &m.pareto);
+        desenho::pareto_vivo(ui, &desenho::id_pareto("ce", del), &m.pareto);
     }
 
     // ---- Pareto ------------------------------------------------------------------------
@@ -1006,12 +1007,21 @@ impl App {
                 self.check_field(ui, s, d, f::BY_COST, tt.by_cost);
             }
         });
+        let p = pareto::of_deliverable(s.state(), del);
+        let id_grafico = desenho::id_pareto("grafico", del);
+        let barra = utsim_visual::pareto::escolhida(ui.ctx(), &id_grafico)
+            .filter(|b| p.rows.iter().any(|r| &r.name == b));
         if table_mode {
             ui.weak(tt.pareto_table_tip);
             self.text_field(ui, s, d, f::TABLE, true, 420.0);
         } else {
             let rows: Vec<Uid> = tools::items(s.state(), del, pareto::ITEM)
                 .iter()
+                .filter(|i| {
+                    barra
+                        .as_deref()
+                        .is_none_or(|b| desenho::na_barra(&p, b, &i.text(f::NAME)))
+                })
                 .map(|i| i.id)
                 .collect();
             egui::Grid::new(("categorias", del))
@@ -1040,9 +1050,11 @@ impl App {
             }
         }
         ui.add_space(8.0);
-        let p = pareto::of_deliverable(s.state(), del);
-        pareto_table(ui, ("resultado", del), &p);
-        pareto_chart(ui, ("grafico", del), &p);
+        pareto_table(ui, ("resultado", del), &p, barra.as_deref());
+        let depois = desenho::pareto_vivo(ui, &id_grafico, &p);
+        if depois != barra {
+            ui.ctx().request_repaint();
+        }
     }
 
     // ---- Plans -------------------------------------------------------------------------
@@ -1327,6 +1339,8 @@ impl App {
         });
         ui.add_space(6.0);
         let rows = fmea::rows(s.state(), del);
+        desenho::fmea_matriz(ui, del, &rows, &table);
+        let (foco, rolar) = desenho::foco_fmea(ui.ctx(), del);
         egui::Grid::new(("fmea", del))
             .striped(true)
             .spacing([4.0, 4.0])
@@ -1337,11 +1351,29 @@ impl App {
                 ui.end_row();
                 for row in &rows {
                     let r = item_ref(row.id);
-                    if row.is_critical(from) {
-                        ui.colored_label(theme::WARN, "◆")
-                            .on_hover_text(tt.critical);
-                    } else {
-                        ui.label("");
+                    let marca = ui.horizontal(|ui| {
+                        if let Some(c) = desenho::cor_do_ap(row.ap(&table)) {
+                            let (r, _) = ui
+                                .allocate_exact_size(egui::vec2(12.0, 12.0), egui::Sense::hover());
+                            ui.painter().circle_filled(r.center(), 5.0, c);
+                        }
+                        if row.is_critical(from) {
+                            ui.colored_label(theme::WARN, "◆")
+                                .on_hover_text(tt.critical);
+                        }
+                    });
+                    if foco == Some(row.id) {
+                        let r = marca.response.rect;
+                        ui.painter().rect_stroke(
+                            r.expand(2.0),
+                            3.0,
+                            Stroke::new(2.0, theme::accent(ui)),
+                            egui::StrokeKind::Outside,
+                        );
+                        if rolar {
+                            ui.scroll_to_rect(r, Some(egui::Align::Center));
+                            desenho::rolou(ui.ctx(), del);
+                        }
                     }
                     self.text_field(ui, s, r, f::STEP, false, 90.0);
                     self.text_field(ui, s, r, f::MODE, false, 120.0);
@@ -1538,7 +1570,12 @@ fn ap_label(ui: &mut egui::Ui, ap: Option<Ap>) {
 }
 
 /// The Pareto as a table: category, value, percentage, cumulative, vital few.
-fn pareto_table(ui: &mut egui::Ui, id: impl Hash + std::fmt::Debug, p: &pareto::Pareto) {
+fn pareto_table(
+    ui: &mut egui::Ui,
+    id: impl Hash + std::fmt::Debug,
+    p: &pareto::Pareto,
+    barra: Option<&str>,
+) {
     let tt = tool_texts();
     if p.rows.is_empty() {
         return;
@@ -1548,7 +1585,7 @@ fn pareto_table(ui: &mut egui::Ui, id: impl Hash + std::fmt::Debug, p: &pareto::
             ui.strong(h);
         }
         ui.end_row();
-        for r in &p.rows {
+        for r in p.rows.iter().filter(|r| barra.is_none_or(|b| r.name == b)) {
             ui.label(or_untitled(&r.name));
             ui.label(fmt_num((r.value * 100.0).round() / 100.0));
             ui.label(pct(r.pct));
@@ -1564,150 +1601,6 @@ fn pareto_table(ui: &mut egui::Ui, id: impl Hash + std::fmt::Debug, p: &pareto::
         ui.strong(fmt_num((p.total * 100.0).round() / 100.0));
         ui.end_row();
     });
-}
-
-/// Bars of the percentage of each category, the cumulative line and the 80 % marker.
-fn pareto_chart(ui: &mut egui::Ui, id: impl Hash + std::fmt::Debug, p: &pareto::Pareto) {
-    let tt = tool_texts();
-    if p.rows.is_empty() || p.total <= 0.0 {
-        ui.weak(tt.no_data);
-        return;
-    }
-    let accent = theme::accent(ui);
-    let gray = Color32::from_gray(140);
-    let names: Vec<String> = p.rows.iter().map(|r| or_untitled(&r.name)).collect();
-    let bars: Vec<Bar> = p
-        .rows
-        .iter()
-        .enumerate()
-        .map(|(i, r)| {
-            Bar::new(i as f64, r.pct)
-                .width(0.7)
-                .name(&names[i])
-                .fill(if r.vital { accent } else { gray })
-        })
-        .collect();
-    let cum: Vec<[f64; 2]> = p
-        .rows
-        .iter()
-        .enumerate()
-        .map(|(i, r)| [i as f64, r.cum_pct])
-        .collect();
-    let n = names.len();
-    Plot::new(id)
-        .height(240.0)
-        .allow_scroll(false)
-        .allow_zoom(false)
-        .allow_drag(false)
-        .include_y(0.0)
-        .include_y(105.0)
-        .x_axis_formatter(move |mark, _| {
-            let k = mark.value.round();
-            if (mark.value - k).abs() < 1e-6 && k >= 0.0 && (k as usize) < n {
-                names[k as usize].clone()
-            } else {
-                String::new()
-            }
-        })
-        .y_axis_formatter(|mark, _| format!("{} %", mark.value))
-        .show(ui, |plot| {
-            plot.bar_chart(BarChart::new(tt.percentage, bars));
-            plot.line(Line::new(tt.cumulative, PlotPoints::new(cum)).color(theme::WARN));
-            plot.hline(HLine::new("80 %", pareto::VITAL_PCT).color(Color32::from_gray(170)));
-        });
-}
-
-/// The fish: the effect at the head, one bone per category (half above, half below) and
-/// the first causes of each bone, coloured by their state.
-fn fishbone(ui: &mut egui::Ui, g: &ishikawa::Diagram) {
-    let width = ui.available_width().clamp(640.0, 1100.0);
-    let height = 340.0;
-    let (rect, _) = ui.allocate_exact_size(vec2(width, height), Sense::hover());
-    let painter = ui.painter_at(rect);
-    let fg = ui.visuals().text_color();
-    let weak = ui.visuals().weak_text_color();
-    let accent = theme::accent(ui);
-    let mid = rect.center().y;
-    let head_w = 180.0;
-    let x0 = rect.left() + 10.0;
-    let x1 = rect.right() - head_w - 10.0;
-    painter.line_segment([pos2(x0, mid), pos2(x1, mid)], Stroke::new(2.5, fg));
-    let head = egui::Rect::from_min_size(pos2(x1, mid - 40.0), vec2(head_w, 80.0));
-    painter.rect_stroke(
-        head,
-        6.0,
-        Stroke::new(2.0, accent),
-        egui::StrokeKind::Inside,
-    );
-    let effect = if g.effect.trim().is_empty() {
-        tool_texts().effect_missing.to_string()
-    } else {
-        g.effect.clone()
-    };
-    let galley = painter.layout(effect, FontId::proportional(13.0), fg, head_w - 12.0);
-    let pos = head.center() - galley.size() / 2.0;
-    painter.galley(pos, galley, fg);
-    let n = g.bones.len();
-    let top = n.div_ceil(2);
-    for (i, b) in g.bones.iter().enumerate() {
-        let up = i < top;
-        let (k, side) = if up { (i, top) } else { (i - top, n - top) };
-        let span = (x1 - x0) / (side as f32 + 0.3);
-        let xe = x0 + span * (k as f32 + 1.0);
-        let ys = if up {
-            rect.top() + 26.0
-        } else {
-            rect.bottom() - 26.0
-        };
-        let xs = xe - 70.0;
-        painter.line_segment([pos2(xs, ys), pos2(xe, mid)], Stroke::new(1.5, fg));
-        let (anchor, ly) = if up {
-            (Align2::CENTER_BOTTOM, ys - 2.0)
-        } else {
-            (Align2::CENTER_TOP, ys + 2.0)
-        };
-        painter.text(
-            pos2(xs, ly),
-            anchor,
-            ishikawa::category_name(&b.category),
-            FontId::proportional(14.0),
-            accent,
-        );
-        let roots: Vec<&ishikawa::Cause> = b.causes.iter().filter(|c| c.depth == 0).collect();
-        let shown = roots.len().min(6);
-        for (j, c) in roots.iter().take(shown).enumerate() {
-            let t = (j as f32 + 1.0) / (shown as f32 + 1.0);
-            let py = ys + (mid - ys) * t;
-            let px = xs + (xe - xs) * t;
-            painter.line_segment([pos2(px - 10.0, py), pos2(px, py)], Stroke::new(1.0, weak));
-            let color = match c.status {
-                ishikawa::CauseStatus::Verified => accent,
-                ishikawa::CauseStatus::Probable => theme::WARN,
-                ishikawa::CauseStatus::RuledOut => weak,
-                ishikawa::CauseStatus::Open => fg,
-            };
-            let mut label: String = c.text.chars().take(26).collect();
-            if c.text.chars().count() > 26 {
-                label.push('…');
-            }
-            painter.text(
-                pos2(px - 12.0, py),
-                Align2::RIGHT_CENTER,
-                label,
-                FontId::proportional(11.0),
-                color,
-            );
-        }
-        if roots.len() > shown {
-            painter.text(
-                pos2(xe - 4.0, if up { mid - 10.0 } else { mid + 10.0 }),
-                Align2::RIGHT_CENTER,
-                format!("+{}", roots.len() - shown),
-                FontId::proportional(11.0),
-                weak,
-            );
-        }
-    }
 }
 
 /// The lead time ladder: for each process, the wait of the inventory before it (the low
