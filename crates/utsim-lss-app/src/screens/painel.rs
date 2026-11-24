@@ -104,7 +104,7 @@ impl App {
             ui.label(texts().untitled);
             return;
         };
-        ui.heading(&o.project.title);
+        // O título fica na barra lateral; aqui, a abordagem e a área.
         let abordagem = text::approach_name(o.project.approach);
         ui.weak(if o.project.area.trim().is_empty() {
             abordagem.to_string()

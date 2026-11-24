@@ -86,8 +86,6 @@ pub struct L3Ui {
     pub result: Option<(Recipe, Result<Outcome, String>)>,
     pub name: String,
     pub justification: String,
-    /// The data set or analysis waiting for the second click of "Apagar".
-    pub confirm_delete: Option<utsim_lss_core::Id>,
     /// The parsed table of the data set on screen, by its id and hash (read once, not on
     /// every frame).
     pub table: Option<(utsim_lss_core::Id, String, Table)>,
@@ -826,8 +824,9 @@ impl App {
             });
     }
 
-    /// "Apagar" for a data set (`dataset`) or a saved analysis, with a second click to
-    /// confirm. A data set used by a saved analysis stays: its analyses go first.
+    /// "Apagar" for a data set (`dataset`) or a saved analysis, confirmed by the family's
+    /// button (`botao_confirmado`). A data set used by a saved analysis stays: its analyses
+    /// go first.
     fn delete_button(
         &mut self,
         ui: &mut egui::Ui,
@@ -836,34 +835,26 @@ impl App {
         dataset: bool,
     ) {
         let t = l3();
-        if self.l3.confirm_delete != Some(id) {
-            if ui.small_button(t.delete).clicked() {
-                self.l3.confirm_delete = Some(id);
-            }
+        if !utsim_ui_tema::campos::botao_confirmado(ui, t.delete, ("lss_apagar_dado", id.to_string()))
+        {
             return;
         }
-        if ui.small_button(t.delete_confirm).clicked() {
-            self.l3.confirm_delete = None;
-            if dataset && dados::in_use(&analises::analyses(s.state(), s.project()), id) {
-                self.set_status(t.dataset_in_use, true);
-                return;
-            }
-            let e = if dataset {
-                dados::delete(id)
-            } else {
-                analises::delete(id)
-            };
-            if self.report(s.apply(e)).is_some() {
-                if dataset {
-                    self.l3.dataset = None;
-                    self.l3.table = None;
-                    self.l3.result = None;
-                }
-                self.set_status(t.deleted, false);
-            }
+        if dataset && dados::in_use(&analises::analyses(s.state(), s.project()), id) {
+            self.set_status(t.dataset_in_use, true);
+            return;
         }
-        if ui.small_button(t.delete_cancel).clicked() {
-            self.l3.confirm_delete = None;
+        let e = if dataset {
+            dados::delete(id)
+        } else {
+            analises::delete(id)
+        };
+        if self.report(s.apply(e)).is_some() {
+            if dataset {
+                self.l3.dataset = None;
+                self.l3.table = None;
+                self.l3.result = None;
+            }
+            self.set_status(t.deleted, false);
         }
     }
 

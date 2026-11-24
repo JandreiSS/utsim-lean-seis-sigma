@@ -407,11 +407,18 @@ impl App {
             }
             ui.add_space(4.0);
         });
-        egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui));
+        egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui, Some(&mut s)));
         egui::Panel::left("navegacao")
             .default_size(200.0)
             .resizable(false)
             .show(ui, |ui| {
+                egui::Panel::bottom("idioma_programa")
+                    .show_separator_line(false)
+                    .show(ui, |ui| {
+                        ui.add_space(4.0);
+                        self.idioma_na_barra(ui);
+                        ui.add_space(4.0);
+                    });
                 ui.add_space(6.0);
                 ui.strong(tl.nav_program);
                 for n in ProgramNav::ALL {

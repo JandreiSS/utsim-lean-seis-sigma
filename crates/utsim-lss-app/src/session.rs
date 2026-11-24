@@ -33,7 +33,16 @@ pub struct Session {
     signatures: Option<(assinatura::Integrity, assinatura::Seals)>,
     /// Operations of a draft right after it was made: more than that is work not saved.
     ops_inicio: usize,
+    /// Desfazer e refazer desta pessoa nesta sessão: cada passo é a lista de edições
+    /// compensatórias (`utsim_lss_core::desfazer`), gravadas no diário como as outras.
+    desfazer: Vec<Vec<Edit>>,
+    refazer: Vec<Vec<Edit>>,
+    /// A gravação em curso é um desfazer ou um refazer (não vira passo novo).
+    voltando: bool,
 }
+
+/// Quantos passos o desfazer guarda.
+pub const DESFAZER_MAX: usize = 200;
 
 /// The permission rules of a folder (`docs/plano_lean_seis_sigma.md`, 8.8).
 #[derive(Debug, Clone, PartialEq)]
@@ -86,6 +95,7 @@ impl Session {
         let edits =
             utsim_lss_core::domain::Person::register(s.state(), me.person, &me.name, &me.email);
         s.apply(edits)?;
+        s.limpar_desfazer();
         Ok(s)
     }
 
@@ -251,6 +261,66 @@ impl Session {
             authorized: None,
             signatures: None,
             ops_inicio: 0,
+            desfazer: Vec::new(),
+            refazer: Vec::new(),
+            voltando: false,
+        }
+    }
+
+    pub fn pode_desfazer(&self) -> bool {
+        !self.desfazer.is_empty()
+    }
+
+    pub fn pode_refazer(&self) -> bool {
+        !self.refazer.is_empty()
+    }
+
+    /// Esquece os passos (ao abrir: o registro de si mesmo não é um passo da pessoa).
+    pub fn limpar_desfazer(&mut self) {
+        self.desfazer.clear();
+        self.refazer.clear();
+    }
+
+    /// Desfaz o último passo desta pessoa com uma edição compensatória. Devolve se havia
+    /// passo.
+    pub fn desfazer(&mut self) -> utsim_lss_store::Result<bool> {
+        let Some(passo) = self.desfazer.pop() else {
+            return Ok(false);
+        };
+        let volta = utsim_lss_core::desfazer::compensar(self.state(), &passo);
+        self.voltando = true;
+        let r = self.apply(passo.clone());
+        self.voltando = false;
+        match r {
+            Ok(_) => {
+                self.refazer.push(volta);
+                Ok(true)
+            }
+            Err(e) => {
+                self.desfazer.push(passo);
+                Err(e)
+            }
+        }
+    }
+
+    /// Refaz o último passo desfeito.
+    pub fn refazer(&mut self) -> utsim_lss_store::Result<bool> {
+        let Some(passo) = self.refazer.pop() else {
+            return Ok(false);
+        };
+        let volta = utsim_lss_core::desfazer::compensar(self.state(), &passo);
+        self.voltando = true;
+        let r = self.apply(passo.clone());
+        self.voltando = false;
+        match r {
+            Ok(_) => {
+                self.desfazer.push(volta);
+                Ok(true)
+            }
+            Err(e) => {
+                self.refazer.push(passo);
+                Err(e)
+            }
         }
     }
 
@@ -366,7 +436,19 @@ impl Session {
             Guard::Training(w) => perfis::check_training(self.state(), me, w, &edits),
         };
         check.map_err(|d| utsim_lss_store::Error::Invalid(d.to_string()))?;
+        let volta = if self.voltando {
+            Vec::new()
+        } else {
+            utsim_lss_core::desfazer::compensar(self.state(), &edits)
+        };
         let ops = self.folder.commit(edits, self.clock.as_ref())?;
+        if !self.voltando && !volta.is_empty() {
+            self.desfazer.push(volta);
+            if self.desfazer.len() > DESFAZER_MAX {
+                self.desfazer.remove(0);
+            }
+            self.refazer.clear();
+        }
         if self.authorized.is_some() {
             self.reauthorize();
         }

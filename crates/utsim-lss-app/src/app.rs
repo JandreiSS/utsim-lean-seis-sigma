@@ -418,6 +418,8 @@ impl App {
             self.l6.close();
         }
         let mut session = session;
+        // Abrir (e o registro de si mesmo) não é um passo para desfazer.
+        session.limpar_desfazer();
         let severe = session.signatures().0.severe();
         self.session = Some(session);
         self.screen = Screen::Project;
@@ -525,6 +527,7 @@ impl App {
                 egui::Panel::top("documento").show(ui, |ui| self.barra_documento(ui));
             }
             self.atalhos_documento(ui.ctx());
+            self.atalhos_desfazer(ui.ctx());
         }
         match self.screen {
             Screen::Identity => {
@@ -640,19 +643,20 @@ impl App {
                     self.screen = Screen::Identity;
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // Sem projeto aberto não há barra lateral: a língua fica aqui em cima.
+                    self.language_picker(ui);
                     self.theme_picker(ui);
                 });
             });
             ui.add_space(4.0);
         });
-        egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui));
+        egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui, None));
         egui::CentralPanel::default().show(ui, |ui| self.start_body(ui));
     }
 
     /// The theme and the language, drawn in a right-to-left row (both callers): the language
     /// first, so it reads "Tema ▾  Idioma Português ▾" from the left.
     fn theme_picker(&mut self, ui: &mut egui::Ui) {
-        self.language_picker(ui);
         let t = texts();
         let name = |th: user::Theme| match th {
             user::Theme::System => t.theme_system,
@@ -685,9 +689,78 @@ impl App {
         ui.label(t.language);
     }
 
-    fn status_bar(&mut self, ui: &mut egui::Ui) {
-        ui.add_space(3.0);
+    /// A língua no pé da barra lateral, como nos outros apps da família.
+    pub(in crate::app) fn idioma_na_barra(&mut self, ui: &mut egui::Ui) {
+        let t = texts();
         ui.horizontal(|ui| {
+            ui.label(t.language);
+            let mut i = crate::text::idioma(self.config.language);
+            if utsim_idiomas::seletor(ui, "idioma", &mut i) {
+                self.config.language = crate::text::language_of(i);
+                crate::text::set_language(self.config.language);
+                self.save_config();
+            }
+        });
+    }
+
+    /// Desfaz o último passo (Ctrl+Z, botão da barra de baixo).
+    pub fn desfazer(&mut self) {
+        let Some(s) = self.session.as_mut() else {
+            return;
+        };
+        let r = s.desfazer();
+        self.depois_de_voltar(r, true);
+    }
+
+    /// Refaz o último passo desfeito (Ctrl+Y ou Ctrl+Shift+Z).
+    pub fn refazer(&mut self) {
+        let Some(s) = self.session.as_mut() else {
+            return;
+        };
+        let r = s.refazer();
+        self.depois_de_voltar(r, false);
+    }
+
+    /// Ctrl+Z desfaz; Ctrl+Y e Ctrl+Shift+Z refazem, quando nada está sendo digitado (num
+    /// campo de texto, o Ctrl+Z é o do campo).
+    fn atalhos_desfazer(&mut self, ctx: &egui::Context) {
+        if self.session.is_none() || ctx.memory(|m| m.focused().is_some()) {
+            return;
+        }
+        use egui::{Key, KeyboardShortcut, Modifiers};
+        let refazer_y = KeyboardShortcut::new(Modifiers::COMMAND, Key::Y);
+        let refazer_z = KeyboardShortcut::new(Modifiers::COMMAND | Modifiers::SHIFT, Key::Z);
+        let desfazer = KeyboardShortcut::new(Modifiers::COMMAND, Key::Z);
+        if ctx.input_mut(|i| i.consume_shortcut(&refazer_z) || i.consume_shortcut(&refazer_y)) {
+            self.refazer();
+        } else if ctx.input_mut(|i| i.consume_shortcut(&desfazer)) {
+            self.desfazer();
+        }
+    }
+
+    /// A barra de baixo: Desfazer e Refazer, a mensagem e os arquivos pendentes. `sessao` é
+    /// a sessão aberta (as telas a tiram de `self` enquanto desenham).
+    pub(in crate::app) fn status_bar(&mut self, ui: &mut egui::Ui, mut sessao: Option<&mut Session>) {
+        ui.add_space(3.0);
+        let (mut desfazer, mut refazer) = (false, false);
+        let pode = sessao
+            .as_deref()
+            .map(|s| (s.pode_desfazer(), s.pode_refazer()));
+        let pending = sessao.as_deref().map_or(0, |s| s.folder().pending().len());
+        ui.horizontal(|ui| {
+            // Desfazer e Refazer no começo da barra de baixo, como nos outros apps.
+            if let Some((pd, pr)) = pode {
+                let tl = crate::text::l16::l16();
+                desfazer = ui
+                    .add_enabled(pd, egui::Button::new(tl.desfazer).small())
+                    .on_hover_text(tl.desfazer_ajuda)
+                    .clicked();
+                refazer = ui
+                    .add_enabled(pr, egui::Button::new(tl.refazer).small())
+                    .on_hover_text(tl.refazer_ajuda)
+                    .clicked();
+                ui.separator();
+            }
             if let Some((msg, err)) = &self.status {
                 let color = if *err {
                     ui.visuals().error_fg_color
@@ -698,15 +771,36 @@ impl App {
             } else {
                 ui.label(" ");
             }
-            if let Some(s) = &self.session {
-                let pending = s.folder().pending().len();
-                if pending > 0 {
-                    ui.separator();
-                    ui.colored_label(theme::WARN, (texts().pending_files)(pending));
-                }
+            if pending > 0 {
+                ui.separator();
+                ui.colored_label(theme::WARN, (texts().pending_files)(pending));
             }
         });
         ui.add_space(3.0);
+        if let Some(s) = sessao.as_deref_mut() {
+            if desfazer {
+                let r = s.desfazer();
+                self.depois_de_voltar(r, true);
+            }
+            if refazer {
+                let r = s.refazer();
+                self.depois_de_voltar(r, false);
+            }
+        }
+    }
+
+    fn depois_de_voltar(&mut self, r: utsim_lss_store::Result<bool>, desfez: bool) {
+        if let Some(feito) = self.report(r) {
+            self.drafts.clear();
+            let tl = crate::text::l16::l16();
+            let msg = match (desfez, feito) {
+                (true, true) => tl.desfeito,
+                (true, false) => tl.nada_para_desfazer,
+                (false, true) => tl.refeito,
+                (false, false) => tl.nada_para_refazer,
+            };
+            self.set_status(msg, false);
+        }
     }
 
     fn project_screen(&mut self, ui: &mut egui::Ui) {
@@ -723,8 +817,7 @@ impl App {
         egui::Panel::top("topo").show(ui, |ui| {
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                ui.heading(s.folder().title());
-                ui.separator();
+                // O título do projeto fica só na barra lateral.
                 let others = s.others();
                 if !others.is_empty() {
                     ui.label(t.here_now);
@@ -753,7 +846,7 @@ impl App {
             }
             ui.add_space(4.0);
         });
-        egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui));
+        egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui, Some(&mut s)));
         egui::Panel::left("navegacao")
             .default_size(utsim_ui_tema::navegacao::LARGURA)
             .resizable(false)
@@ -878,6 +971,16 @@ impl App {
                     if ui.button(rotulo).clicked() {
                         self.l1.mais = !self.l1.mais;
                     }
+                    ui.add_space(6.0);
+                    self.idioma_na_barra(ui);
+                    ui.add_space(4.0);
+                });
+        } else {
+            egui::Panel::bottom("idioma_carteira")
+                .show_separator_line(false)
+                .show(ui, |ui| {
+                    ui.add_space(4.0);
+                    self.idioma_na_barra(ui);
                     ui.add_space(4.0);
                 });
         }

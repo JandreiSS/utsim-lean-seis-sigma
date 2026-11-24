@@ -36,6 +36,14 @@ pub struct L16Texts {
     pub termo_pronto: S,
     pub portao_avancado: S,
     pub painel_tabelas: S,
+    pub desfazer: S,
+    pub refazer: S,
+    pub desfazer_ajuda: S,
+    pub refazer_ajuda: S,
+    pub desfeito: S,
+    pub refeito: S,
+    pub nada_para_desfazer: S,
+    pub nada_para_refazer: S,
 }
 
 pub fn l16() -> &'static L16Texts {
@@ -74,5 +82,13 @@ fn construir() -> L16Texts {
         termo_pronto: tx("l16-termo_pronto"),
         portao_avancado: tx("l16-portao_avancado"),
         painel_tabelas: tx("l16-painel_tabelas"),
+        desfazer: tx("l16-desfazer"),
+        refazer: tx("l16-refazer"),
+        desfazer_ajuda: tx("l16-desfazer_ajuda"),
+        refazer_ajuda: tx("l16-refazer_ajuda"),
+        desfeito: tx("l16-desfeito"),
+        refeito: tx("l16-refeito"),
+        nada_para_desfazer: tx("l16-nada_para_desfazer"),
+        nada_para_refazer: tx("l16-nada_para_refazer"),
     }
 }
