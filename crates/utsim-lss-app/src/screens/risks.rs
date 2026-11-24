@@ -199,10 +199,7 @@ impl App {
                 ui.weak(format!("▸ {} ({})", c.title, text::column_name(c.column)));
             }
         });
-        if ui
-            .button(RichText::new(t.delete).color(ui.visuals().error_fg_color))
-            .clicked()
-        {
+        if utsim_ui_tema::campos::botao_confirmado(ui, t.delete, ("lss_risco", r.id.to_string())) {
             let res = s.delete(r);
             self.report(res);
             self.l1.risk = None;

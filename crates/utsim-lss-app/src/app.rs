@@ -649,7 +649,10 @@ impl App {
         egui::CentralPanel::default().show(ui, |ui| self.start_body(ui));
     }
 
+    /// The theme and the language, drawn in a right-to-left row (both callers): the language
+    /// first, so it reads "Tema ▾  Idioma Português ▾" from the left.
     fn theme_picker(&mut self, ui: &mut egui::Ui) {
+        self.language_picker(ui);
         let t = texts();
         let name = |th: user::Theme| match th {
             user::Theme::System => t.theme_system,
@@ -667,19 +670,19 @@ impl App {
         if self.config.theme != before {
             self.save_config();
         }
-        self.language_picker(ui);
     }
 
-    /// The language of the interface (stage P8); each language is named in itself.
+    /// The language of the interface (stage P8); each language is named in itself. In a
+    /// right-to-left row the menu goes first, so the label "Idioma" lands before it.
     fn language_picker(&mut self, ui: &mut egui::Ui) {
         let t = texts();
-        ui.label(t.language);
         let mut i = crate::text::idioma(self.config.language);
         if utsim_idiomas::seletor(ui, "idioma", &mut i) {
             self.config.language = crate::text::language_of(i);
             crate::text::set_language(self.config.language);
             self.save_config();
         }
+        ui.label(t.language);
     }
 
     fn status_bar(&mut self, ui: &mut egui::Ui) {
@@ -1302,10 +1305,11 @@ impl App {
             });
             self.card_extras(ui, s, &card);
             ui.add_space(12.0);
-            if ui
-                .button(RichText::new(t.delete).color(ui.visuals().error_fg_color))
-                .clicked()
-            {
+            if utsim_ui_tema::campos::botao_confirmado(
+                ui,
+                t.delete,
+                ("lss_cartao", r.id.to_string()),
+            ) {
                 let res = s.delete(r);
                 self.report(res);
                 self.selected_card = None;

@@ -203,10 +203,11 @@ impl App {
                     })
                     .collect();
             self.combo_field(ui, s, r, f::STATUS, &statuses, 120.0);
-            if ui
-                .button(RichText::new(t.delete).color(ui.visuals().error_fg_color))
-                .clicked()
-            {
+            if utsim_ui_tema::campos::botao_confirmado(
+                ui,
+                t.delete,
+                ("lss_entregavel", r.id.to_string()),
+            ) {
                 let res = s.delete(r);
                 self.report(res);
                 self.selected_deliverable = None;
@@ -344,11 +345,14 @@ impl App {
             let r = s.nudge_item(item, 1);
             self.report(r);
         }
-        if ui
-            .small_button(RichText::new(tt.remove).color(ui.visuals().error_fg_color))
-            .on_hover_text(t.delete)
-            .clicked()
-        {
+        // Apagar pede confirmação, como nos outros apps da família (e o item leva junto
+        // o que estiver debaixo dele).
+        if utsim_ui_tema::campos::botao_confirmado_com_aviso(
+            ui,
+            tt.remove,
+            t.delete,
+            ("lss_item", item.to_string()),
+        ) {
             let r = s.delete_item(item);
             self.report(r);
         }
