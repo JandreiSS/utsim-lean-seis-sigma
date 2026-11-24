@@ -35,8 +35,10 @@ fn main() -> ExitCode {
         Box::new(move |cc| {
             cc.egui_ctx
                 .set_pixels_per_point(cc.egui_ctx.pixels_per_point().max(1.1));
-            // egui's fonts with the symbols (● △ ◆) of the drawn tools.
-            cc.egui_ctx.set_fonts(utsim_ui_tema::fonts_with(None));
+            // The family's fonts and style (egui's fonts stay as the fallback, for the
+            // symbols ● △ ◆ of the drawn tools) and the app's green.
+            utsim_ui_tema::install(&cc.egui_ctx);
+            utsim_lss_app::theme::apply(&cc.egui_ctx);
             let mut app = App::new(dirs);
             if let Some(p) = open {
                 app.open_project(&p);

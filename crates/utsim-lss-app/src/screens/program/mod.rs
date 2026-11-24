@@ -398,7 +398,6 @@ impl App {
                     if ui.button(t.close_project).clicked() {
                         close = true;
                     }
-                    self.theme_picker(ui);
                 });
             });
             let n = s.unauthorized().len();

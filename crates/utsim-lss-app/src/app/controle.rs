@@ -408,7 +408,7 @@ impl App {
             .height(150.0)
             .allow_scroll(false)
             .show(ui, |p| {
-                p.line(Line::new("", PlotPoints::new(pts)).color(theme::ACCENT_LIGHT));
+                p.line(Line::new("", PlotPoints::new(pts)).color(crate::app::screens::inicio::COR));
                 p.points(
                     Points::new("", PlotPoints::new(out))
                         .radius(4.0)

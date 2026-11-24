@@ -12,7 +12,7 @@ use utsim_lss_core::domain::{self, Action, Approach, Column, fields};
 use utsim_lss_core::overview::Overview;
 use utsim_lss_core::tools::Tool;
 use utsim_lss_core::{Date, EntityRef, Id as Uid, Kind, kanban, modelos_linha};
-use utsim_lss_store::user::{self, AppDirs, Identity, UserConfig};
+use utsim_lss_store::user::{AppDirs, Identity, UserConfig};
 use utsim_lss_store::{Clock, SystemClock};
 
 use crate::session::Session;
@@ -199,7 +199,7 @@ pub struct App {
     ap_table_name: String,
     ap_errors: Vec<String>,
     status: Option<(String, bool)>,
-    theme_applied: Option<user::Theme>,
+    theme_applied: bool,
     l1: screens::L1Ui,
     /// The screen of an open program folder (stage L6).
     pub pnav: screens::program::ProgramNav,
@@ -277,7 +277,7 @@ impl App {
             ap_table_name: String::new(),
             ap_errors: Vec::new(),
             status: None,
-            theme_applied: None,
+            theme_applied: false,
             l1: screens::L1Ui::default(),
             pnav: screens::program::ProgramNav::default(),
             l6: screens::program::L6Ui::default(),
@@ -513,9 +513,9 @@ impl App {
     /// The whole window.
     pub fn draw(&mut self, ui: &mut egui::Ui) {
         utsim_ui_tema::maximizar_no_inicio(ui.ctx());
-        if self.theme_applied != Some(self.config.theme) {
-            theme::apply(ui.ctx(), self.config.theme);
-            self.theme_applied = Some(self.config.theme);
+        if !self.theme_applied {
+            theme::apply(ui.ctx());
+            self.theme_applied = true;
         }
         if self.screen == Screen::Project {
             // A barra do documento, no canto de cima à esquerda, antes dos outros painéis.
@@ -645,35 +645,12 @@ impl App {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     // Sem projeto aberto não há barra lateral: a língua fica aqui em cima.
                     self.language_picker(ui);
-                    self.theme_picker(ui);
                 });
             });
             ui.add_space(4.0);
         });
         egui::Panel::bottom("estado").show(ui, |ui| self.status_bar(ui, None));
         egui::CentralPanel::default().show(ui, |ui| self.start_body(ui));
-    }
-
-    /// The theme and the language, drawn in a right-to-left row (both callers): the language
-    /// first, so it reads "Tema ▾  Idioma Português ▾" from the left.
-    fn theme_picker(&mut self, ui: &mut egui::Ui) {
-        let t = texts();
-        let name = |th: user::Theme| match th {
-            user::Theme::System => t.theme_system,
-            user::Theme::Light => t.theme_light,
-            user::Theme::Dark => t.theme_dark,
-        };
-        let before = self.config.theme;
-        egui::ComboBox::from_id_salt("tema")
-            .selected_text(format!("{}: {}", t.theme, name(before)))
-            .show_ui(ui, |ui| {
-                for th in [user::Theme::System, user::Theme::Light, user::Theme::Dark] {
-                    ui.selectable_value(&mut self.config.theme, th, name(th));
-                }
-            });
-        if self.config.theme != before {
-            self.save_config();
-        }
     }
 
     /// The language of the interface (stage P8); each language is named in itself. In a
@@ -832,7 +809,6 @@ impl App {
                     if ui.button(t.close_project).clicked() {
                         close = true;
                     }
-                    self.theme_picker(ui);
                 });
             });
             let n = s.state().conflicts.len();
