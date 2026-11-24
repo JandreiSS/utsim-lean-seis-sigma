@@ -781,7 +781,7 @@ impl App {
             }
         });
         ui.add_space(3.0);
-        if let Some(s) = sessao.as_deref_mut() {
+        if let Some(s) = sessao {
             if desfazer {
                 let r = s.desfazer();
                 self.depois_de_voltar(r, true);
