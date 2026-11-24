@@ -743,7 +743,7 @@ impl App {
     pub(in crate::app) fn status_bar(
         &mut self,
         ui: &mut egui::Ui,
-        mut sessao: Option<&mut Session>,
+        sessao: Option<&mut Session>,
     ) {
         ui.add_space(3.0);
         let (mut desfazer, mut refazer) = (false, false);
