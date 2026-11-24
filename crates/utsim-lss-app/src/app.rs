@@ -740,7 +740,11 @@ impl App {
 
     /// A barra de baixo: Desfazer e Refazer, a mensagem e os arquivos pendentes. `sessao` é
     /// a sessão aberta (as telas a tiram de `self` enquanto desenham).
-    pub(in crate::app) fn status_bar(&mut self, ui: &mut egui::Ui, mut sessao: Option<&mut Session>) {
+    pub(in crate::app) fn status_bar(
+        &mut self,
+        ui: &mut egui::Ui,
+        mut sessao: Option<&mut Session>,
+    ) {
         ui.add_space(3.0);
         let (mut desfazer, mut refazer) = (false, false);
         let pode = sessao

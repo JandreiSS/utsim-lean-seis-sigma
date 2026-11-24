@@ -835,8 +835,11 @@ impl App {
         dataset: bool,
     ) {
         let t = l3();
-        if !utsim_ui_tema::campos::botao_confirmado(ui, t.delete, ("lss_apagar_dado", id.to_string()))
-        {
+        if !utsim_ui_tema::campos::botao_confirmado(
+            ui,
+            t.delete,
+            ("lss_apagar_dado", id.to_string()),
+        ) {
             return;
         }
         if dataset && dados::in_use(&analises::analyses(s.state(), s.project()), id) {

@@ -47,14 +47,27 @@ fn desfazer_volta_o_campo_com_uma_edicao_nova_no_diario() {
     let dir = tempfile::tempdir().unwrap();
     let mut app = app_in(&dir.path().join("config"), 31);
     assert!(app.comecar_sem_pasta());
-    assert!(!app.session().unwrap().pode_desfazer(), "abrir não é um passo");
+    assert!(
+        !app.session().unwrap().pode_desfazer(),
+        "abrir não é um passo"
+    );
     {
         let s = app.session_mut().unwrap();
         let p = Project::entity_ref(s.project());
-        s.set_field(p, fields::project::PROBLEM, Value::from("Refugo alto"), None)
-            .unwrap();
-        s.set_field(p, fields::project::PROBLEM, Value::from("Refugo de 4,8 %"), None)
-            .unwrap();
+        s.set_field(
+            p,
+            fields::project::PROBLEM,
+            Value::from("Refugo alto"),
+            None,
+        )
+        .unwrap();
+        s.set_field(
+            p,
+            fields::project::PROBLEM,
+            Value::from("Refugo de 4,8 %"),
+            None,
+        )
+        .unwrap();
     }
     let ops = app.session().unwrap().folder().journal().len();
     app.desfazer();
