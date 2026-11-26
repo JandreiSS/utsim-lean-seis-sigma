@@ -15,8 +15,8 @@ name = "utsim_lss_app"
 path = "src/lib.rs"
 
 [dependencies]
-utsim-lss-core = { path = "../utsim-lss-core" }
-utsim-lss-store = { path = "../utsim-lss-store" }
+utsim-lss-core = { workspace = true }
+utsim-lss-store = { workspace = true }
 # The texts of the screens in the five languages (`idiomas/<código>/seis-sigma.ftl`).
 utsim-idiomas.workspace = true
 # The UTSim model of a project (stage L4): read, run and draw it; open it in UTSim through
@@ -29,8 +29,8 @@ utsim-quality.workspace = true
 utsim-diagram.workspace = true
 # The drawn tools (fishbone, whys tree, live Pareto, S × O matrix), the same as in UTSim
 # Qualidade and Segurança.
-utsim-visual = { path = "../utsim-visual" }
-utsim-launcher-core = { path = "../utsim-launcher-core" }
+utsim-visual = { workspace = true }
+utsim-launcher-core = { workspace = true }
 serde_json.workspace = true
 serde.workspace = true
 # The access token of the gemba page (the same version as the signatures').
