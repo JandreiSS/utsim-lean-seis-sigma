@@ -83,7 +83,7 @@ fn construir() -> L16Texts {
         portao_avancado: tx("l16-portao_avancado"),
         painel_tabelas: tx("l16-painel_tabelas"),
         desfazer: tx("l16-desfazer"),
-        refazer: tx("l16-refazer"),
+        refazer: tx("l16-refazer_botao"),
         desfazer_ajuda: tx("l16-desfazer_ajuda"),
         refazer_ajuda: tx("l16-refazer_ajuda"),
         desfeito: tx("l16-desfeito"),
