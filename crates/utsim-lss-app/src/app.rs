@@ -27,6 +27,7 @@ const LSSZ: utsim_ui_tema::arquivos::Filtro = utsim_ui_tema::arquivos::Filtro {
 // Stage L1 screens (portfolio, charter versions, team, tollgates, risks, meetings,
 // schedule, savings, closing, opening screen).
 mod controle;
+mod pedido;
 // Começar sem pasta: Salvar, Salvar como e a guarda das mudanças não salvas.
 pub mod documento;
 #[path = "screens/mod.rs"]
@@ -223,6 +224,8 @@ pub struct App {
     gemba: screens::gemba::GembaUi,
     /// The project as a document: Save, Save as and the guard of unsaved work.
     pub doc: documento::Documento,
+    /// A oportunidade mandada por outro app (`--utsim-pedido`).
+    pedido_ui: pedido::PedidoUi,
 }
 
 impl App {
@@ -291,6 +294,7 @@ impl App {
             signer: None,
             gemba: screens::gemba::GembaUi::default(),
             doc: documento::Documento::default(),
+            pedido_ui: pedido::PedidoUi::default(),
         };
         app.load_signer();
         app
@@ -536,6 +540,7 @@ impl App {
             Screen::Start => self.start_screen(ui),
             Screen::Project => self.project_screen(ui),
         }
+        self.janela_pedido(ui.ctx());
         self.after_frame(ui.ctx());
         self.quadro_documento(ui.ctx());
     }

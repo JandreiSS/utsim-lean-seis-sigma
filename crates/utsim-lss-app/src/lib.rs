@@ -16,5 +16,7 @@ pub mod reports;
 pub mod session;
 pub mod text;
 pub mod theme;
+/// Pedidos de outros apps da família (`--utsim-pedido`): a oportunidade do UTSim Ambiental.
+pub mod troca;
 
 pub use app::App;

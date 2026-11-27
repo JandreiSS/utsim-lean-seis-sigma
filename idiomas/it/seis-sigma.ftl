@@ -2305,3 +2305,37 @@ l16-desfeito = Annullato: il passo è tornato indietro, e l’annullamento è re
 l16-refeito = Ripetuto.
 l16-nada_para_desfazer = Niente da annullare.
 l16-nada_para_refazer = Niente da ripetere.
+
+## Pedidos de outros apps: a oportunidade do UTSim Ambiental (troca.rs, app/pedido.rs)
+l17-janela = Nuova opportunità da UTSim Ambiental
+l17-intro = UTSim Ambiental ha inviato uno scenario con un guadagno ambientale. Entra come idea nella banca delle idee del portafoglio, con i dati di spreco ed energia e il file degli scenari allegato.
+l17-carteira = Portafoglio (cartella .lss)
+l17-carteira_dica = La cartella del portafoglio dei progetti in cui entra l'idea.
+l17-criar = Crea l'idea nel portafoglio
+l17-agora_nao = Non ora
+l17-sem_carteira = Scegli la cartella del portafoglio.
+l17-nota_ganho = Il guadagno ambientale resta accanto a quello finanziario, senza convertire l'uno nell'altro.
+l17-alavancas = Leve:
+l17-diferencas = Differenza rispetto al Base (media e intervallo al 95 %, repliche appaiate):
+l17-vsm = Linea ambientale della mappa del flusso del valore (per pezzo):
+l17-testes = Test della riduzione:
+l17-m_co2e = CO₂e (kg)
+l17-m_energia = Energia (kWh)
+l17-m_agua = Acqua (m³)
+l17-m_conta = Bolletta energetica
+l17-m_custo = Costo
+l17-sem_resumo = La richiesta non porta il riepilogo dello scenario.
+l17-app_ambiental = Scenario di UTSim Ambiental
+l17-criada = Idea creata nel portafoglio: { $titulo }.
+l17-erro_acao = UTSim LSS non gestisce questa richiesta ({ $acao }).
+l17-erro_pedido = Impossibile leggere la richiesta: { $erro }
+l17-erro_carteira = Impossibile creare l'idea: { $erro }
+l17-titulo_ideia = Scenario ambientale: { $cenario }
+l17-problema = Lo scenario { $cenario } di UTSim Ambiental cambia: { $alavancas }.
+l17-problema_sem_alavancas = Lo scenario { $cenario } di UTSim Ambiental.
+l17-cabecalho = Da UTSim Ambiental (modello { $modelo }), scenario { $cenario }.
+l17-diferenca_linha = { $metrica }: { $media } (da { $de } a { $ate })
+l17-investimento = Investimento: { $valor }
+l17-vida = Vita utile: { $anos } anni
+l17-vsm_linha = { $no }: { $kwh } kWh e { $co2e } kg CO₂e
+l17-teste_linha = { $metrica }: differenza { $dif }, p = { $p } ({ $origem })

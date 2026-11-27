@@ -1,4 +1,6 @@
-//! `utsim-seis-sigma [pasta.lss]`: opens the window; with a folder, opens that project.
+//! `utsim-seis-sigma [pasta.lss] [--utsim-pedido=<pedido>]`: opens the window; with a
+//! folder, opens that project; with a request of another app of the family (the
+//! opportunity of UTSim Ambiental), asks for the portfolio where the idea goes.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -15,7 +17,7 @@ fn main() -> ExitCode {
         args.first().map(String::as_str),
         "utsim-seis-sigma",
         env!("CARGO_PKG_VERSION"),
-        "utsim-seis-sigma [pasta.lss]\n  sem argumentos: abre a janela\n  pasta.lss: abre esse projeto",
+        "utsim-seis-sigma [pasta.lss] [--utsim-pedido=<pedido>]\n  sem argumentos: abre a janela\n  pasta.lss: abre esse projeto\n  --utsim-pedido: a oportunidade de outro app (UTSim Ambiental) vira ideia na carteira",
     ) {
         return c;
     }
@@ -23,7 +25,15 @@ fn main() -> ExitCode {
         eprintln!("erro: não encontrei a pasta do usuário");
         return ExitCode::FAILURE;
     };
-    let open = args.first().map(PathBuf::from);
+    let pedido = utsim_troca::caminho_do_pedido(args.iter().cloned());
+    // The project is the first argument that is not an option (nor the value of one).
+    let open = args
+        .iter()
+        .enumerate()
+        .find(|(i, a)| {
+            !a.starts_with("--") && (*i == 0 || args[i - 1] != utsim_troca::OPCAO_PEDIDO)
+        })
+        .map(|(_, a)| PathBuf::from(a));
     let name = texts().app_name;
     let options = eframe::NativeOptions {
         viewport: utsim_ui_tema::janela::viewport(name, [1180.0, 760.0], [760.0, 480.0], None),
@@ -42,6 +52,9 @@ fn main() -> ExitCode {
             let mut app = App::new(dirs);
             if let Some(p) = open {
                 app.open_project(&p);
+            }
+            if let Some(p) = pedido {
+                app.receber_pedido(&p);
             }
             Ok(Box::new(app))
         }),

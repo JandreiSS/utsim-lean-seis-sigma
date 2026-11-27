@@ -2304,3 +2304,37 @@ l16-desfeito = Annulé : l’étape est revenue, et l’annulation est enregistr
 l16-refeito = Rétabli.
 l16-nada_para_desfazer = Rien à annuler.
 l16-nada_para_refazer = Rien à rétablir.
+
+## Pedidos de outros apps: a oportunidade do UTSim Ambiental (troca.rs, app/pedido.rs)
+l17-janela = Nouvelle opportunité d'UTSim Ambiental
+l17-intro = UTSim Ambiental a envoyé un scénario avec un gain environnemental. Il entre comme idée dans la banque d'idées du portefeuille, avec les données de gaspillage et d'énergie et le fichier des scénarios en pièce jointe.
+l17-carteira = Portefeuille (dossier .lss)
+l17-carteira_dica = Le dossier du portefeuille de projets où l'idée entre.
+l17-criar = Créer l'idée dans le portefeuille
+l17-agora_nao = Pas maintenant
+l17-sem_carteira = Choisissez le dossier du portefeuille.
+l17-nota_ganho = Le gain environnemental reste à côté du gain financier, sans convertir l'un en l'autre.
+l17-alavancas = Leviers :
+l17-diferencas = Différence avec la Base (moyenne et intervalle à 95 %, réplications appariées) :
+l17-vsm = Ligne environnementale de la cartographie de la chaîne de valeur (par pièce) :
+l17-testes = Tests de la réduction :
+l17-m_co2e = CO₂e (kg)
+l17-m_energia = Énergie (kWh)
+l17-m_agua = Eau (m³)
+l17-m_conta = Facture d'énergie
+l17-m_custo = Coût
+l17-sem_resumo = La demande n'apporte pas le résumé du scénario.
+l17-app_ambiental = Scénario d'UTSim Ambiental
+l17-criada = Idée créée dans le portefeuille : { $titulo }.
+l17-erro_acao = UTSim LSS ne traite pas cette demande ({ $acao }).
+l17-erro_pedido = Impossible de lire la demande : { $erro }
+l17-erro_carteira = Impossible de créer l'idée : { $erro }
+l17-titulo_ideia = Scénario environnemental : { $cenario }
+l17-problema = Le scénario { $cenario } d'UTSim Ambiental change : { $alavancas }.
+l17-problema_sem_alavancas = Le scénario { $cenario } d'UTSim Ambiental.
+l17-cabecalho = D'UTSim Ambiental (modèle { $modelo }), scénario { $cenario }.
+l17-diferenca_linha = { $metrica } : { $media } (de { $de } à { $ate })
+l17-investimento = Investissement : { $valor }
+l17-vida = Durée de vie : { $anos } ans
+l17-vsm_linha = { $no } : { $kwh } kWh et { $co2e } kg CO₂e
+l17-teste_linha = { $metrica } : différence { $dif }, p = { $p } ({ $origem })

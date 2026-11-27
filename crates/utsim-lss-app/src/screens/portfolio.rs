@@ -396,6 +396,8 @@ impl App {
         if let Some((app, reference)) = portfolio::source_of(idea) {
             let app_name = if app == portfolio::SOURCE_8D {
                 t.app_8d.to_string()
+            } else if app == crate::troca::ORIGEM_AMBIENTAL {
+                crate::text::l17::l17().app_ambiental.to_string()
             } else {
                 app
             };

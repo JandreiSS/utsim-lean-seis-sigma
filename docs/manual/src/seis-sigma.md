@@ -265,7 +265,16 @@ diretamente, pela tela inicial, também leva à tela Carteira.
 - **Ideias**: qualquer pessoa registra uma oportunidade (título, processo, problema observado,
   dados disponíveis, ganho grosseiro). Outros apps da família também mandam ideias: o **8D do
   UTSim Qualidade**, quando o problema pede um projeto Lean Seis Sigma, envia a ideia com o
-  número do 8D, quem enviou e quando, e os anexos (relatório, dados). A ideia mostra a origem
+  número do 8D, quem enviou e quando, e os anexos (relatório, dados). O **UTSim Ambiental**
+  manda um cenário com ganho ambiental ("Levar para o LSS"): o UTSim LSS abre com a janela
+  "Nova oportunidade do UTSim Ambiental", mostra o resumo e pede a pasta da carteira (a
+  carteira aberta já vem preenchida). A ideia entra com as alavancas no problema e, nos dados,
+  a diferença para o Base de CO₂e, energia, água, conta de energia e custo (média e intervalo
+  de 95 %), o investimento e a vida útil, a linha ambiental do mapa de fluxo de valor (kWh e
+  kg CO₂e por peça de cada máquina) e os testes da redução; o arquivo dos cenários vai anexado,
+  e o LSS confere o hash dele antes (um arquivo mudado depois do pedido é recusado). O ganho
+  ambiental fica ao lado do financeiro, sem converter um no outro: o ganho grosseiro fica para
+  quem prioriza. A ideia mostra a origem
   no alto, e cada anexo abre com um clique; os arquivos ficam em `anexos/` da carteira. O quadro mostra as ideias por situação: ideia, triagem,
   aprovada, em execução e suspensa; encerradas, canceladas e arquivadas aparecem contadas.
   Os botões "→" mostram só as passagens permitidas (por exemplo, de ideia para triagem; de

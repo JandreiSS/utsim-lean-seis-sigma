@@ -2246,3 +2246,37 @@ l16-desfeito = Desfeito: o passo voltou, e a volta ficou registrada no diário.
 l16-refeito = Refeito.
 l16-nada_para_desfazer = Nada para desfazer.
 l16-nada_para_refazer = Nada para refazer.
+
+## Pedidos de outros apps: a oportunidade do UTSim Ambiental (troca.rs, app/pedido.rs)
+l17-janela = Nova oportunidade do UTSim Ambiental
+l17-intro = O UTSim Ambiental mandou um cenário com ganho ambiental. Ele entra como ideia no banco de ideias da carteira, com os dados de desperdício e energia e o arquivo dos cenários anexado.
+l17-carteira = Carteira (pasta .lss)
+l17-carteira_dica = A pasta da carteira de projetos onde a ideia entra.
+l17-criar = Criar a ideia na carteira
+l17-agora_nao = Agora não
+l17-sem_carteira = Escolha a pasta da carteira.
+l17-nota_ganho = O ganho ambiental fica ao lado do financeiro, sem converter um no outro.
+l17-alavancas = Alavancas:
+l17-diferencas = Diferença para o Base (média e intervalo de 95 %, replicações pareadas):
+l17-vsm = Linha ambiental do mapa de fluxo de valor (por peça):
+l17-testes = Testes da redução:
+l17-m_co2e = CO₂e (kg)
+l17-m_energia = Energia (kWh)
+l17-m_agua = Água (m³)
+l17-m_conta = Conta de energia
+l17-m_custo = Custo
+l17-sem_resumo = O pedido não traz o resumo do cenário.
+l17-app_ambiental = Cenário do UTSim Ambiental
+l17-criada = Ideia criada na carteira: { $titulo }.
+l17-erro_acao = O UTSim LSS não atende este pedido ({ $acao }).
+l17-erro_pedido = Não foi possível ler o pedido: { $erro }
+l17-erro_carteira = Não foi possível criar a ideia: { $erro }
+l17-titulo_ideia = Cenário ambiental: { $cenario }
+l17-problema = O cenário { $cenario } do UTSim Ambiental muda: { $alavancas }.
+l17-problema_sem_alavancas = O cenário { $cenario } do UTSim Ambiental.
+l17-cabecalho = Do UTSim Ambiental (modelo { $modelo }), cenário { $cenario }.
+l17-diferenca_linha = { $metrica }: { $media } (de { $de } a { $ate })
+l17-investimento = Investimento: { $valor }
+l17-vida = Vida útil: { $anos } anos
+l17-vsm_linha = { $no }: { $kwh } kWh e { $co2e } kg CO₂e
+l17-teste_linha = { $metrica }: diferença { $dif }, p = { $p } ({ $origem })

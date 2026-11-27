@@ -2303,3 +2303,37 @@ l16-desfeito = Deshecho: el paso volvió, y la vuelta quedó registrada en el di
 l16-refeito = Rehecho.
 l16-nada_para_desfazer = Nada para deshacer.
 l16-nada_para_refazer = Nada para rehacer.
+
+## Pedidos de outros apps: a oportunidade do UTSim Ambiental (troca.rs, app/pedido.rs)
+l17-janela = Nueva oportunidad de UTSim Ambiental
+l17-intro = UTSim Ambiental envió un escenario con ganancia ambiental. Entra como idea en el banco de ideas de la cartera, con los datos de desperdicio y energía y el archivo de escenarios adjunto.
+l17-carteira = Cartera (carpeta .lss)
+l17-carteira_dica = La carpeta de la cartera de proyectos donde entra la idea.
+l17-criar = Crear la idea en la cartera
+l17-agora_nao = Ahora no
+l17-sem_carteira = Elija la carpeta de la cartera.
+l17-nota_ganho = La ganancia ambiental queda al lado de la financiera, sin convertir una en la otra.
+l17-alavancas = Palancas:
+l17-diferencas = Diferencia con el Base (media e intervalo del 95 %, réplicas pareadas):
+l17-vsm = Línea ambiental del mapa de flujo de valor (por pieza):
+l17-testes = Pruebas de la reducción:
+l17-m_co2e = CO₂e (kg)
+l17-m_energia = Energía (kWh)
+l17-m_agua = Agua (m³)
+l17-m_conta = Factura de energía
+l17-m_custo = Costo
+l17-sem_resumo = La solicitud no trae el resumen del escenario.
+l17-app_ambiental = Escenario de UTSim Ambiental
+l17-criada = Idea creada en la cartera: { $titulo }.
+l17-erro_acao = UTSim LSS no atiende esta solicitud ({ $acao }).
+l17-erro_pedido = No se pudo leer la solicitud: { $erro }
+l17-erro_carteira = No se pudo crear la idea: { $erro }
+l17-titulo_ideia = Escenario ambiental: { $cenario }
+l17-problema = El escenario { $cenario } de UTSim Ambiental cambia: { $alavancas }.
+l17-problema_sem_alavancas = El escenario { $cenario } de UTSim Ambiental.
+l17-cabecalho = De UTSim Ambiental (modelo { $modelo }), escenario { $cenario }.
+l17-diferenca_linha = { $metrica }: { $media } (de { $de } a { $ate })
+l17-investimento = Inversión: { $valor }
+l17-vida = Vida útil: { $anos } años
+l17-vsm_linha = { $no }: { $kwh } kWh y { $co2e } kg CO₂e
+l17-teste_linha = { $metrica }: diferencia { $dif }, p = { $p } ({ $origem })

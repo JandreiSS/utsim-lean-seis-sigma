@@ -31,6 +31,8 @@ utsim-diagram.workspace = true
 # Qualidade and Segurança.
 utsim-visual = { workspace = true }
 utsim-launcher-core = { workspace = true }
+# Pedidos de outros apps da família (`--utsim-pedido`): a oportunidade do UTSim Ambiental.
+utsim-troca.workspace = true
 serde_json.workspace = true
 serde.workspace = true
 # The access token of the gemba page (the same version as the signatures').
