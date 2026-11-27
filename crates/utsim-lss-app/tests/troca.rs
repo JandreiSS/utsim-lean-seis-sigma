@@ -154,6 +154,18 @@ fn the_opportunity_of_ambiental_becomes_an_idea_in_the_portfolio() {
     assert!(app.receber_pedido(&caminho));
     assert!(app.pedido().is_some());
     frames(&mut app, &ctx, 3);
+    // With `UTSIM_CAPTURAS=<pasta>` the picture of the request is saved for review.
+    if let Some(d) = std::env::var_os("UTSIM_CAPTURAS") {
+        let d = std::path::PathBuf::from(d);
+        std::fs::create_dir_all(&d).unwrap();
+        let mut cap = utsim_ui_tema::captura::Captura::new(
+            egui::Context::default(),
+            egui::vec2(1280.0, 860.0),
+        );
+        let img = cap.imagem(30, |ui| app.draw(ui));
+        img.salvar_png(&d.join("seis_sigma_pedido_ambiental.png"))
+            .unwrap();
+    }
     assert!(app.enviar_pedido(&carteira));
     assert!(app.pedido().is_none());
     assert_eq!(app.nav, Nav::Portfolio);

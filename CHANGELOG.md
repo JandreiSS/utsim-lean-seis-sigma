@@ -11,6 +11,7 @@ As mudanças deste repositório ficam registradas aqui. O histórico de antes da
 ### Alterado
 - Repositório próprio, separado do monorepo da família UTSim; usa a família pela tag v0.1.0.
 - Usa a família pela tag v0.1.1 (as fontes da família entram no `install` comum).
+- A oportunidade do UTSim Ambiental abre num quadro modal, como o de "Salvar como" e os da abertura (era uma janela solta com texto monoespaçado): título no corpo, texto na fonte comum e "Criar a ideia na carteira" como botão principal.
 
 ### Corrigido
 - O botão "Refazer" da barra de baixo mostrava a frase "Os aprovadores pediram para refazer parte de {$fase}…", nas cinco línguas: duas mensagens usavam a mesma chave. O botão ganhou a chave própria.

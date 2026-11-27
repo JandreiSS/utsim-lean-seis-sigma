@@ -81,45 +81,46 @@ impl App {
         };
         let titulo = p.submissao().title;
         let dados = p.dados();
-        egui::Window::new(t.janela)
-            .collapsible(false)
-            .resizable(true)
-            .default_width(620.0)
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, |ui| {
-                ui.label(t.intro);
-                ui.add_space(6.0);
-                ui.strong(&titulo);
-                egui::ScrollArea::vertical()
-                    .max_height(280.0)
-                    .show(ui, |ui| {
-                        ui.label(egui::RichText::new(&dados).monospace().size(12.0));
-                    });
-                ui.add_space(8.0);
-                ui.label(t.carteira);
-                utsim_ui_tema::arquivos::campo(
-                    ui,
-                    &mut self.pedido_ui.carteira,
-                    utsim_ui_tema::arquivos::Tipo::Pasta,
-                    t.carteira,
-                    &[],
-                    480.0,
-                )
-                .on_hover_text(t.carteira_dica);
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    let tem = !self.pedido_ui.carteira.trim().is_empty();
-                    if ui.add_enabled(tem, egui::Button::new(t.criar)).clicked() {
-                        criar = true;
-                    }
-                    if ui.button(t.agora_nao).clicked() {
-                        fechar = true;
-                    }
-                    if !tem {
-                        ui.weak(t.sem_carteira);
-                    }
+        // Um quadro modal, como o de Salvar como e os da abertura.
+        let modal = egui::Modal::new(egui::Id::new("pedido_lss")).show(ctx, |ui| {
+            ui.set_width(600.0);
+            ui.heading(t.janela);
+            ui.add_space(8.0);
+            ui.label(t.intro);
+            ui.add_space(8.0);
+            ui.strong(&titulo);
+            ui.add_space(4.0);
+            egui::ScrollArea::vertical()
+                .max_height(280.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    ui.label(&dados);
                 });
+            ui.add_space(8.0);
+            ui.label(t.carteira);
+            utsim_ui_tema::arquivos::campo(
+                ui,
+                &mut self.pedido_ui.carteira,
+                utsim_ui_tema::arquivos::Tipo::Pasta,
+                t.carteira,
+                &[],
+                420.0,
+            )
+            .on_hover_text(t.carteira_dica);
+            let tem = !self.pedido_ui.carteira.trim().is_empty();
+            if !tem {
+                ui.add_space(8.0);
+                ui.colored_label(ui.visuals().weak_text_color(), t.sem_carteira);
+            }
+            ui.add_space(12.0);
+            ui.horizontal(|ui| {
+                criar = ui
+                    .add_enabled(tem, utsim_ui_tema::widgets::primary(t.criar))
+                    .clicked();
+                fechar = ui.button(t.agora_nao).clicked();
             });
+        });
+        fechar |= modal.should_close();
         if criar {
             let c = std::path::PathBuf::from(self.pedido_ui.carteira.trim());
             self.enviar_pedido(&c);
